@@ -78,14 +78,6 @@ jobs:
         echo "$changelog" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Delete existing release and tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh release delete ${{ steps.get_version.outputs.version }} --cleanup-tag -y || true
-        git push --delete origin ${{ steps.get_version.outputs.version }} || true
-        sleep 5
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
@@ -98,3 +90,4 @@ jobs:
           ${{ steps.package_arm64.outputs.zip_name }}
         draft: false
         prerelease: false
+        make_latest: true
