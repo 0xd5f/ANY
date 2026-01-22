@@ -1,0 +1,12 @@
+[Unit]
+Description=Reseller Telegram Bot for ANY Panel
+After=network.target
+
+[Service]
+ExecStart=/bin/bash -c 'source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/hysteria2_venv/bin/python /etc/hysteria/core/scripts/telegrambot/reselbot.py'
+WorkingDirectory=/etc/hysteria/core/scripts/telegrambot
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

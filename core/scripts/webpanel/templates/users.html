@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Custom Scrollbar for tables if needed */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content" style="display: none;"
+    data-service-status-url="{{ url_for('server_services_status_api') }}"
+    data-bulk-remove-url="{{ url_for('bulk_remove_users_api') }}"
+    data-remove-user-url-template="{{ url_for('remove_user_api', username='U') }}"
+    data-bulk-add-url="{{ url_for('add_bulk_users_api') }}"
+    data-add-user-url="{{ url_for('add_user_api') }}"
+    data-edit-user-url-template="{{ url_for('edit_user_api', username='U') }}"
+    data-reset-user-url-template="{{ url_for('reset_user_api', username='U') }}"
+    data-user-uri-url-template="{{ url_for('show_user_uri_api', username='U') }}"
+    data-bulk-uri-url="{{ url_for('show_multiple_user_uris_api') }}"
+    data-users-base-url="{{ url_for('users') }}"
+    data-get-user-url-template="{{ url_for('get_user_api', username='U') }}"
+    data-search-url="{{ url_for('search_users') }}"
+></div>
+
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            Users 
+            {% if total_users is defined %}
+            <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-white" id="user-total-count">
+                {{ total_users }}
+            </span>
+            {% endif %}
+        </h1>
+        <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Manage user access and subscriptions</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-2">
+         <button type="button" class="btn-icon bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2" data-toggle="modal" data-target="#addUserModal">
+             <i class="fas fa-plus"></i> Add User
+         </button>
+         
+         <div class="flex gap-2">
+             <button type="button" class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors" id="showSelectedLinks" title="Show Links">
+                <i class="fas fa-link"></i>
+             </button>
+             <button type="button" class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" id="deleteSelected" title="Delete Selected">
+                <i class="fas fa-trash"></i>
+             </button>
+         </div>
+    </div>
+</div>
+
+<section class="space-y-6">
+
+
+    
+    <!-- Filters & Search -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 p-4">
+        <div class="flex flex-col md:flex-row justify-between gap-4">
+            
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-2 text-sm">
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300 transition-colors font-medium active-filter bg-gray-100 dark:bg-zinc-800" data-filter="all">All</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors font-medium" data-filter="enable">Enabled</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium" data-filter="disable">Disabled</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors font-medium" data-filter="online">Online</button>
+            </div>
+
+            <!-- Search -->
+            <div class="flex items-center gap-2 max-w-md w-full md:w-auto">
+                <div class="relative w-full">
+                    <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-zinc-700 rounded-xl leading-5 bg-gray-50 dark:bg-zinc-950 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:text-white" placeholder="Search users...">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                </div>
+                <button type="button" class="bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 px-3 py-2 rounded-xl transition-colors" id="searchButton">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="userTable">
+                <thead>
+                    <tr class="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
+                        <th class="px-4 py-3 w-4">
+                            <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        </th>
+                        <th class="px-4 py-3">#</th>
+                        <th class="px-4 py-3">Username</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Status</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Traffic</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Usage Days</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Expiry</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Enable</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Note</th>
+                        <th class="px-4 py-3 hidden md:table-cell requires-iplimit-service hidden">Unl. IP</th>
+                        <th class="px-4 py-3 hidden md:table-cell">Configs</th>
+                        <th class="px-4 py-3 hidden md:table-cell text-right">Actions</th>
+                        <th class="px-4 py-3 md:hidden text-center">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800 text-sm">
+                    {% set offset = (current_page - 1) * limit %}
+                    {% include 'users_rows.html' %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="px-4 py-3 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4" id="paginationContainer">
+             <div class="text-sm text-gray-500 dark:text-gray-400">
+                Showing {{ ((current_page - 1) * limit) + 1 }} to {{ [((current_page - 1) * limit) + limit, total_users] | min }} of {{ total_users }} users
+            </div>
+            
+            <div class="flex items-center gap-4">
+                 <form id="limit-form" method="get" class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Per Page:</span>
+                    <select id="limit-select" class="form-select block w-full pl-3 pr-10 py-1.5 text-base border-gray-300 dark:border-zinc-700 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-lg bg-gray-50 dark:bg-zinc-800 dark:text-white">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="1000">1000</option>
+                    </select>
+                </form>
+
+                {% if total_pages > 1 %}
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <a href="{{ url_for('users_paginated', page=current_page - 1) }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:z-20 focus:outline-offset-0 {% if current_page == 1 %}pointer-events-none opacity-50{% endif %}">
+                        <span class="sr-only">Previous</span>
+                        <i class="fas fa-chevron-left h-5 w-5"></i>
+                    </a>
+                    
+                    {% set page_start = [1, current_page - 2] | max %}
+                    {% set page_end = [total_pages, current_page + 2] | min %}
+                    
+                    {% for page_num in range(page_start, page_end + 1) %}
+                    <a href="{{ url_for('users_paginated', page=page_num) }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold {% if page_num == current_page %}z-10 bg-primary-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600{% else %}text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:z-20 focus:outline-offset-0{% endif %}">
+                        {{ page_num }}
+                    </a>
+                    {% endfor %}
+
+                    <a href="{{ url_for('users_paginated', page=current_page + 1) }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:z-20 focus:outline-offset-0 {% if current_page == total_pages %}pointer-events-none opacity-50{% endif %}">
+                        <span class="sr-only">Next</span>
+                         <i class="fas fa-chevron-right h-5 w-5"></i>
+                    </a>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- --- CUSTOM MODAL IMPLEMENTATION --- -->
+<!-- Background Overlay (Shared) -->
+<div id="modalBackdrop" class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm z-[100] hidden transition-opacity opacity-0"></div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 modal-content-wrapper">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add User</h3>
+            <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="addUserModal">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <!-- TABS -->
+            <div class="flex space-x-1 mb-6 p-1 bg-gray-100 dark:bg-zinc-950/50 rounded-xl">
+                <button class="flex-1 tab-btn px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm bg-white dark:bg-zinc-800 text-primary-600 active" data-target="#single-user">Single User</button>
+                <button class="flex-1 tab-btn px-4 py-2 text-sm font-semibold rounded-lg transition-all text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200" data-target="#bulk-users">Bulk Add</button>
+            </div>
+            
+            <!-- Tab Contents -->
+            <div class="tab-content">
+                <!-- Single User -->
+                <div id="single-user" class="tab-pane block">
+                    <form id="addUserForm" class="space-y-5">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Username</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <input type="text" id="addUsername" name="username" required class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all placeholder-gray-400">
+                            </div>
+                            <p class="text-red-500 text-xs mt-1 font-medium" id="addUsernameError"></p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Traffic Limit (GB)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <input type="number" id="addTrafficLimit" name="traffic_limit" required min="0" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                                </div>
+                            </div>
+                             <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Expiration Days</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <input type="number" id="addExpirationDays" name="expiration_days" required min="0" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                                </div>
+                                <p class="text-red-500 text-xs mt-1 font-medium" id="addExpirationDaysError"></p>
+                            </div>
+                        </div>
+
+                         <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Note (Optional)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-sticky-note"></i>
+                                </div>
+                                <input type="text" id="addNote" name="note" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 requires-iplimit-service hidden">
+                            <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" id="addUnlimited" name="unlimited" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-emerald-500 checked:bg-emerald-500"/>
+                                <label for="addUnlimited" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
+                            </div>
+                            <label for="addUnlimited" class="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Unlimited IP</label>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" id="addSubmitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-primary-500/30 text-sm font-bold text-white bg-primary-600 hover:bg-primary-500 hover:shadow-primary-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all transform hover:-translate-y-0.5">Create User</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Bulk Users -->
+                <div id="bulk-users" class="tab-pane hidden">
+                    <form id="addBulkUsersForm" class="space-y-5">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Prefix</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <i class="fas fa-font"></i>
+                                </div>
+                                <input type="text" id="addBulkPrefix" name="prefix" required class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                            </div>
+                             <p class="text-red-500 text-xs mt-1 font-medium" id="addBulkPrefixError"></p>
+                        </div>
+                        <!-- ... simplified for brevity, similar structure applied ... -->
+                           <div class="grid grid-cols-2 gap-4">
+                             <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Count</label>
+                                <input type="number" id="addBulkCount" name="count" value="10" required min="1" class="block w-full px-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Start #</label>
+                                <input type="number" id="addBulkStartNumber" name="start_number" value="1" required min="0" class="block w-full px-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm">
+                            </div>
+                        </div>
+                         <div class="grid grid-cols-2 gap-4">
+                             <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Limit (GB)</label>
+                                <input type="number" id="addBulkTrafficLimit" name="traffic_gb" required min="0" class="block w-full px-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Days</label>
+                                <input type="number" id="addBulkExpirationDays" name="expiration_days" required min="0" class="block w-full px-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 requires-iplimit-service hidden">
+                            <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" id="addBulkUnlimited" name="unlimited" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-emerald-500 checked:bg-emerald-500"/>
+                                <label for="addBulkUnlimited" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
+                            </div>
+                            <label for="addBulkUnlimited" class="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Unlimited IP</label>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" id="addBulkSubmitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-primary-500/30 text-sm font-bold text-white bg-primary-600 hover:bg-primary-500 hover:shadow-primary-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all transform hover:-translate-y-0.5">Bulk Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg transform transition-all scale-95 opacity-0 modal-content-wrapper">
+         <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit User</h3>
+            <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="editUserModal">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="editUserForm" class="space-y-5">
+                 <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                             <i class="fas fa-user-circle"></i>
+                        </div>
+                        <input type="text" id="editUsername" readonly class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/30 dark:text-zinc-400 shadow-sm sm:text-sm bg-gray-50 cursor-not-allowed border-dashed">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Subscription Link</label>
+                    <div class="flex rounded-xl shadow-sm">
+                         <div class="relative flex-1">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                 <i class="fas fa-link"></i>
+                             </div>
+                             <input type="text" id="editSubLink" readonly class="block w-full pl-10 pr-3 py-3 rounded-l-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/30 dark:text-gray-400 text-xs font-mono shadow-sm">
+                         </div>
+                         <button type="button" id="copyEditSubLink" class="inline-flex items-center px-4 rounded-r-xl border border-l-0 border-gray-200 dark:border-zinc-700/50 bg-gray-50 dark:bg-zinc-800/50 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                             <i class="fas fa-copy"></i>
+                         </button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Password</label>
+                    <div class="flex rounded-xl shadow-sm">
+                         <div class="relative flex-1">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                 <i class="fas fa-key"></i>
+                             </div>
+                             <input type="text" id="editPassword" name="new_password" placeholder="New password (optional)" class="block w-full pl-10 pr-3 py-3 rounded-l-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all">
+                         </div>
+                         <button type="button" id="generatePasswordBtn" class="inline-flex items-center px-4 rounded-r-xl border border-l-0 border-gray-200 dark:border-zinc-700/50 bg-gray-50 dark:bg-zinc-800/50 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                             <i class="fas fa-sync-alt"></i>
+                         </button>
+                    </div>
+                     <p class="text-red-500 text-xs mt-1 font-medium" id="editPasswordError"></p>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Traffic Limit</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <input type="number" id="editTrafficLimit" name="new_traffic_limit" min="0" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Expiration Days</label>
+                    <div class="relative">
+                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                             <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <input type="number" id="editExpirationDays" name="new_expiration_days" min="0" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all">
+                    </div>
+                    <p class="text-red-500 text-xs mt-1 font-medium" id="editExpirationDaysError"></p>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Note</label>
+                    <div class="relative">
+                        <div class="absolute top-3 left-3 flex items-center pointer-events-none text-gray-400">
+                             <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <textarea id="editNote" name="note" rows="2" class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-white shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 sm:text-sm transition-all"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="editBlocked" name="blocked" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-red-500 checked:bg-red-500"/>
+                        <label for="editBlocked" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
+                    </div>
+                     <label for="editBlocked" class="block text-sm font-medium text-gray-700 dark:text-zinc-300 cursor-pointer">Block User</label>
+                </div>
+                <input type="hidden" id="originalUsername" name="username">
+                <div class="pt-2">
+                     <button type="submit" id="editSubmitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg shadow-primary-500/30 text-sm font-bold text-white bg-primary-600 hover:bg-primary-500 hover:shadow-primary-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all transform hover:-translate-y-0.5">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="qrcodeModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+     <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 modal-content-wrapper flex flex-col items-center">
+        <div class="w-full flex justify-end p-4 absolute top-0 right-0 z-10">
+             <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn p-2 bg-gray-100/50 dark:bg-zinc-800/50 rounded-full" data-modal="qrcodeModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="pt-8 pb-4 text-center">
+             <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-violet-600 dark:from-primary-400 dark:to-violet-400">Scan QR Code</h3>
+             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Scan this with your client app</p>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div id="qrcodesLoading" class="hidden w-full">
+             <div class="flex flex-col items-center justify-center py-12">
+                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                 <p class="text-zinc-500 dark:text-zinc-400 mt-4 text-sm font-medium animate-pulse">Generating code...</p>
+             </div>
+        </div>
+        
+        <!-- QR Container -->
+        <div id="qrcodesContainer" class="w-full flex-col items-center gap-4 hidden"></div>
+        
+        <div class="p-6 w-full">
+            <button class="w-full py-3 px-4 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all closeModalBtn" data-modal="qrcodeModal">Close</button>
+        </div>
+     </div>
+</div>
+
+<!-- Show Links Modal -->
+<div id="showLinksModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 modal-content-wrapper">
+         <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Extract Links</h3>
+            <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="showLinksModal">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="space-y-6">
+                 <div class="bg-gray-50 dark:bg-zinc-950/50 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800/50">
+                     <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 block">Extract Options</label>
+                     <div class="flex flex-wrap gap-4">
+                         <label class="inline-flex items-center cursor-pointer group">
+                             <div class="relative">
+                                <input type="checkbox" id="extractIPv4" value="ipv4" class="peer sr-only">
+                                <div class="w-5 h-5 border-2 border-gray-300 dark:border-zinc-600 rounded peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all"></div>
+                                <i class="fas fa-check text-white text-[10px] absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                             </div>
+                             <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors">IPv4</span>
+                         </label>
+                         
+                         <label class="inline-flex items-center cursor-pointer group">
+                             <div class="relative">
+                                <input type="checkbox" id="extractIPv6" value="ipv6" class="peer sr-only">
+                                <div class="w-5 h-5 border-2 border-gray-300 dark:border-zinc-600 rounded peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all"></div>
+                                <i class="fas fa-check text-white text-[10px] absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                             </div>
+                             <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors">IPv6</span>
+                         </label>
+
+                         <label class="inline-flex items-center cursor-pointer group">
+                             <div class="relative">
+                                <input type="checkbox" id="extractNormalSub" value="normal_sub" checked class="peer sr-only">
+                                <div class="w-5 h-5 border-2 border-gray-300 dark:border-zinc-600 rounded peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all"></div>
+                                <i class="fas fa-check text-white text-[10px] absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                             </div>
+                             <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors">Subscription</span>
+                         </label>
+
+                         <label class="inline-flex items-center cursor-pointer group">
+                             <div class="relative">
+                                <input type="checkbox" id="extractNodes" value="nodes" class="peer sr-only">
+                                <div class="w-5 h-5 border-2 border-gray-300 dark:border-zinc-600 rounded peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all"></div>
+                                <i class="fas fa-check text-white text-[10px] absolute top-1 left-1 opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                             </div>
+                             <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary-600 transition-colors">Nodes</span>
+                         </label>
+                     </div>
+                 </div>
+                 
+                 <div class="relative">
+                     <textarea id="linksTextarea" rows="8" readonly class="block w-full rounded-2xl border-gray-200 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-zinc-300 shadow-inner sm:text-xs font-mono p-4 resize-none focus:ring-2 focus:ring-primary-500/50 outline-none transition-all" placeholder="Select options above and click extract..."></textarea>
+                     <div class="absolute bottom-3 right-3 flex gap-2">
+                         <button type="button" class="bg-primary-600 hover:bg-primary-500 text-white p-2 rounded-lg shadow-lg hover:shadow-primary-500/50 transition-all transform hover:scale-105" id="extractLinksButton" title="Extract Links">
+                             <i class="fas fa-play"></i>
+                         </button>
+                         <button class="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg shadow-lg hover:shadow-emerald-500/50 transition-all transform hover:scale-105" id="copyExtractedLinksButton" title="Copy to Clipboard">
+                             <i class="fas fa-copy"></i>
+                         </button>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- SHIM FOR BOOTSTRAP MODALS -->
+<script>
+    // Simple Shim to map $.modal() calls to our Tailwind implementation
+    // This allows the existing users.js (jQuery) to controll the new HTML structure.
+    (function($) {
+        $.fn.modal = function(action) {
+            return this.each(function() {
+                const modalId = $(this).attr('id');
+                const $modal = $('#' + modalId);
+                const $backdrop = $('#modalBackdrop');
+                const $content = $modal.find('.modal-content-wrapper');
+                
+                if (action === 'show' || action === undefined) {
+                    $backdrop.removeClass('hidden').removeClass('opacity-0');
+                    $modal.removeClass('hidden').removeClass('pointer-events-none');
+                    // Small delay to allow display:block to apply before opacity transition
+                    setTimeout(() => {
+                        $content.removeClass('scale-95').removeClass('opacity-0').addClass('scale-100').addClass('opacity-100');
+                    }, 10);
+                    $('body').addClass('overflow-hidden');
+                } else if (action === 'hide') {
+                    $content.removeClass('scale-100').removeClass('opacity-100').addClass('scale-95').addClass('opacity-0');
+                    setTimeout(() => {
+                        $modal.addClass('hidden').addClass('pointer-events-none');
+                        // Check if any other modals are open before hiding backdrop
+                        if ($('.modal-content-wrapper.scale-100').length === 0) {
+                            $backdrop.addClass('opacity-0');
+                            setTimeout(() => {
+                                if ($('.modal-content-wrapper.scale-100').length === 0) $backdrop.addClass('hidden');
+                            }, 300);
+                            $('body').removeClass('overflow-hidden');
+                        }
+                    }, 300);
+                }
+            });
+        };
+        
+        // Manual event listeners for close buttons since we don't have bootstrap data-dismiss
+        $(document).on('click', '.closeModalBtn', function() {
+            const targetId = $(this).data('modal');
+            $('#' + targetId).modal('hide');
+        });
+
+        // Shim for data-toggle="modal" triggers
+        $(document).on('click', '[data-toggle="modal"]', function(e) {
+            e.preventDefault();
+            const target = $(this).data('target');
+            const $target = $(target);
+            
+            // Trigger show.bs.modal with relatedTarget (the button clicked)
+            const showEvent = $.Event('show.bs.modal', { relatedTarget: this });
+            $target.trigger(showEvent);
+            
+            if (!showEvent.isDefaultPrevented()) {
+                $target.modal('show');
+            }
+        });
+        
+        // Tab Shim (for Add User Tabs)
+        $(document).on('click', '.tab-btn', function(e) {
+            e.preventDefault();
+            const target = $(this).data('target');
+            
+            // Remove active state from all tabs in this group
+            $(this).parent().find('.tab-btn').removeClass('active border-primary-500 text-primary-600').addClass('border-transparent text-gray-500');
+            // Add active state to clicked
+            $(this).addClass('active border-primary-500 text-primary-600').removeClass('border-transparent text-gray-500');
+            
+            // Hide all tab content
+            $(this).closest('.p-6').find('.tab-pane').addClass('hidden').removeClass('block');
+            // Show target
+            $(target).removeClass('hidden').addClass('block');
+        });
+
+    })(jQuery);
+</script>
+
+<script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+<script src="{{ url_for('assets', path='js/users.js') }}?v=final6"></script>
+{% endblock %}

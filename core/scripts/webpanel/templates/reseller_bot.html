@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+
+{% block title %}Редактор Бота{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script id="reseller-config-data" type="application/json">
+    {{ config | tojson | safe }}
+</script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('botConfig', () => ({
+            activeTab: 'editor',
+            activeMenuId: 'main',
+            config: {},
+            saving: false,
+            saveUrl: "{{ url_for('save_reseller_config') }}",
+            
+            // Modal
+            editingButton: null,
+            showEditModal: false,
+            showSettingsModal: false,
+            
+            // Bot Control
+            botActive: false,
+            
+            init() {
+                try {
+                    const dataContent = document.getElementById('reseller-config-data').textContent;
+                    if (dataContent && dataContent.trim()) {
+                        this.config = JSON.parse(dataContent);
+                    }
+                } catch (e) {
+                    console.error('Failed to parse config:', e);
+                    this.config = {};
+                }
+
+                this.ensureConfigStructure();
+                this.$nextTick(() => this.initSortable());
+                this.checkStatus();
+            },
+
+            async checkStatus() {
+                try {
+                    const res = await fetch("{{ url_for('bot_status') }}");
+                    const data = await res.json();
+                    this.botActive = data.active;
+                } catch(e) { console.error(e); }
+            },
+
+            async controlBot(action) {
+                const endpoints = {
+                    'start': "{{ url_for('start_bot') }}",
+                    'stop': "{{ url_for('stop_bot') }}",
+                    'restart': "{{ url_for('restart_bot') }}"
+                };
+                
+                try {
+                    const res = await fetch(endpoints[action], { method: 'POST' });
+                    if(res.ok) {
+                         this.checkStatus();
+                         const toasts = { 'start': 'Бот запущен', 'stop': 'Бот остановлен', 'restart': 'Бот перезагружен' };
+                         Swal.fire({ 
+                            icon: 'success', 
+                            title: toasts[action], 
+                            toast: true, 
+                            position: 'top-end', 
+                            showConfirmButton: false, 
+                            timer: 2000 
+                         });
+                    } else {
+                        throw new Error();
+                    }
+                } catch(e) {
+                    Swal.fire({ icon: 'error', title: 'Ошибка выполнения', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+                }
+            },
+
+            ensureConfigStructure() {
+                if (!this.config) this.config = {};
+                if (!this.config.prices) this.config.prices = {};
+                if (!this.config.menus) this.config.menus = {};
+
+                // --- DEFAULTS --- //
+                
+                // 1. Main Menu
+                if (!this.config.menus.main) {
+                    this.config.menus.main = {
+                        text: "👋 Добро пожаловать! Выберите раздел:",
+                        type: 'reply',
+                        buttons: [
+                            [{ text: '💸 Купить подписку', action: 'submenu', param: 'buy_menu' }, { text: '👤 Профиль', action: 'submenu', param: 'profile' }],
+                            [{ text: '🆘 Поддержка', action: 'submenu', param: 'support' }, { text: 'ℹ️ Инструкция', action: 'submenu', param: 'instruction' }]
+                        ]
+                    };
+                }
+
+                // 2. Buy Menu
+                if (!this.config.menus.buy_menu) {
+                    this.config.menus.buy_menu = {
+                        text: "💎 Выберите период подписки:",
+                        type: 'inline',
+                        buttons: [
+                            [{ text: '1 День - $1', action: 'payment', param: '1_day' }, { text: '7 Дней - $5', action: 'payment', param: '7_days' }],
+                            [{ text: '30 Дней - $10', action: 'payment', param: '30_days' }],
+                            [{ text: '🔙 Назад', action: 'submenu', param: 'main' }]
+                        ]
+                    };
+                }
+
+                // 3. Profile
+                if (!this.config.menus.profile) {
+                    this.config.menus.profile = {
+                        text: "👤 <b>Ваш Профиль</b>\n\nID: {id}\nИмя: {user}\nБаланс: $0.00",
+                        type: 'inline',
+                        buttons: [
+                             [{ text: '💳 Пополнить баланс', action: 'text', param: 'Функция пополнения скоро...' }],
+                             [{ text: '🔙 Назад', action: 'submenu', param: 'main' }]
+                        ]
+                    };
+                }
+
+                // 4. Support
+                if (!this.config.menus.support) {
+                     this.config.menus.support = {
+                        text: "🆘 <b>Техническая поддержка</b>\n\nЕсли у вас возникли вопросы, напишите администратору.",
+                        type: 'inline',
+                        buttons: [
+                            [{ text: '👨‍💻 Связаться с админом', action: 'url', param: 'https://t.me/admin' }],
+                            [{ text: '🔙 Назад', action: 'submenu', param: 'main' }]
+                        ]
+                     };
+                }
+                
+                // 5. Instruction
+                if (!this.config.menus.instruction) {
+                     this.config.menus.instruction = {
+                        text: "ℹ️ <b>Инструкция по подключению</b>\n\n1. Скачайте приложение...\n2. Скопируйте ключ...\n3. Вставьте в приложение.",
+                        type: 'inline',
+                        image: 'https://i.imgur.com/example.jpg',
+                        buttons: [
+                            [{ text: '📥 Скачать Client', action: 'url', param: 'https://github.com/' }],
+                            [{ text: '🔙 Назад', action: 'submenu', param: 'main' }]
+                        ]
+                     };
+                }
+                
+                this.activeMenuId = 'main';
+            },
+
+            get currentMenu() {
+                return this.config.menus[this.activeMenuId] || this.config.menus.main;
+            },
+            
+            get availableMenus() {
+                return Object.keys(this.config.menus);
+            },
+
+            createNewMenu() {
+                Swal.fire({
+                    title: 'ID нового меню',
+                    input: 'text',
+                    inputLabel: 'Например: support_menu',
+                    showCancelButton: true,
+                    confirmButtonText: 'Создать',
+                    cancelButtonText: 'Отмена',
+                    inputValidator: (value) => {
+                        if (!value) return 'Введите ID!';
+                        if (this.config.menus[value]) return 'Такое меню уже есть!';
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.config.menus[result.value] = {
+                            text: `Меню: ${result.value}`,
+                            type: 'inline',
+                            buttons: [[{ text: '🔙 Назад', action: 'submenu', param: 'main' }]]
+                        };
+                        this.activeMenuId = result.value;
+                        this.refreshSortable();
+                    }
+                });
+            },
+
+            deleteCurrentMenu() {
+                if (this.activeMenuId === 'main') return;
+                Swal.fire({
+                    title: 'Удалить меню?',
+                    text: `Меню '${this.activeMenuId}' будет удалено.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Да, удалить'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        delete this.config.menus[this.activeMenuId];
+                        this.activeMenuId = 'main';
+                    }
+                });
+            },
+
+            // --- Editor Logic --- #
+            initSortable() {
+                const el = document.getElementById('keyboard-rows');
+                if (el) {
+                    new Sortable(el, {
+                        handle: '.row-handle',
+                        animation: 150,
+                        onEnd: (evt) => {
+                            const menu = this.currentMenu;
+                            const item = menu.buttons.splice(evt.oldIndex, 1)[0];
+                            menu.buttons.splice(evt.newIndex, 0, item);
+                        }
+                    });
+                }
+                
+                // Init vertical sort for reply keyboard
+                const elReply = document.getElementById('keyboard-rows-reply');
+                 if (elReply) {
+                    new Sortable(elReply, {
+                        handle: '.row-handle',
+                        animation: 150,
+                        onEnd: (evt) => {
+                            const menu = this.currentMenu;
+                            const item = menu.buttons.splice(evt.oldIndex, 1)[0];
+                            menu.buttons.splice(evt.newIndex, 0, item);
+                        }
+                    });
+                }
+            },
+            
+            initRowSortable(el, rowIndex) {
+                 new Sortable(el, {
+                    group: 'buttons_shared',
+                    animation: 150,
+                    draggable: '.draggable-btn',
+                    onEnd: (evt) => {
+                        const menu = this.currentMenu;
+                        const fromRowIndex = parseInt(evt.from.dataset.rowIndex);
+                        const toRowIndex = parseInt(evt.to.dataset.rowIndex);
+                        const oldIndex = evt.oldIndex;
+                        const newIndex = evt.newIndex;
+                        
+                        if (fromRowIndex === undefined || toRowIndex === undefined) return;
+                        
+                        // Extract item from source
+                        // Note: SortableJS modifies DOM. We must update state to match.
+                        // Because x-for tracks by index (default), swapping in array should be reflected.
+                        
+                        const item = menu.buttons[fromRowIndex][oldIndex];
+                        
+                        // Remove from source
+                        menu.buttons[fromRowIndex].splice(oldIndex, 1);
+                        
+                        // Add to target
+                        menu.buttons[toRowIndex].splice(newIndex, 0, item);
+                    }
+                });
+            },
+
+            addEmptyRow() {
+                if(!this.currentMenu.buttons) this.currentMenu.buttons = [];
+                this.currentMenu.buttons.push([]);
+                this.$nextTick(() => this.initSortable());
+            },
+
+            addButton(rowIndex) {
+                this.currentMenu.buttons[rowIndex].push({ 
+                    text: 'Кнопка', 
+                    action: 'text', 
+                    param: 'Привет!' 
+                });
+                this.$nextTick(() => this.initSortable());
+            },
+
+            removeButton(rowIndex, btnIndex) {
+                 this.currentMenu.buttons[rowIndex].splice(btnIndex, 1);
+            },
+
+            removeRow(rowIndex) {
+                this.currentMenu.buttons.splice(rowIndex, 1);
+            },
+
+            editButton(rowIndex, btnIndex) {
+                const btn = this.currentMenu.buttons[rowIndex][btnIndex];
+                this.editingButton = {
+                    rowIndex,
+                    btnIndex,
+                    data: JSON.parse(JSON.stringify(btn))
+                };
+                this.showEditModal = true;
+            },
+
+            saveButtonChanges() {
+                if (this.editingButton) {
+                    const { rowIndex, btnIndex, data } = this.editingButton;
+                    this.currentMenu.buttons[rowIndex][btnIndex] = data;
+                    this.showEditModal = false;
+                    this.editingButton = null;
+                }
+            },
+
+            async save() {
+                this.saving = true;
+                // Sync legacy field for compatibility
+                if (this.config.menus.main) {
+                    this.config.keyboard = this.config.menus.main.buttons;
+                }
+                
+                try {
+                    const response = await fetch(this.saveUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.config)
+                    });
+                    
+                    if (response.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Сохранено!',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    } else {
+                        throw new Error('Save failed');
+                    }
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Ошибка сохранения' });
+                } finally {
+                    this.saving = false;
+                }
+            }
+        }))
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div x-data="botConfig" class="min-h-screen pb-20 pt-8" x-cloak>
+    
+    <!-- Main Content -->
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+        
+        <!-- Header Row -->
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+             <!-- Branding -->
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Bot Editor</h1>
+                    <p class="text-gray-500 text-sm font-medium">Конструктор и Настройки</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                 <!-- Status Indicator & Controls -->
+                 <div class="flex items-center bg-white dark:bg-zinc-800 rounded-xl p-1 border border-gray-200 dark:border-zinc-700 mr-2 shadow-sm">
+                    <div class="px-3 flex items-center gap-2 border-r border-gray-100 dark:border-zinc-700 mr-1">
+                        <div class="w-2.5 h-2.5 rounded-full animate-pulse" :class="botActive ? 'bg-green-500' : 'bg-red-500'"></div>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase" x-text="botActive ? 'Работает' : 'Остановлен'"></span>
+                    </div>
+                    
+                    <button @click="controlBot('start')" x-show="!botActive" class="w-8 h-8 flex items-center justify-center text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors" title="Запустить">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    
+                    <button @click="controlBot('stop')" x-show="botActive" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Остановить">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                    
+                    <button @click="controlBot('restart')" class="w-8 h-8 flex items-center justify-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Перезагрузить">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                 </div>
+
+                 <button @click="showSettingsModal = true"
+                    class="px-5 py-2.5 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-zinc-700 rounded-xl font-medium transition-all shadow-sm flex items-center gap-2">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </button>
+
+                <button @click="save()" :disabled="saving" 
+                    class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 font-bold flex items-center gap-2">
+                    <i class="fas" :class="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    <span x-text="saving ? '...' : 'Сохранить'"></span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- VISUAL EDITOR TAB -->
+        <div x-show="activeTab === 'editor'" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT SIDEBAR: MENUS LIST -->
+            <div class="lg:col-span-3 space-y-6">
+
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-gray-900 dark:text-white text-lg">Меню Бота</h2>
+                        <button @click="createNewMenu()" class="w-10 h-10 flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                        <template x-for="menuId in availableMenus" :key="menuId">
+                            <div @click="activeMenuId = menuId" 
+                                 class="group cursor-pointer p-3 rounded-xl flex items-center justify-between transition-all border-l-4"
+                                 :class="activeMenuId === menuId ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-500' : 'bg-transparent border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800/50'">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-zinc-800 text-gray-500" :class="activeMenuId === menuId ? 'text-blue-500' : ''">
+                                        <i class="fas" :class="config.menus[menuId].type === 'inline' ? 'fa-fingerprint' : 'fa-th-large'"></i>
+                                    </div>
+                                    <span x-text="menuId" class="font-medium text-sm truncate text-gray-700 dark:text-gray-200"></span>
+                                </div>
+                                <button x-show="menuId !== 'main'" @click.stop="activeMenuId = menuId; deleteCurrentMenu()" class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Helper -->
+                <div class="bg-gradient-to-br from-purple-500/10 to-blue-500/10 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/30">
+                    <h3 class="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-3 tracking-wider">Переменные</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-2 py-1 bg-white dark:bg-black/20 rounded text-xs font-mono text-gray-600 dark:text-gray-300 border border-black/5">{user}</span>
+                        <span class="px-2 py-1 bg-white dark:bg-black/20 rounded text-xs font-mono text-gray-600 dark:text-gray-300 border border-black/5">{id}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER: PHONE SIMULATOR -->
+            <div class="lg:col-span-5 flex justify-center">
+                 <div class="relative w-full max-w-[400px]">
+                     <!-- Phone Case -->
+                     <div class="bg-gray-900 dark:bg-black rounded-[3rem] p-3 shadow-2xl border-[6px] border-gray-800 dark:border-zinc-900 h-[700px] w-full max-w-[360px] relative overflow-hidden ring-4 ring-black/10">
+                        <!-- Screen -->
+                        <div class="bg-[#eef2f5] dark:bg-[#0f0f0f] w-full h-full rounded-[2.2rem] overflow-hidden flex flex-col relative custom-scrollbar">
+                            
+                            <!-- Status Bar -->
+                            <div class="h-8 flex justify-between items-center px-6 text-[10px] font-medium text-black dark:text-white opacity-80 z-20">
+                                <span>9:41</span>
+                                <div class="flex gap-1.5"><i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-full"></i></div>
+                            </div>
+
+                            <!-- App Header -->
+                            <div class="h-14 bg-white dark:bg-[#1c1c1d] flex items-center px-4 border-b border-gray-200 dark:border-zinc-800 z-10 sticky top-0 shadow-sm">
+                                <img src="{{ url_for('assets', path='img/logo.png') }}" class="w-9 h-9 rounded-full mr-3 bg-gray-100 p-0.5 object-cover">
+                                <div>
+                                    <div class="text-sm font-bold text-gray-900 dark:text-white leading-tight">Reseller Bot</div>
+                                    <div class="text-xs text-blue-500">bot</div>
+                                </div>
+                            </div>
+
+                            <!-- Chat Content -->
+                            <div class="flex-1 overflow-y-auto p-3 space-y-4">
+                                <div class="flex items-end gap-2">
+                                    <img src="{{ url_for('assets', path='img/logo.png') }}" class="w-8 h-8 rounded-full flex-shrink-0 mb-1 bg-gray-100 p-0.5 object-cover">
+                                    <div class="flex-1 max-w-[85%]">
+                                        <!-- Editable Bubble -->
+                                        <div class="bg-white dark:bg-[#1c1c1d] rounded-2xl rounded-tl-none p-1 shadow-sm overflow-hidden group border border-transparent hover:border-blue-500/30 transition-colors">
+                                            
+                                            <!-- Image Preview/Input -->
+                                            <div class="relative bg-gray-100 dark:bg-black/30 w-full min-h-[0px]">
+                                                <template x-if="currentMenu.image">
+                                                    <img :src="currentMenu.image" class="w-full h-auto object-cover max-h-[200px]" onerror="this.style.display='none'">
+                                                </template>
+                                                <!-- Image URL Input (Hover) -->
+                                                <input type="text" x-model="currentMenu.image" placeholder="URL картинки..." 
+                                                    class="absolute top-0 left-0 w-full text-[10px] bg-black/50 text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity border-none focus:ring-0 backdrop-blur-sm">
+                                            </div>
+
+                                            <div class="p-3">
+                                                 <textarea x-model="currentMenu.text" 
+                                                    class="w-full bg-transparent border-0 p-0 text-[13px] text-gray-800 dark:text-gray-200 focus:ring-0 resize-none leading-relaxed" 
+                                                    rows="4" placeholder="Текст сообщения..."></textarea>
+                                            </div>
+                                        </div>
+
+                                        <!-- Inline Buttons Render -->
+                                        <div x-show="currentMenu.type === 'inline'" class="mt-2 space-y-2 pl-1">
+                                            <div id="keyboard-rows" class="space-y-4">
+                                                <template x-for="(row, rIndex) in currentMenu.buttons" :key="rIndex">
+                                                    <div class="relative group/row pl-1 pr-14 py-1 border border-dashed border-transparent hover:border-gray-300 dark:hover:border-zinc-700 rounded-xl transition-colors">
+                                                        
+                                                        <!-- Row Handle (Fixed Position) -->
+                                                        <div class="absolute right-0 top-1/2 -translate-y-1/2 hidden group-hover/row:flex flex-col gap-1 z-20 items-center bg-gray-50/90 dark:bg-zinc-800/90 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-zinc-700 shadow-sm">
+                                                            <button class="row-handle text-gray-400 hover:text-blue-500 w-6 h-6 flex items-center justify-center cursor-move"><i class="fas fa-grip-vertical text-sm"></i></button>
+                                                            <button @click="removeRow(rIndex)" class="text-gray-400 hover:text-red-500 w-6 h-6 flex items-center justify-center"><i class="fas fa-trash-alt text-sm"></i></button>
+                                                        </div>
+
+                                                        <!-- Draggable Buttons Container -->
+                                                        <div class="flex gap-2 min-h-[36px]" :data-row-index="rIndex" x-init="initRowSortable($el, rIndex)">
+                                                            <template x-for="(btn, bIndex) in row" :key="bIndex">
+                                                                <button @click="editButton(rIndex, bIndex)" 
+                                                                    class="draggable-btn flex-1 bg-[#d8dfe6]/50 dark:bg-white/10 backdrop-blur-sm hover:bg-white/20 active:scale-95 text-gray-800 dark:text-white py-2 px-3 rounded-lg text-xs font-medium transition-all relative overflow-hidden shadow-sm cursor-grab active:cursor-grabbing border border-transparent hover:border-blue-300/30">
+                                                                    <span x-text="btn.text"></span>
+                                                                    <div class="absolute bottom-0 left-0 w-full h-[3px] opacity-70"
+                                                                        :class="{
+                                                                            'bg-blue-500': btn.action === 'url',
+                                                                            'bg-green-500': btn.action === 'submenu',
+                                                                            'bg-yellow-500': btn.action === 'payment',
+                                                                            'bg-purple-500': btn.action === 'text'
+                                                                        }"></div>
+                                                                </button>
+                                                            </template>
+                                                        </div>
+                                                        
+                                                        <!-- Add Button in row (Optional, if you want multiline specific) - Disabled for now to keep it clean, use floating + -->
+                                                        <button @click="addButton(rIndex)" class="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-blue-100 dark:bg-zinc-800 text-blue-500 flex items-center justify-center text-xs opacity-0 group-hover/row:opacity-100 transition-opacity translate-x-full hover:bg-blue-500 hover:text-white" title="Добавить кнопку в этот ряд">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+
+                                                    </div>
+                                                </template>
+                                                
+                                                <button @click="addEmptyRow()" class="w-full py-3 border-2 border-dashed border-gray-300 dark:border-zinc-700/50 rounded-xl text-xs font-bold text-gray-400 hover:text-blue-500 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all">
+                                                    + Новый ряд кнопок
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reply Keyboard -->
+                            <div x-show="currentMenu.type !== 'inline'" class="mt-auto bg-[#f5f5f5] dark:bg-[#1c1c1d] pb-6 pt-2 px-2 border-t border-gray-200 dark:border-zinc-800">
+                                 <!-- Re-using ID for Sortable Logic Hack -->
+                                 <div id="keyboard-rows-reply" class="space-y-2">
+                                    <template x-if="currentMenu.type !== 'inline'">
+                                    <div class="contents">
+                                        <template x-for="(row, rIndex) in currentMenu.buttons" :key="rIndex">
+                                            <div class="relative group/row pt-3 pb-1">
+                                                
+                                                 <!-- Row Controls -->
+                                                 <div class="absolute -top-1 right-0 hidden group-hover/row:flex gap-1 z-20 items-center bg-white dark:bg-zinc-800 shadow-md border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-0.5">
+                                                    <button class="row-handle text-gray-400 hover:text-blue-500 cursor-move py-1"><i class="fas fa-grip-vertical text-xs"></i></button>
+                                                    <div class="w-[1px] h-3 bg-gray-300 dark:bg-zinc-700 mx-1"></div>
+                                                    <button @click="removeRow(rIndex)" class="text-gray-400 hover:text-red-500 py-1"><i class="fas fa-trash-alt text-xs"></i></button>
+                                                </div>
+
+                                                <!-- Buttons Container -->
+                                                <div class="flex gap-1 min-h-[44px]" :data-row-index="rIndex" x-init="initRowSortable($el, rIndex)">
+                                                    <template x-for="(btn, bIndex) in row" :key="bIndex">
+                                                        <button @click="editButton(rIndex, bIndex)" 
+                                                            class="draggable-btn flex-1 bg-white dark:bg-[#2c2c2e] text-gray-900 dark:text-white text-xs font-medium rounded-lg shadow-sm border-b border-gray-300 dark:border-zinc-700 active:bg-gray-100 flex items-center justify-center relative hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+                                                            <span x-text="btn.text"></span>
+                                                            <div class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
+                                                                :class="{
+                                                                    'bg-green-500': btn.action === 'submenu',
+                                                                    'bg-blue-500': btn.action === 'url'
+                                                                }"></div>
+                                                        </button>
+                                                    </template>
+                                                    <button @click="addButton(rIndex)" class="w-8 flex-shrink-0 flex items-center justify-center bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 rounded-lg text-gray-500 transition-colors text-xs opacity-50 group-hover/row:opacity-100">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <button @click="addEmptyRow()" class="w-full py-2 text-[10px] text-gray-400 uppercase font-bold tracking-wider hover:text-blue-500 border border-dashed border-gray-300 dark:border-zinc-800 rounded-lg mt-2">+ Ряд</button>
+                                    </div>
+                                    </template>
+                                 </div>
+                            </div>
+                            
+                            <!-- Sortable Effect Logic (Keeping Init Logic in x-init above, removing this block) -->
+                            <div></div>
+
+                        </div>
+                     </div>
+                 </div>
+            </div>
+
+            <!-- RIGHT SIDEBAR: PROPERTIES -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Menu Settings -->
+                <div class="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
+                    <h3 class="font-bold text-gray-900 dark:text-white mb-4">Настройки Меню</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Тип меню</label>
+                            <div class="mt-2 grid grid-cols-2 gap-2 bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl">
+                                <button @click="currentMenu.type = 'reply'" 
+                                    class="py-2 text-xs font-bold rounded-lg transition-all"
+                                    :class="currentMenu.type !== 'inline' ? 'bg-white dark:bg-zinc-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'">
+                                    Reply (Клавиатура)
+                                </button>
+                                <button @click="currentMenu.type = 'inline'"
+                                    class="py-2 text-xs font-bold rounded-lg transition-all"
+                                    :class="currentMenu.type === 'inline' ? 'bg-white dark:bg-zinc-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'">
+                                    Inline (В чате)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">ID меню</label>
+                            <input disabled :value="activeMenuId" class="mt-1 w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border-none rounded-lg text-sm text-gray-600 dark:text-gray-400 font-mono">
+                        </div>
+                        
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Картинка (URL)</label>
+                            <input x-model="currentMenu.image" type="text" placeholder="https://..." class="mt-1 w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                            <p class="text-[10px] text-gray-400 mt-1">Оставьте пустым, если картинка не нужна.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Settings Modal -->
+    <div x-show="showSettingsModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showSettingsModal = false"></div>
+            
+            <div class="bg-white dark:bg-[#1c1c1d] rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 transform transition-all border border-gray-200 dark:border-zinc-800">
+                <div class="p-6 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Настройки Бота</h3>
+                    <button @click="showSettingsModal = false" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-8">
+                     
+                     <!-- Tokens -->
+                     <section>
+                        <h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-zinc-800 pb-2">Основные Токены</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Telegram Bot Token</label>
+                                <input type="text" x-model="config.bot_token" placeholder="123456:ABC-DEF..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400">
+                                <p class="text-[10px] text-gray-400 mt-1.5">От @BotFather</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">CryptoBot Token</label>
+                                <input type="text" x-model="config.cryptobot_token" placeholder="1234:ABC..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder-gray-400">
+                                <p class="text-[10px] text-gray-400 mt-1.5">От @CryptoBot (Mainnet/Testnet)</p>
+                            </div>
+                        </div>
+                     </section>
+
+                     <!-- Prices -->
+                     <section>
+                        <h4 class="text-xs font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-zinc-800 pb-2">Цены на подписку ($ USD)</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <template x-for="(label, key) in {'1_day': '1 День', '7_days': '7 Дней', '30_days': '30 Дней', '90_days': '90 Дней', '365_days': '1 Год'}" :key="key">
+                                <div class="relative group">
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1" x-text="label"></label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 text-sm">$</span>
+                                        </div>
+                                        <input type="number" step="0.01" x-model.number="config.prices[key]" 
+                                            class="w-full pl-7 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none font-mono text-sm">
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                     </section>
+
+                </div>
+                
+                <div class="p-6 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 rounded-b-2xl flex justify-end">
+                    <button @click="showSettingsModal = false" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30">Готово</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Button Modal -->
+    <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showEditModal = false"></div>
+
+            <div class="bg-white dark:bg-[#1c1c1d] rounded-2xl shadow-2xl w-full max-w-lg relative z-10 transform transition-all border border-gray-200 dark:border-zinc-800">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Редактор Кнопки</h3>
+                    
+                    <div class="space-y-4" x-if="editingButton">
+                         <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Название кнопки</label>
+                            <input type="text" x-model="editingButton.data.text" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                         </div>
+
+                         <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Действие</label>
+                            <select x-model="editingButton.data.action" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white outline-none">
+                                <option value="submenu">📂 Открыть меню</option>
+                                <option value="text">💬 Отправить текст</option>
+                                <option value="payment">💳 Оплата</option>
+                                <option value="url">🔗 Ссылка</option>
+                                <option value="profile">👤 Профиль</option>
+                            </select>
+                         </div>
+
+                         <!-- Dynamic Params -->
+                         <div class="p-4 bg-gray-50 dark:bg-zinc-900/50 rounded-xl border border-gray-100 dark:border-zinc-800/50">
+                             
+                             <div x-show="editingButton.data.action === 'submenu'">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Целевое меню</label>
+                                <select x-model="editingButton.data.param" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white">
+                                    <template x-for="m in availableMenus" :key="m">
+                                        <option :value="m" x-text="m"></option>
+                                    </template>
+                                </select>
+                             </div>
+
+                             <div x-show="editingButton.data.action === 'text'">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ответ бота</label>
+                                <textarea x-model="editingButton.data.param" rows="3" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white"></textarea>
+                             </div>
+
+                             <div x-show="editingButton.data.action === 'url'">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL адрес</label>
+                                <input x-model="editingButton.data.param" type="text" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white">
+                             </div>
+
+                             <div x-show="editingButton.data.action === 'payment'">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Тариф</label>
+                                <select x-model="editingButton.data.param" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white">
+                                    <template x-for="k in Object.keys(config.prices || {})" :key="k">
+                                        <option :value="k" x-text="k.replace('_', ' ') + ' ($' + config.prices[k] + ')'"></option>
+                                    </template>
+                                </select>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 dark:bg-zinc-900/50 flex gap-3 rounded-b-2xl">
+                     <button @click="showEditModal = false" class="flex-1 py-3 text-gray-600 dark:text-gray-400 font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors">Отмена</button>
+                     <button @click="saveButtonChanges()" class="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all">Применить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Hysteria Settings{% endblock %}
+
+{% block content %}
+<div class='mb-8'>
+    <h1 class='text-2xl font-bold text-zinc-900 dark:text-white'>Hysteria Settings</h1>
+    <p class="text-zinc-500 dark:text-zinc-400 mt-1">Configure core Hysteria protocol parameters.</p>
+</div>
+
+<div class='content'
+    data-get-port-url="{{ url_for('get_port_api') }}"
+    data-get-sni-url="{{ url_for('get_sni_api') }}"
+    data-check-obfs-url="{{ url_for('check_obfs') }}"
+    data-enable-obfs-url="{{ url_for('enable_obfs') }}"
+    data-disable-obfs-url="{{ url_for('disable_obfs') }}"
+    data-check-masquerade-url="{{ url_for('check_masquerade') }}"
+    data-enable-masquerade-url="{{ url_for('enable_masquerade') }}"
+    data-disable-masquerade-url="{{ url_for('disable_masquerade') }}"
+    data-set-port-url-template="{{ url_for('set_port_api', port='PORT_PLACEHOLDER') }}"
+    data-set-sni-url-template="{{ url_for('set_sni_api', sni='SNI_PLACEHOLDER') }}"
+    data-update-geo-url-template="{{ url_for('update_geo', country='COUNTRY_PLACEHOLDER') }}"
+>
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Port Card -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3 text-blue-600 dark:text-blue-400">
+                    <i class="fas fa-server text-sm"></i>
+                </div>
+                Change Port
+            </h3>
+            <div class="flex-1">
+                <form id="port_form">
+                    <div class='mb-4'>
+                        <label for='hysteria_port' class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port</label>
+                        <input type='text' class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400' id='hysteria_port'
+                            placeholder='Enter Port'>
+                        <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                            Please enter a valid port number.
+                        </div>
+                    </div>
+                </form>
+            </div>
+             <button id="port_change" type='button' class='w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
+                Save Changes
+            </button>
+        </div>
+
+        <!-- SNI Card -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                 <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mr-3 text-purple-600 dark:text-purple-400">
+                    <i class="fas fa-shield-alt text-sm"></i>
+                </div>
+                Change SNI
+            </h3>
+            <div class="flex-1">
+                 <form id="sni_form">
+                    <div class='mb-4'>
+                        <label for='sni_domain' class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Domain</label>
+                        <input type='text' class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder-zinc-400' id='sni_domain'
+                            placeholder='Enter Domain'>
+                        <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                            Please enter a valid domain (without http:// or https://).
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <button id="sni_change" type='button' class='w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all font-medium text-sm'>
+                Save Changes
+            </button>
+        </div>
+
+        <!-- OBFS/Masquerade (Tabs) -->
+        <div class="md:col-span-2"> <!-- Spans full width on medium+ screens if you want, or keep it 50% -->
+             <!-- We'll keep it as md:col-span-1 based on original layout, wait, original was col-md-6. So keeping it in grid flow. -->
+        </div>
+
+        <!-- Actually original was 2x2 grid. Let's stick to the grid flow -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full"
+             x-data="{ activeTab: 'obfs-content' }">
+            
+            <!-- Custom Tabs Header -->
+            <div class="flex border-b border-zinc-200 dark:border-zinc-800">
+                <button @click="activeTab = 'obfs-content'" 
+                        :class="activeTab === 'obfs-content' ? 'bg-zinc-50 dark:bg-zinc-800/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                        class="flex-1 py-4 text-sm font-medium transition-colors text-center focus:outline-none"
+                        id="obfs-tab" role="tab"> <!-- ID kept for JS compatibility if needed -->
+                    <i class="fas fa-user-secret mr-2"></i> OBFS
+                </button>
+                <button @click="activeTab = 'masquerade-content'" 
+                        :class="activeTab === 'masquerade-content' ? 'bg-zinc-50 dark:bg-zinc-800/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                        class="flex-1 py-4 text-sm font-medium transition-colors text-center focus:outline-none"
+                        id="masquerade-tab" role="tab"> <!-- ID kept -->
+                    <i class="fas fa-theater-masks mr-2"></i> Masquerade
+                </button>
+            </div>
+
+            <div class="p-6 flex-1 tab-content"> <!-- tab-content class kept for potential JS selectors -->
+                
+                <!-- OBFS Content -->
+                <div x-show="activeTab === 'obfs-content'" id="obfs-content" role="tabpanel" class="tab-pane active"> <!-- Classes kept -->
+                    <div class="mb-4">
+                        <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">OBFS Status</h5>
+                        <div id="obfs_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                            <span id="obfs_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading OBFS status...</span>
+                        </div>
+                    </div>
+                    <div class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
+                        <div class="flex items-start">
+                             <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                             <div>
+                                <strong>Warning:</strong> Changing this setting requires users to update their client configurations.
+                             </div>
+                        </div>
+                    </div>
+                    <button id="obfs_enable_btn" type='button' class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm' style="display: none;">
+                        <i class="fas fa-check mr-2"></i> Enable OBFS
+                    </button>
+                    <button id="obfs_disable_btn" type='button' class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
+                         <i class="fas fa-times mr-2"></i> Disable OBFS
+                    </button>
+                </div>
+
+                <!-- Masquerade Content -->
+                <div x-show="activeTab === 'masquerade-content'" id="masquerade-content" role="tabpanel" class="tab-pane" style="display: none;" :style="activeTab === 'masquerade-content' ? 'display: block' : 'display: none'"> <!-- Alpine x-show handles display, but we add initial style for flicker prevention -->
+                    <div class="mb-4">
+                        <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Masquerade Status</h5>
+                        <div id="masquerade_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                            <span id="masquerade_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading Masquerade status...</span>
+                        </div>
+                    </div>
+                     <div class="p-4 mb-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 text-blue-700 dark:text-blue-500 text-sm">
+                       <div class="flex items-start">
+                           <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                           <div>
+                               <strong>Note:</strong> Masquerade cannot be active at the same time as OBFS.
+                           </div>
+                       </div>
+                    </div>
+                    <button id="masquerade_enable_btn" type='button' class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm' style="display: none;">
+                        <i class="fas fa-check mr-2"></i> Enable Masquerade
+                    </button>
+                    <button id="masquerade_disable_btn" type='button' class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
+                         <i class="fas fa-times mr-2"></i> Disable Masquerade
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- GeoIP Update Card -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                 <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mr-3 text-teal-600 dark:text-teal-400">
+                    <i class="fas fa-globe-americas text-sm"></i>
+                </div>
+                Update GeoIP & GeoSite
+            </h3>
+            <div class="flex-1">
+                 <p class="text-zinc-500 dark:text-zinc-400 text-sm mb-4">Update database files for specific countries manually if needed for routing rules.</p>
+                <div class="space-y-3">
+                    <button id="geo_update_iran" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                         Update for Iran
+                    </button>
+                     <button id="geo_update_china" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                        Update for China
+                    </button>
+                    <button id="geo_update_russia" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                        Update for Russia
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Shim for Invalid Feedback -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .is-invalid {
+                border-color: #ef4444 !important; 
+                background-image: none !important;
+            }
+             .invalid-feedback {
+                 display: none; 
+             }
+             .is-invalid ~ .invalid-feedback {
+                 display: block; 
+             }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ url_for('assets', path='js/hysteria_settings.js') }}"></script>
+{% endblock %}

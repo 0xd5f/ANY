@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ANY Dashboard - 2FA Verification</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: { 500: '#006FEE', 600: '#005BC4' } }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(-45deg, #000000, #18181b, #09090b, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 text-gray-100">
+
+    <div class="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-800 shadow-2xl p-8 relative overflow-hidden">
+        
+        <!-- Removed top gradient line by user request -->
+
+        <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-800 mb-4 border border-zinc-700">
+                <i class="fas fa-shield-alt text-2xl text-blue-500"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h1>
+            <div id="status_msg">
+                <p class="text-zinc-400 text-sm">Please verify the login via Telegram app.</p>
+                <div class="mt-2 text-xs text-blue-400 animate-pulse">Waiting for approval...</div>
+            </div>
+            <div id="manual_code_msg" class="hidden mt-4">
+                <p class="text-zinc-500 text-xs">Or enter the code manually:</p>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+            <i class="fas fa-circle-exclamation text-red-500"></i>
+            <span class="text-red-500 text-sm font-medium">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('verify_2fa') }}" method="POST" id="verify_form">
+            <input type="hidden" name="token" value="{{ token }}" id="auth_token">
+            
+            <div class="mb-6">
+                <!-- <label for="code" class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Verification Code</label> -->
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-key text-zinc-500"></i>
+                    </div>
+                    <input type="text" id="code" name="code"
+                           class="w-full pl-11 pr-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-white placeholder-zinc-600 tracking-widest text-center text-lg" 
+                           placeholder="Enter Code (Optional)" maxlength="6" autocomplete="one-time-code" autofocus>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold py-3.5 rounded-xl transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group">
+                <span>Verify & Login</span>
+                <i class="fas fa-arrow-right text-sm opacity-70 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+             <button id="show_manual" class="text-xs text-zinc-600 hover:text-zinc-400 underline decoration-zinc-700 underline-offset-4">
+                 Having trouble? Enter code manually
+             </button>
+             <div class="mt-4">
+                <a href="/login" class="text-sm text-zinc-500 hover:text-white transition-colors">
+                    Back to Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = document.getElementById('auth_token').value;
+        const pollInterval = 2000;
+        let polling = true;
+
+        function checkStatus() {
+            if (!polling) return;
+            
+            // Use relative path to ensure we stay within the ROOT_PATH scope
+            fetch("check-2fa-status", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: token })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'approved') {
+                    polling = false;
+                    document.getElementById('status_msg').innerHTML = '<div class="text-emerald-500 text-lg font-bold">Approved! Redirecting...</div>';
+                    setTimeout(() => window.location.href = '{{ url_for("index") }}', 500);
+                } else if (data.status === 'denied') {
+                    polling = false;
+                    document.getElementById('status_msg').innerHTML = '<div class="text-red-500 font-bold">Request Denied.</div>';
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        setInterval(checkStatus, pollInterval);
+
+        // UI Toggles
+        document.getElementById('show_manual').addEventListener('click', function() {
+            document.getElementById('code').focus();
+        });
+    </script>
+
+
+</body>
+</html>

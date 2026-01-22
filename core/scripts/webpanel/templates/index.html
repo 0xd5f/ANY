@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+</div>
+
+<section class="content space-y-6" 
+         data-server-status-url="{{ url_for('server_status_api') }}" 
+         data-services-status-url="{{ url_for('server_services_status_api') }}"
+         data-restart-hysteria-url="{{ url_for('restart_service') }}"
+         data-version-url="{{ url_for('get_version_info') }}" 
+         data-check-version-url="{{ url_for('check_version_info') }}">
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- CPU -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <i class="fas fa-microchip text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">CPU Usage</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white" id="cpu-usage">--</h3>
+            </div>
+        </div>
+
+        <!-- RAM -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <i class="fas fa-memory text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">RAM Usage</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white" id="ram-usage">-- / --</h3>
+            </div>
+        </div>
+
+        <!-- Users -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                <i class="fas fa-users text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Online Users</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white" id="online-users">--</h3>
+            </div>
+        </div>
+
+        <!-- Uptime -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-gray-500/10 flex items-center justify-center text-gray-500">
+                <i class="fas fa-clock text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Uptime</p>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white" id="uptime">--</h3>
+            </div>
+        </div>
+
+        <!-- Network -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                <i class="fas fa-exchange-alt text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Network Speed</p>
+                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span class="block" id="download-speed">🔽 --</span>
+                    <span class="block" id="upload-speed">🔼 --</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center text-white">
+                <i class="fas fa-project-diagram text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Connections</p>
+                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span class="block" id="tcp-connections">TCP: --</span>
+                    <span class="block" id="udp-connections">UDP: --</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- IPs -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4" id="ip-info-box">
+            <div class="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+                <i class="fas fa-network-wired text-xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Server IPs</p>
+                    <a href="#" id="toggle-ip-visibility" class="text-gray-400 hover:text-primary-500 transition-colors"><i class="fas fa-eye"></i></a>
+                </div>
+                <div id="ip-addresses" style="filter: blur(5px);" class="text-sm font-semibold text-gray-900 dark:text-white transition-all duration-300">
+                    <span class="block truncate" id="server-ipv4">IPv4: --</span>
+                    <span class="block truncate" id="server-ipv6">IPv6: --</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500">
+                <i class="fas fa-info-circle text-xl"></i>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 font-medium">Version</p>
+                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                    <span class="block hover:text-primary-500 transition-colors">
+                        Panel: <span id="panel-version-display">...</span>
+                    </span>
+                    <span id="core-version-row" class="block hover:text-primary-500 transition-colors hidden">
+                        Core: <span id="core-version-display">...</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts / Traffic -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- reboot traffic -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 bg-red-50/50 dark:bg-red-900/10">
+                <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 flex items-center">
+                    <i class="fas fa-power-off mr-2"></i> Traffic Since Last Reboot
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="text-emerald-600 font-medium flex items-center"><i class="fas fa-arrow-up mr-2"></i>Uploaded</span>
+                    <span class="text-lg font-mono font-semibold" id="reboot-uploaded-traffic">--</span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="text-blue-600 font-medium flex items-center"><i class="fas fa-arrow-down mr-2"></i>Downloaded</span>
+                    <span class="text-lg font-mono font-semibold" id="reboot-downloaded-traffic">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-indigo-600 font-medium flex items-center"><i class="fas fa-chart-line mr-2"></i>Combined</span>
+                    <span class="text-lg font-mono font-semibold" id="reboot-total-traffic">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- user traffic -->
+        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 bg-blue-50/50 dark:bg-blue-900/10">
+                <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center">
+                    <i class="fas fa-history mr-2"></i> User Traffic (All Time)
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="text-emerald-600 font-medium flex items-center"><i class="fas fa-arrow-up mr-2"></i>Uploaded</span>
+                    <span class="text-lg font-mono font-semibold" id="user-uploaded-traffic">--</span>
+                </div>
+                <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="text-blue-600 font-medium flex items-center"><i class="fas fa-arrow-down mr-2"></i>Downloaded</span>
+                    <span class="text-lg font-mono font-semibold" id="user-downloaded-traffic">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-indigo-600 font-medium flex items-center"><i class="fas fa-chart-line mr-2"></i>Combined</span>
+                    <span class="text-lg font-mono font-semibold" id="user-total-traffic">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Statuses -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Hysteria -->
+        <div class="rounded-xl p-4 shadow-sm text-white transition-colors duration-300 relative overflow-hidden group" id="hysteria2-status-box">
+             <!-- Default bg set by JS -->
+            <div class="relative z-10">
+                <h3 class="text-2xl font-bold" id="hysteria2-status">--</h3>
+                <p class="text-white/80 text-sm font-medium">Hysteria2 Core</p>
+            </div>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-4xl group-hover:scale-110 transition-transform">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <a href="#" id="restart-hysteria2-btn" class="absolute inset-x-0 bottom-0 bg-black/20 text-center py-1 text-xs uppercase tracking-wider font-semibold hover:bg-black/30 transition-colors hidden backdrop-blur-sm">
+                Restart <i class="fas fa-sync-alt ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Telegram -->
+        <div class="rounded-xl p-4 shadow-sm text-white transition-colors duration-300 relative overflow-hidden group" id="telegrambot-status-box">
+            <div class="relative z-10">
+                <h3 class="text-2xl font-bold" id="telegrambot-status">--</h3>
+                <p class="text-white/80 text-sm font-medium">Telegram Bot</p>
+            </div>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-4xl group-hover:scale-110 transition-transform">
+                <i class="fab fa-telegram"></i>
+            </div>
+        </div>
+
+        <!-- IP Limit -->
+        <div class="rounded-xl p-4 shadow-sm text-white transition-colors duration-300 relative overflow-hidden group" id="iplimit-status-box">
+             <div class="relative z-10">
+                <h3 class="text-2xl font-bold" id="iplimit-status">--</h3>
+                <p class="text-white/80 text-sm font-medium">IP Limit Service</p>
+            </div>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-4xl group-hover:scale-110 transition-transform">
+                <i class="fas fa-ban"></i>
+            </div>
+        </div>
+
+        <!-- Normal Sub -->
+        <div class="rounded-xl p-4 shadow-sm text-white transition-colors duration-300 relative overflow-hidden group" id="normalsub-status-box">
+             <div class="relative z-10">
+                <h3 class="text-2xl font-bold" id="normalsub-status">--</h3>
+                <p class="text-white/80 text-sm font-medium">Subscription Service</p>
+            </div>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-4xl group-hover:scale-110 transition-transform">
+                <i class="fas fa-rss"></i>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ url_for('assets', path='js/index.js') }}"></script>
+{% endblock %}

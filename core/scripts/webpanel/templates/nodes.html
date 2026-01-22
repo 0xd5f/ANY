@@ -1,0 +1,1582 @@
+{% extends 'base.html' %}
+
+{% block title %}Nodes Manager{% endblock %}
+
+{% block content %}
+<div class='mb-8'>
+    <h1 class='text-2xl font-bold text-zinc-900 dark:text-white'>Nodes Manager</h1>
+    <p class="text-zinc-500 dark:text-zinc-400 mt-1">Manage external proxy nodes.</p>
+</div>
+
+<!-- Hidden Data Container for JS -->
+<div id="nodes-data" class="d-none" style="display: none;"
+    data-get-nodes-url="{{ url_for('get_all_nodes') }}"
+    data-get-nodes-status-url="{{ url_for('get_nodes_status') }}"
+    data-add-node-url="{{ url_for('add_node') }}"
+    data-edit-node-url="{{ url_for('edit_node') }}"
+    data-delete-node-url-template="{{ url_for('delete_node') }}"
+    data-restart-node-url="{{ url_for('restart_node') }}"
+    data-get-all-extra-configs-url="{{ url_for('get_all_extra_configs') }}"
+    data-add-extra-config-url="{{ url_for('add_extra_config') }}"
+    data-edit-extra-config-url="{{ url_for('edit_extra_config') }}"
+    data-delete-extra-config-url="{{ url_for('delete_extra_config') }}"
+></div>
+
+<div class='content' x-data="{ activeTab: 'nodes' }">
+    
+    <!-- Tunnel Setup Modal -->
+    <div id="tunnelSetupModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-4xl transform transition-all border border-zinc-200 dark:border-zinc-800 h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-zinc-900 dark:text-white">
+                    <i class="fas fa-network-wired mr-2 text-primary-500"></i>Tunnel Setup Wizard
+                </h3>
+                <button type="button" class="text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 p-2 rounded-full transition-all" id="close_tunnel_btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-4">
+                 <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <p class="text-sm text-blue-800 dark:text-blue-300">
+                        This wizard generates a deployment command to run on your <strong>Intermediate (Relay) Node</strong>. 
+                        Users will connect to this Node's IP, which will forward traffic to the Target Server.
+                    </p>
+                </div>
+
+                <!-- Step-by-Step Guide -->
+                <details class="group bg-zinc-50 dark:bg-zinc-800/30 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer font-medium text-sm text-zinc-700 dark:text-zinc-300 select-none">
+                        <span class="flex items-center"><i class="fas fa-list-ol mr-2 text-primary-500"></i>Installation Guide</span>
+                        <i class="fas fa-chevron-down text-xs transition-transform group-open:rotate-180 text-zinc-400"></i>
+                    </summary>
+                    <div class="mt-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-2 pl-1">
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 text-xs font-bold">1</span>
+                            <p>Verify that the <strong>Target Server</strong> details (Step 2) match your main Hysteria server.</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 text-xs font-bold">2</span>
+                            <p>Select your preferred forwarding method below (<strong>Docker</strong> is recommended).</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 text-xs font-bold">3</span>
+                            <p>Click <strong>Copy Script</strong> to save the command to your clipboard.</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-600 text-xs font-bold">4</span>
+                            <p>Connect to this node via SSH and paste the command. The tunnel will start immediately.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/20">
+                        <h4 class="font-bold text-zinc-700 dark:text-zinc-300 mb-2">1. Relay Node (Current)</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                             <span class="text-zinc-500">Node IP:</span> 
+                             <span class="font-mono text-zinc-800 dark:text-zinc-200" id="tunnel_relay_ip"></span>
+                             <span class="text-zinc-500">Forwarding Port:</span> 
+                             <span class="font-mono text-zinc-800 dark:text-zinc-200" id="tunnel_relay_port"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/20">
+                        <h4 class="font-bold text-zinc-700 dark:text-zinc-300 mb-2">2. Target Server</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                             <div>
+                                <label class="block text-xs text-zinc-500 mb-1">Target IP / Domain</label>
+                                <input type="text" id="tunnel_target_ip" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm placeholder-zinc-500">
+                             </div>
+                             <div>
+                                <label class="block text-xs text-zinc-500 mb-1">Target Port</label>
+                                <input type="number" id="tunnel_target_port" class="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm placeholder-zinc-500">
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 min-h-0 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="font-bold text-zinc-700 dark:text-zinc-300 text-sm">Deployment Script</label>
+                    <div class="flex gap-2">
+                        <button class="text-xs px-3 py-1.5 rounded font-medium transition-colors bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-200" onclick="window.updateTunnelScript('docker')" id="btn_mode_docker">Docker</button>
+                        <button class="text-xs px-3 py-1.5 rounded font-medium transition-colors bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200" onclick="window.updateTunnelScript('gost')" id="btn_mode_gost">GOST</button>
+                        <button class="text-xs px-3 py-1.5 rounded font-medium transition-colors bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200" onclick="window.updateTunnelScript('iptables')" id="btn_mode_iptables">IPtables</button>
+                    </div>
+                </div>
+                <textarea id="tunnel_script_output" class="flex-1 w-full bg-zinc-900 text-zinc-300 font-mono text-xs p-4 rounded-xl border border-zinc-700 focus:outline-none resize-none" readonly spellcheck="false"></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="button" class="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-white rounded-xl hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors" onclick="copyToClipboard(document.getElementById('tunnel_script_output').value)">
+                    <i class="fas fa-copy mr-2"></i>Copy Script
+                </button>
+                <button type="button" class="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-500 transition-colors" id="close_tunnel_btn_2">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Node Modal -->
+    <div id="editNodeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-2xl transform transition-all border border-zinc-200 dark:border-zinc-800">
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-4">Edit Node</h3>
+            <form id="edit_node_form" class="space-y-4">
+                <input type="hidden" id="edit_node_original_name">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit_node_name" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Node Name</label>
+                        <input type="text" id="edit_node_name" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. Node-US">
+                    </div>
+                    <div>
+                        <label for="edit_node_location" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Location</label>
+                        <div id="edit_node_location_wrapper" x-data="countrySelector('')" x-init="setupEvents()" class="relative" @click.outside="isOpen = false">
+                            <input type="hidden" id="edit_node_location" name="edit_node_location" x-model="selectedCode">
+                            
+                            <button type="button" @click="isOpen = !isOpen" 
+                                    class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white text-left flex items-center justify-between group">
+                                
+                                <div class="flex items-center flex-1 overflow-hidden">
+                                    <span x-show="!selectedCode" class="text-gray-500">Select Location...</span>
+                                    <span x-show="selectedCode" class="flex items-center truncate">
+                                        <template x-if="selectedCountry">
+                                            <div class="flex items-center">
+                                                <span :class="`fi fi-${selectedCountry?.code.toLowerCase()} mr-2 rounded-sm`"></span>
+                                                <span x-text="selectedCountry?.name"></span>
+                                            </div>
+                                        </template>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2 pl-2">
+                                    <div @click.stop="copyToClipboard(selectedCountry ? getEmoji(selectedCountry.code) + ' ' + selectedCountry.name : '')" 
+                                         x-show="selectedCode"
+                                         class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                         title="Copy Location">
+                                        <i class="fas fa-copy text-xs"></i>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform" :class="isOpen ? 'rotate-180' : ''"></i>
+                                </div>
+                            </button>
+                            
+                            <div x-show="isOpen" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 class="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                <div class="p-2 bg-zinc-50 dark:bg-zinc-800/90 border-b border-zinc-100 dark:border-zinc-700">
+                                    <input type="text" x-model="search" placeholder="Search country..." 
+                                           @click.stop
+                                           class="w-full px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-zinc-900 dark:text-white">
+                                </div>
+                                <ul class="overflow-y-auto flex-1 p-1">
+                                    <template x-for="country in filteredCountries" :key="country.code">
+                                        <li @click="select(country)" 
+                                            class="px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 rounded-lg cursor-pointer flex items-center text-sm text-zinc-700 dark:text-zinc-200 transition-colors">
+                                            <span :class="`fi fi-${country.code.toLowerCase()} mr-3 text-lg rounded-sm shadow-sm`"></span>
+                                            <span x-text="country.name"></span>
+                                        </li>
+                                    </template>
+                                    <li x-show="filteredCountries.length === 0" class="px-4 py-3 text-sm text-gray-500 text-center">No results found</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <label for="edit_node_ip" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">IP / Domain</label>
+                        <input type="text" id="edit_node_ip" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 1.2.3.4">
+                    </div>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                        <label for="edit_node_port" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Port</label>
+                        <input type="number" id="edit_node_port" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="443">
+                    </div>
+                     <div>
+                        <label for="edit_node_obfs" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">OBFS</label>
+                        <input type="text" id="edit_node_obfs" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="edit_node_sni" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">SNI</label>
+                        <input type="text" id="edit_node_sni" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                     <label for="edit_node_pin" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Pin SHA256</label>
+                     <input type="text" id="edit_node_pin" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white text-xs font-mono">
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="edit_node_insecure" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-emerald-500"/>
+                        <label for="edit_node_insecure" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
+                    </div>
+                     <label for="edit_node_insecure" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">Insecure (Allow invalid certs)</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" id="cancel_edit_btn" class="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium text-sm">Cancel</button>
+                    <button type="button" id="save_edit_btn" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium text-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Node Modal -->
+    <div id="addNodeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-2xl transform transition-all border border-zinc-200 dark:border-zinc-800">
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-4">Add Node</h3>
+            <form id="add_node_form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="node_name" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Node Name</label>
+                        <input type="text" id="node_name" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. Node-US">
+                    </div>
+                    <div>
+                        <label for="node_location" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Location</label>
+                        <div id="node_location_wrapper" x-data="countrySelector('')" x-init="setupEvents()" class="relative" @click.outside="isOpen = false">
+                            <input type="hidden" id="node_location" name="node_location" x-model="selectedCode">
+                            
+                            <button type="button" @click="isOpen = !isOpen" 
+                                    class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white text-left flex items-center justify-between group">
+                                
+                                <div class="flex items-center flex-1 overflow-hidden">
+                                    <span x-show="!selectedCode" class="text-gray-500">Select Location...</span>
+                                    <span x-show="selectedCode" class="flex items-center truncate">
+                                        <template x-if="selectedCountry">
+                                            <div class="flex items-center">
+                                                <span :class="`fi fi-${selectedCountry?.code.toLowerCase()} mr-2 rounded-sm`"></span>
+                                                <span x-text="selectedCountry?.name"></span>
+                                            </div>
+                                        </template>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2 pl-2">
+                                    <div @click.stop="copyToClipboard(selectedCountry ? getEmoji(selectedCountry.code) + ' ' + selectedCountry.name : '')" 
+                                         x-show="selectedCode"
+                                         class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                         title="Copy Location">
+                                        <i class="fas fa-copy text-xs"></i>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform" :class="isOpen ? 'rotate-180' : ''"></i>
+                                </div>
+                            </button>
+                            
+                            <div x-show="isOpen" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 class="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                <div class="p-2 bg-zinc-50 dark:bg-zinc-800/90 border-b border-zinc-100 dark:border-zinc-700">
+                                    <input type="text" x-model="search" placeholder="Search country..." 
+                                           @click.stop
+                                           class="w-full px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-zinc-900 dark:text-white">
+                                </div>
+                                <ul class="overflow-y-auto flex-1 p-1">
+                                    <template x-for="country in filteredCountries" :key="country.code">
+                                        <li @click="select(country)" 
+                                            class="px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 rounded-lg cursor-pointer flex items-center text-sm text-zinc-700 dark:text-zinc-200 transition-colors">
+                                            <span :class="`fi fi-${country.code.toLowerCase()} mr-3 text-lg rounded-sm shadow-sm`"></span>
+                                            <span x-text="country.name"></span>
+                                        </li>
+                                    </template>
+                                    <li x-show="filteredCountries.length === 0" class="px-4 py-3 text-sm text-gray-500 text-center">No results found</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <label for="node_ip" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">IP / Domain</label>
+                        <input type="text" id="node_ip" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 1.2.3.4">
+                    </div>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                        <label for="node_port" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Port</label>
+                        <input type="number" id="node_port" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="443">
+                    </div>
+                     <div>
+                        <label for="node_obfs" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">OBFS</label>
+                        <input type="text" id="node_obfs" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="node_sni" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">SNI</label>
+                        <input type="text" id="node_sni" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                     <label for="node_pin" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Pin SHA256</label>
+                     <input type="text" id="node_pin" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white text-xs font-mono">
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                    <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" id="node_insecure" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-emerald-500 checked:bg-emerald-500"/>
+                        <label for="node_insecure" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
+                    </div>
+                     <label for="node_insecure" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">Insecure (Allow invalid certs)</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" id="cancel_add_btn" class="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium text-sm">Cancel</button>
+                    <button type="button" id="save_add_btn" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium text-sm">Add Node</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="flex space-x-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-6 w-fit">
+        <button @click="activeTab = 'nodes'" :class="activeTab === 'nodes' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">Node</button>
+        <button @click="activeTab = 'external-proxy'" :class="activeTab === 'external-proxy' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">External Proxy</button>
+    </div>
+
+    <div x-show="activeTab === 'nodes'">
+    
+    <!-- Panel URL -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4">Panel URL</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Use this URL to connect nodes to this panel.</p>
+        
+        <div class="relative max-w-xl" x-data="{ url: '{{ panel_url }}' }">
+            <div class="relative">
+                <input 
+                    type="text" 
+                    readonly 
+                    :value="url" 
+                    class="w-full px-4 py-2.5 pr-14 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-zinc-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
+                    <button 
+                        @click="navigator.clipboard.writeText(url); Swal.fire({icon: 'success', title: 'URL copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500})"
+                         class="p-2 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+                         title="Copy"
+                    >
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Token -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4">Panel Token</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Use this token to connect nodes to this panel.</p>
+        
+        <div class="relative max-w-xl" x-data="{ show: false, token: '{{ api_token }}' }">
+            <div class="relative">
+                <input 
+                    :type="show ? 'text' : 'password'" 
+                    readonly 
+                    :value="token" 
+                    id="panelTokenInput"
+                    class="w-full px-4 py-2.5 pr-24 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-zinc-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
+                    <button 
+                        @click="show = !show" 
+                        class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg"
+                        title="Show/Hide"
+                    >
+                        <i class="fas" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                    <button 
+                        @click="navigator.clipboard.writeText(token); Swal.fire({icon: 'success', title: 'Token copied!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500})"
+                         class="p-2 text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-lg"
+                         title="Copy"
+                    >
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Nodes -->
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-zinc-900 dark:text-white">External Nodes</h3>
+            <button id="open_add_node_btn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                Add Node
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 mb-6">
+             <table class="w-full text-left text-sm" id="nodes_table">
+                <thead class="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400">
+                    <tr>
+                        <th class="px-4 py-3 font-medium">Name</th>
+                        <th class="px-4 py-3 font-medium">Location</th>
+                        <th class="px-4 py-3 font-medium">IP/Domain</th>
+                        <th class="px-4 py-3 font-medium">Status</th>
+                        <th class="px-4 py-3 font-medium">CPU</th>
+                        <th class="px-4 py-3 font-medium">RAM</th>
+                        <th class="px-4 py-3 font-medium">Uptime</th>
+                        <th class="px-4 py-3 font-medium">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    <!-- JS Populates this -->
+                </tbody>
+            </table>
+        </div>
+         <div id="no_nodes_message" class="bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 p-4 rounded-xl mb-6 text-sm">
+            No external nodes have been configured.
+        </div>
+    </div>
+    </div>
+
+    <!-- External Proxy Tab -->
+    <div x-show="activeTab === 'external-proxy'">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 mb-6">
+             <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">External Proxy Configurations</h3>
+                    <p class="text-sm text-zinc-500 mt-1">Add Vmess/Vless/SS/Trojan links here.</p>
+                </div>
+                <!-- Toolbar -->
+                 <div class="flex gap-3">
+                    <button id="bulk_delete_btn" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm flex items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Delete (<span id="selected_count">0</span>)
+                    </button>
+                    <button onclick="document.getElementById('addConfigModal').classList.remove('hidden')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Add Single
+                    </button>
+                    <button onclick="document.getElementById('bulkConfigModal').classList.remove('hidden')" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all font-medium text-sm flex items-center">
+                        <i class="fas fa-layer-group mr-2"></i> Bulk Import
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 mb-6">
+                <table class="w-full text-left text-sm" id="extra_configs_table">
+                    <thead class="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400">
+                        <tr>
+                            <th class="px-4 py-3 w-8"><input type="checkbox" id="selectAllConfigs" class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 bg-transparent"></th>
+                            <th class="px-4 py-3 font-medium w-1/4">Name</th>
+                            <th class="px-4 py-3 font-medium">Address</th>
+                            <th class="px-4 py-3 font-medium text-center">Active</th>
+                            <th class="px-4 py-3 font-medium w-32 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+                        <!-- JS Populates this -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="no_extra_configs_message" class="hidden flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-800/30 rounded-xl border border-zinc-200 dark:border-zinc-800 text-center">
+                <p class="text-zinc-500 dark:text-zinc-400 font-medium">No configurations added yet.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Single Config Modal -->
+    <div id="addConfigModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-lg transform transition-all border border-zinc-200 dark:border-zinc-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Add Configuration</h3>
+                <button onclick="document.getElementById('addConfigModal').classList.add('hidden')" class="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="add_extra_config_form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name</label>
+                    <input type="text" id="extra_config_name" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. My Proxy">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">URI</label>
+                    <textarea id="extra_config_uri" rows="3" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="vmess://..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('addConfigModal').classList.add('hidden')" class="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">Cancel</button>
+                    <button type="button" id="add_extra_config_btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium">Add Config</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Single Config Modal -->
+    <div id="editConfigModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-lg transform transition-all border border-zinc-200 dark:border-zinc-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Edit Configuration</h3>
+                <button onclick="document.getElementById('editConfigModal').classList.add('hidden')" class="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="edit_extra_config_form" class="space-y-4">
+                <input type="hidden" id="edit_config_original_name">
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name</label>
+                    <input type="text" id="edit_config_name" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. My Proxy">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">URI</label>
+                    <textarea id="edit_config_uri" rows="3" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="vmess://..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('editConfigModal').classList.add('hidden')" class="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">Cancel</button>
+                    <button type="button" id="save_edit_config_btn" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Import Config Modal -->
+    <div id="bulkConfigModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 w-full max-w-2xl transform transition-all border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white">Bulk Import</h3>
+                    <p class="text-xs text-zinc-500 mt-0.5">Paste multiple links (one per line). Names will be auto-detected from remarks (#).</p>
+                </div>
+                <button onclick="document.getElementById('bulkConfigModal').classList.add('hidden')" class="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex-1 min-h-0 mb-4">
+                <textarea id="bulk_config_input" class="w-full h-64 md:h-80 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/30 text-zinc-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all resize-none" placeholder="vless://...#Remark&#10;vmess://...#Name&#10;trojan://..."></textarea>
+            </div>
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 mb-4">
+                <div class="flex items-center text-xs text-zinc-500 dark:text-zinc-400">
+                    <i class="fas fa-info-circle mr-2 text-purple-500"></i>
+                    <span>Supported: vmess, vless, trojan, ss. The system will automatically parse the hash (#) for names.</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('bulkConfigModal').classList.add('hidden')" class="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">Cancel</button>
+                <button type="button" id="bulk_import_btn" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all font-medium">
+                    <span class="spinner-border spinner-border-sm mr-2 hidden" role="status" aria-hidden="true"></span>
+                    Import All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.getEmoji = (code) => {
+    if (!code || code.length !== 2) return '';
+    try {
+        const codePoints = code.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+        return String.fromCodePoint(...codePoints);
+    } catch (e) { return ''; }
+};
+
+// Comprehensive list of countries exposed for Alpine
+// Defined globally to ensure availability
+window.countriesList = [
+    { code: "AF", name: "Afghanistan" },
+    { code: "AL", name: "Albania" },
+    { code: "DZ", name: "Algeria" },
+    { code: "AD", name: "Andorra" },
+    { code: "AO", name: "Angola" },
+    { code: "AR", name: "Argentina" },
+    { code: "AM", name: "Armenia" },
+    { code: "AU", name: "Australia" },
+    { code: "AT", name: "Austria" },
+    { code: "AZ", name: "Azerbaijan" },
+    { code: "BH", name: "Bahrain" },
+    { code: "BD", name: "Bangladesh" },
+    { code: "BY", name: "Belarus" },
+    { code: "BE", name: "Belgium" },
+    { code: "BZ", name: "Belize" },
+    { code: "BA", name: "Bosnia and Herzegovina" },
+    { code: "BR", name: "Brazil" },
+    { code: "BG", name: "Bulgaria" },
+    { code: "KH", name: "Cambodia" },
+    { code: "CA", name: "Canada" },
+    { code: "CL", name: "Chile" },
+    { code: "CN", name: "China" },
+    { code: "CO", name: "Colombia" },
+    { code: "CR", name: "Costa Rica" },
+    { code: "HR", name: "Croatia" },
+    { code: "CY", name: "Cyprus" },
+    { code: "CZ", name: "Czech Republic" },
+    { code: "DK", name: "Denmark" },
+    { code: "EG", name: "Egypt" },
+    { code: "EE", name: "Estonia" },
+    { code: "FI", name: "Finland" },
+    { code: "FR", name: "France" },
+    { code: "GE", name: "Georgia" },
+    { code: "DE", name: "Germany" },
+    { code: "GR", name: "Greece" },
+    { code: "HK", name: "Hong Kong" },
+    { code: "HU", name: "Hungary" },
+    { code: "IS", name: "Iceland" },
+    { code: "IN", name: "India" },
+    { code: "ID", name: "Indonesia" },
+    { code: "IR", name: "Iran" },
+    { code: "IQ", name: "Iraq" },
+    { code: "IE", name: "Ireland" },
+    { code: "IL", name: "Israel" },
+    { code: "IT", name: "Italy" },
+    { code: "JP", name: "Japan" },
+    { code: "KZ", name: "Kazakhstan" },
+    { code: "KE", name: "Kenya" },
+    { code: "KR", name: "Korea, South" },
+    { code: "KG", name: "Kyrgyzstan" },
+    { code: "LV", name: "Latvia" },
+    { code: "LT", name: "Lithuania" },
+    { code: "LU", name: "Luxembourg" },
+    { code: "MY", name: "Malaysia" },
+    { code: "MT", name: "Malta" },
+    { code: "MX", name: "Mexico" },
+    { code: "MD", name: "Moldova" },
+    { code: "MC", name: "Monaco" },
+    { code: "MN", name: "Mongolia" },
+    { code: "ME", name: "Montenegro" },
+    { code: "MA", name: "Morocco" },
+    { code: "NL", name: "Netherlands" },
+    { code: "NZ", name: "New Zealand" },
+    { code: "NG", name: "Nigeria" },
+    { code: "MK", name: "North Macedonia" },
+    { code: "NO", name: "Norway" },
+    { code: "PK", name: "Pakistan" },
+    { code: "PA", name: "Panama" },
+    { code: "PY", name: "Paraguay" },
+    { code: "PE", name: "Peru" },
+    { code: "PH", name: "Philippines" },
+    { code: "PL", name: "Poland" },
+    { code: "PT", name: "Portugal" },
+    { code: "QA", name: "Qatar" },
+    { code: "RO", name: "Romania" },
+    { code: "RU", name: "Russia" },
+    { code: "SA", name: "Saudi Arabia" },
+    { code: "RS", name: "Serbia" },
+    { code: "SG", name: "Singapore" },
+    { code: "SK", name: "Slovakia" },
+    { code: "SI", name: "Slovenia" },
+    { code: "ZA", name: "South Africa" },
+    { code: "ES", name: "Spain" },
+    { code: "SE", name: "Sweden" },
+    { code: "CH", name: "Switzerland" },
+    { code: "TW", name: "Taiwan" },
+    { code: "TJ", name: "Tajikistan" },
+    { code: "TH", name: "Thailand" },
+    { code: "TN", name: "Tunisia" },
+    { code: "TR", name: "Turkey" },
+    { code: "TM", name: "Turkmenistan" },
+    { code: "UA", name: "Ukraine" },
+    { code: "AE", name: "United Arab Emirates" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "US", name: "United States" },
+    { code: "UY", name: "Uruguay" },
+    { code: "UZ", name: "Uzbekistan" },
+    { code: "VE", name: "Venezuela" },
+    { code: "VN", name: "Vietnam" }
+].sort((a, b) => a.name.localeCompare(b.name));
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Basic shim for saving functionality
+    const nodesTableBody = document.querySelector('#nodes_table tbody');
+    const noNodesMessage = document.getElementById('no_nodes_message');
+    const dataContainer = document.getElementById('nodes-data') || document.querySelector('.content');
+    
+    // API Endpoints
+    const api = {
+        getNodes: dataContainer.dataset.getNodesUrl,
+        getNodesStatus: dataContainer.dataset.getNodesStatusUrl,
+        addNode: dataContainer.dataset.addNodeUrl,
+        editNode: dataContainer.dataset.editNodeUrl,
+        deleteNode: dataContainer.dataset.deleteNodeUrlTemplate,
+        restartNode: dataContainer.dataset.restartNodeUrl
+    };
+
+    let configuredNodes = [];
+    let nodesStatus = {};
+
+    // Modal elements
+    const editModal = document.getElementById('editNodeModal');
+    const cancelEditBtn = document.getElementById('cancel_edit_btn');
+    const saveEditBtn = document.getElementById('save_edit_btn');
+    
+    // Add Node references
+    const addModal = document.getElementById('addNodeModal');
+    const openAddNodeBtn = document.getElementById('open_add_node_btn');
+    const cancelAddBtn = document.getElementById('cancel_add_btn');
+    const saveAddBtn = document.getElementById('save_add_btn');
+
+    // Toggle Edit Modal
+    const toggleModal = (show) => {
+        if (show) {
+            editModal.classList.remove('hidden');
+        } else {
+            editModal.classList.add('hidden');
+        }
+    };
+    
+    // Toggle Add Modal
+    const toggleAddModal = (show) => {
+        if (show) {
+            addModal.classList.remove('hidden');
+        } else {
+            addModal.classList.add('hidden');
+        }
+    };
+
+    cancelEditBtn.addEventListener('click', () => toggleModal(false));
+    
+    if (openAddNodeBtn) openAddNodeBtn.addEventListener('click', () => {
+        document.getElementById('add_node_form').reset();
+        // Reset Alpine dropdown
+        const wrapper = document.getElementById('node_location_wrapper');
+        if (wrapper) wrapper.dispatchEvent(new CustomEvent('reset-location'));
+        toggleAddModal(true);
+    });
+    
+    if (cancelAddBtn) cancelAddBtn.addEventListener('click', () => toggleAddModal(false));
+
+    // Render nodes
+    const renderNodes = () => {
+        nodesTableBody.innerHTML = '';
+        const nodes = configuredNodes;
+        if (!nodes || nodes.length === 0) {
+            noNodesMessage.style.display = 'block';
+            return;
+        }
+        noNodesMessage.style.display = 'none';
+        
+        nodes.forEach(node => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors';
+            
+            // Status data
+            const status = nodesStatus[node.name] || {};
+            const isOnline = status.is_online;
+            const cpu = status.cpu_percent !== undefined ? status.cpu_percent + '%' : '-';
+            const ram = status.ram_percent !== undefined ? status.ram_percent + '%' : '-';
+            const uptime = status.uptime || '-';
+            
+            tr.dataset.node = JSON.stringify(node);
+
+            // Format location with flag if available
+            let locationDisplay = '-';
+            if (node.location) {
+                let code = '', name = node.location;
+                let emoji = '';
+                
+                if (node.location.includes('|')) {
+                    [code, name] = node.location.split('|');
+                    // Generate Emoji from code
+                    if (code && code.length === 2) {
+                        const codePoints = code.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+                        emoji = String.fromCodePoint(...codePoints);
+                    }
+                    locationDisplay = `
+                        <div class="flex items-center group cursor-pointer" onclick="copyToClipboard('${emoji} ${name}')" title="Click to copy location">
+                            <span class="fi fi-${code.toLowerCase()} mr-2 rounded-sm shadow-sm"></span>
+                            <span>${name}</span>
+                            <i class="fas fa-copy ml-2 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs"></i>
+                        </div>`;
+                } else {
+                     // Fallback for old data or manual entry
+                    locationDisplay = node.location;
+                }
+            }
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 font-medium text-zinc-900 dark:text-white">${node.name}</td>
+                <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 text-sm">${locationDisplay}</td>
+                <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                    <div class="flex flex-col">
+                        <span>${node.ip}</span>
+                        <span class="text-xs text-gray-400">${node.port || ''}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    ${isOnline 
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">Online</span>' 
+                        : '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Offline</span>'
+                    }
+                </td>
+                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 font-mono text-xs">${cpu}</td>
+                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 font-mono text-xs">${ram}</td>
+                <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 font-mono text-xs">${uptime}</td>
+                <td class="px-4 py-3 flex gap-2">
+                    <button class="tunnel-node text-purple-500 hover:text-purple-600 transition-colors p-1" data-name="${node.name}" title="Tunnel Setup">
+                         <i class="fas fa-network-wired"></i>
+                    </button>
+                    <button class="restart-node text-amber-500 hover:text-amber-600 transition-colors p-1" data-name="${node.name}" title="Restart Node Service">
+                         <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="edit-node text-blue-500 hover:text-blue-600 transition-colors p-1" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-node text-red-500 hover:text-red-600 transition-colors p-1" data-name="${node.name}" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            nodesTableBody.appendChild(tr);
+        });
+        
+        attachListeners();
+    };
+
+    const attachListeners = () => {
+        // Tunnel Listener
+        document.querySelectorAll('.tunnel-node').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                const node = JSON.parse(tr.dataset.node);
+                openTunnelModal(node);
+            });
+        });
+
+        // Edit Listener
+        document.querySelectorAll('.edit-node').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tr = e.target.closest('tr');
+                const node = JSON.parse(tr.dataset.node);
+                
+                document.getElementById('edit_node_original_name').value = node.name;
+                document.getElementById('edit_node_name').value = node.name;
+                
+                // Update location including Alpine component
+                const locationVal = node.location || '';
+                document.getElementById('edit_node_location').value = locationVal; // Hidden input
+                const locWrapper = document.getElementById('edit_node_location_wrapper');
+                if (locWrapper) locWrapper.dispatchEvent(new CustomEvent('set-location', { detail: locationVal }));
+
+                document.getElementById('edit_node_ip').value = node.ip;
+                document.getElementById('edit_node_port').value = node.port || '';
+                document.getElementById('edit_node_obfs').value = node.obfs || '';
+                document.getElementById('edit_node_sni').value = node.sni || '';
+                document.getElementById('edit_node_pin').value = node.pinSHA256 || '';
+                document.getElementById('edit_node_insecure').checked = !!node.insecure;
+                
+                toggleModal(true);
+            });
+        });
+
+        // Delete Listener
+        document.querySelectorAll('.delete-node').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const name = e.currentTarget.dataset.name;
+                if (!confirm(`Are you sure you want to delete node "${name}"?`)) return;
+                
+                try {
+                    const deleteUrl = api.deleteNode + "?name=" + encodeURIComponent(name);
+                    const response = await fetch(deleteUrl, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ name: name })
+                    });
+                    
+                    if (response.ok) {
+                        fetchNodes();
+                    } else {
+                        alert('Failed to delete node');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error deleting node');
+                }
+            });
+        });
+        
+        // Restart Listener
+        document.querySelectorAll('.restart-node').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                 const name = e.currentTarget.dataset.name;
+                 const btnEl = e.currentTarget;
+                 const icon = btnEl.querySelector('i');
+                 icon.classList.add('fa-spin');
+                 
+                 try {
+                     const response = await fetch(api.restartNode, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ node_name: name })
+                     });
+                     
+                     if (response.ok) {
+                         const data = await response.json();
+                         // Optional: show toast
+                         setTimeout(() => icon.classList.remove('fa-spin'), 1500);
+                     } else {
+                         alert('Failed to send restart command');
+                         icon.classList.remove('fa-spin');
+                     }
+                 } catch (err) {
+                     alert('Error calling restart API: ' + err.message);
+                     icon.classList.remove('fa-spin');
+                 }
+            });
+        });
+    };
+
+    // Fetch nodes
+    const fetchNodes = async () => {
+        try {
+            const [nodesResp, statusResp] = await Promise.all([
+                fetch(api.getNodes),
+                fetch(api.getNodesStatus)
+            ]);
+            
+            if (nodesResp.ok) configuredNodes = await nodesResp.json();
+            if (statusResp.ok) nodesStatus = await statusResp.json();
+            
+            renderNodes();
+        } catch (error) {
+            console.error('Error loading nodes:', error);
+        }
+    };
+    
+    // Status Polling
+    setInterval(async () => {
+        try {
+            const resp = await fetch(api.getNodesStatus);
+            if (resp.ok) {
+                nodesStatus = await resp.json();
+                renderNodes();
+            }
+        } catch(e) {}
+    }, 5000);
+
+    // Save Edit
+    saveEditBtn.addEventListener('click', async () => {
+        const originalName = document.getElementById('edit_node_original_name').value;
+        const data = {
+            name: originalName,
+            new_name: document.getElementById('edit_node_name').value,
+            location: document.getElementById('edit_node_location').value,
+            ip: document.getElementById('edit_node_ip').value,
+            port: parseInt(document.getElementById('edit_node_port').value) || null,
+            obfs: document.getElementById('edit_node_obfs').value,
+            sni: document.getElementById('edit_node_sni').value,
+            pinSHA256: document.getElementById('edit_node_pin').value,
+            insecure: document.getElementById('edit_node_insecure').checked
+        };
+        
+        // Basic validation
+        if (!data.new_name || !data.ip) {
+            alert('Name and IP are required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(api.editNode, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                toggleModal(false);
+                fetchNodes();
+            } else {
+                const err = await response.json();
+                alert('Error: ' + (err.detail || 'Failed to edit node'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error editing node');
+        }
+    });
+
+    // Add Node
+    saveAddBtn.addEventListener('click', async () => {
+        const data = {
+            name: document.getElementById('node_name').value,
+            location: document.getElementById('node_location').value,
+            ip: document.getElementById('node_ip').value,
+            port: parseInt(document.getElementById('node_port').value),
+            obfs: document.getElementById('node_obfs').value,
+            sni: document.getElementById('node_sni').value,
+            pinSHA256: document.getElementById('node_pin').value,
+            insecure: document.getElementById('node_insecure').checked
+        };
+
+        if (!data.name || !data.ip || !data.port) {
+            alert('Please fill in required fields (Name, IP, Port)');
+            return;
+        }
+
+        try {
+            const response = await fetch(api.addNode, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                toggleAddModal(false);
+                fetchNodes();
+            } else {
+                const err = await response.json();
+                alert('Error: ' + (err.detail || 'Failed to add node'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error adding node');
+        }
+    });
+
+    // Copy helper
+    window.copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            // Optional feedback
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-zinc-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50 animate-fade-in-up';
+            toast.textContent = 'Copied: ' + text;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        });
+    };
+
+    // Tunnel Modal Logic
+    const tunnelModal = document.getElementById('tunnelSetupModal');
+    const closeTunnelBtns = [document.getElementById('close_tunnel_btn'), document.getElementById('close_tunnel_btn_2')];
+    
+    let currentTunnelState = {
+        nodePort: 0,
+        relayIp: '',
+        targetIp: '',
+        targetPort: 443,
+        mode: 'docker'
+    };
+
+    if (tunnelModal) {
+        closeTunnelBtns.forEach(btn => btn?.addEventListener('click', () => {
+            tunnelModal.classList.add('hidden');
+        }));
+    }
+
+    window.updateTunnelScript = (mode) => {
+        if (mode) currentTunnelState.mode = mode;
+        
+        // Update inputs if changed by user
+        const tIp = document.getElementById('tunnel_target_ip').value;
+        const tPort = document.getElementById('tunnel_target_port').value;
+        if (tIp) currentTunnelState.targetIp = tIp;
+        if (tPort) currentTunnelState.targetPort = tPort;
+
+        // UI Active State
+        ['docker', 'gost', 'iptables'].forEach(m => {
+            const btn = document.getElementById(`btn_mode_${m}`);
+            if (btn) {
+                if (m === currentTunnelState.mode) {
+                    btn.className = "text-xs px-3 py-1.5 rounded font-medium transition-colors bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 border border-primary-200 dark:border-primary-800";
+                } else {
+                    btn.className = "text-xs px-3 py-1.5 rounded font-medium transition-colors bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700";
+                }
+            }
+        });
+
+        const { nodePort, targetIp, targetPort } = currentTunnelState;
+        let script = "";
+
+        if (currentTunnelState.mode === 'docker') {
+            script = `# On the Relay Node (Port ${nodePort} -> ${targetIp}:${targetPort})\n\n` +
+                     `# 1. Forward UDP (Essential for Hysteria 2)\n` +
+                     `docker run -d --restart=always --name hy2-tunnel-udp-${nodePort} -p ${nodePort}:${nodePort}/udp alpine/socat -d -d UDP4-LISTEN:${nodePort},fork,reuseaddr UDP4:${targetIp}:${targetPort}\n\n` +
+                     `# 2. Forward TCP (Optional, for HTTP checks)\n` +
+                     `docker run -d --restart=always --name hy2-tunnel-tcp-${nodePort} -p ${nodePort}:${nodePort}/tcp alpine/socat -d -d TCP4-LISTEN:${nodePort},fork,reuseaddr TCP4:${targetIp}:${targetPort}`;
+        } else if (currentTunnelState.mode === 'gost') {
+            script = `# On the Relay Node (Port ${nodePort} -> ${targetIp}:${targetPort})\n` +
+                     `# Using GOST v2/v3\n\n` +
+                     `./gost -L udp://:${nodePort}/${targetIp}:${targetPort} -L tcp://:${nodePort}/${targetIp}:${targetPort}`;
+        } else {
+            script = `# On the Relay Node (Port ${nodePort} -> ${targetIp}:${targetPort})\n` +
+                     `# LINUX NATIVE (Requires Root)\n\n` +
+                     `sysctl -w net.ipv4.ip_forward=1\n` +
+                     `iptables -t nat -A PREROUTING -p udp --dport ${nodePort} -j DNAT --to-destination ${targetIp}:${targetPort}\n` +
+                     `iptables -t nat -A PREROUTING -p tcp --dport ${nodePort} -j DNAT --to-destination ${targetIp}:${targetPort}\n` +
+                     `iptables -t nat -A POSTROUTING -j MASQUERADE\n\n` +
+                     `# Persist:\n` +
+                     `# apt install iptables-persistent && netfilter-persistent save`;
+        }
+        
+        const out = document.getElementById('tunnel_script_output');
+        if(out) out.value = script;
+    };
+
+    // Input listeners to live update script
+    const targetIpInput = document.getElementById('tunnel_target_ip');
+    const targetPortInput = document.getElementById('tunnel_target_port');
+    
+    if(targetIpInput) targetIpInput.addEventListener('input', () => {
+        localStorage.setItem('tunnel_target_ip', targetIpInput.value);
+        window.updateTunnelScript();
+    });
+    if(targetPortInput) targetPortInput.addEventListener('input', () => {
+        localStorage.setItem('tunnel_target_port', targetPortInput.value);
+        window.updateTunnelScript();
+    });
+
+    const openTunnelModal = async (node) => {
+        // Restore from localStorage first
+        const savedIp = localStorage.getItem('tunnel_target_ip');
+        const savedPort = localStorage.getItem('tunnel_target_port');
+        
+        if (savedIp && targetIpInput) targetIpInput.value = savedIp;
+        if (savedPort && targetPortInput) targetPortInput.value = savedPort;
+
+        // Fetch Main Server Config if not gathered or empty
+        try {
+            if (!document.getElementById('tunnel_target_ip').value) {
+                const resp = await fetch('/api/v1/config/main-config');
+                if (resp.ok) {
+                    const data = await resp.json();
+                     if (targetIpInput) {
+                         targetIpInput.value = data.ip || '';
+                         localStorage.setItem('tunnel_target_ip', data.ip || '');
+                     }
+                     if (targetPortInput) {
+                         targetPortInput.value = data.port || 443;
+                         localStorage.setItem('tunnel_target_port', data.port || 443);
+                     }
+                }
+            }
+        } catch(e) {}
+
+        // Populate values
+        document.getElementById('tunnel_relay_ip').textContent = node.ip;
+        document.getElementById('tunnel_relay_port').textContent = node.port || '443';
+        
+        currentTunnelState.nodePort = node.port || 443;
+        currentTunnelState.relayIp = node.ip;
+        currentTunnelState.targetIp = document.getElementById('tunnel_target_ip').value;
+        currentTunnelState.targetPort = document.getElementById('tunnel_target_port').value;
+        
+        window.updateTunnelScript('docker');
+        if(tunnelModal) tunnelModal.classList.remove('hidden');
+    };
+
+    fetchNodes();
+    
+    // --- External Proxy Logic ---
+    api.getAllExtraConfigs = dataContainer.dataset.getAllExtraConfigsUrl;
+    api.addExtraConfig = dataContainer.dataset.addExtraConfigUrl;
+    api.editExtraConfig = dataContainer.dataset.editExtraConfigUrl;
+    api.deleteExtraConfig = dataContainer.dataset.deleteExtraConfigUrl;
+    api.bulkDeleteExtraConfig = '/api/external-proxy/delete'; // Re-use delete endpoint or loop
+
+    const fetchExtraConfigs = () => {
+        const tbody = document.querySelector('#extra_configs_table tbody');
+        const noMsg = document.getElementById('no_extra_configs_message');
+        const selectAll = document.getElementById('selectAllConfigs');
+        
+        if(!api.getAllExtraConfigs) return;
+
+        fetch(api.getAllExtraConfigs)
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (selectAll) selectAll.checked = false;
+                updateBulkDeleteState();
+
+                if (!data || data.length === 0) {
+                    noMsg.classList.remove('hidden');
+                    return;
+                }
+                noMsg.classList.add('hidden');
+                
+                data.forEach(config => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors';
+                    
+                    // Extract domain/IP
+                    let address = '-';
+                    try {
+                        let tmpUri = config.uri;
+                        if(tmpUri.includes("://")) {
+                            const url = new URL(tmpUri);
+                            address = url.hostname;
+                        }
+                    } catch(e) {}
+
+                    const isChecked = config.enabled !== false; // Default true
+
+                    tr.innerHTML = `
+                        <td class="px-4 py-3"><input type="checkbox" class="config-checkbox rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 bg-transparent" value="${config.name}"></td>
+                        <td class="px-4 py-3 font-medium text-zinc-900 dark:text-white">
+                             <div class="flex items-center gap-2">
+                                <span>${config.name}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 font-mono text-xs">
+                             <div class="flex items-center gap-2" title="${config.uri}">
+                                <span>${address}</span>
+                                <button class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors" onclick="copyToClipboard('${config.uri}')">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                             </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                             <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-emerald-500 checked:bg-emerald-500 toggle-active-status" data-name="${config.name}" ${isChecked ? 'checked' : ''}/>
+                                <div class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" class="text-blue-500 hover:text-blue-700 transition-colors edit-extra-config mr-2" data-name="${config.name}" data-uri="${encodeURIComponent(config.uri)}" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="text-red-500 hover:text-red-700 transition-colors delete-extra-config" data-name="${config.name}" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                // Toggle active status listener
+                document.querySelectorAll('.toggle-active-status').forEach(toggle => {
+                    toggle.addEventListener('change', async (e) => {
+                        const name = e.target.dataset.name;
+                        const enabled = e.target.checked;
+                        
+                        try {
+                            const res = await fetch(api.editExtraConfig, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({name: name, enabled: enabled})
+                            });
+                            
+                            if (!res.ok) {
+                                e.target.checked = !enabled; // Revert
+                                // Optional: show error toast
+                            }
+                        } catch(err) {
+                            e.target.checked = !enabled;
+                        }
+                    });
+                });
+
+                // Checkbox listeners
+                const checkboxes = document.querySelectorAll('.config-checkbox');
+                checkboxes.forEach(box => {
+                    box.addEventListener('change', updateBulkDeleteState);
+                });
+                
+                // Attach edit listeners
+                document.querySelectorAll('.edit-extra-config').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const btnEl = e.currentTarget; // Ensure we get the button, not icon
+                        const name = btnEl.dataset.name;
+                        const uri = decodeURIComponent(btnEl.dataset.uri);
+                        
+                        document.getElementById('edit_config_original_name').value = name;
+                        document.getElementById('edit_config_name').value = name;
+                        document.getElementById('edit_config_uri').value = uri;
+                        
+                        document.getElementById('editConfigModal').classList.remove('hidden');
+                    });
+                });
+
+                // Attach delete listeners
+                document.querySelectorAll('.delete-extra-config').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault(); 
+                        deleteExtraConfig(btn.dataset.name)
+                    });
+                });
+            })
+            .catch(e => console.error("Failed to fetch configs", e));
+    };
+
+    // Bulk Delete State Manager
+    const updateBulkDeleteState = () => {
+        const checkboxes = document.querySelectorAll('.config-checkbox');
+        const checked = Array.from(checkboxes).filter(c => c.checked);
+        const btn = document.getElementById('bulk_delete_btn');
+        const countSpan = document.getElementById('selected_count');
+        
+        if (checked.length > 0) {
+            btn.classList.remove('hidden');
+            if (countSpan) countSpan.textContent = checked.length;
+        } else {
+            if(btn) btn.classList.add('hidden');
+        }
+        
+        // Update header checkbox
+        const selectAll = document.getElementById('selectAllConfigs');
+        if (selectAll) {
+             selectAll.checked = checkboxes.length > 0 && checked.length === checkboxes.length;
+             selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        }
+    };
+    
+    // Select All Listener
+    const selectAllBox = document.getElementById('selectAllConfigs');
+    if(selectAllBox) {
+        selectAllBox.addEventListener('change', (e) => {
+             const checkboxes = document.querySelectorAll('.config-checkbox');
+             checkboxes.forEach(box => box.checked = e.target.checked);
+             updateBulkDeleteState();
+        });
+    }
+
+    // Bulk Delete Button Listener
+    const bulkDelBtn = document.getElementById('bulk_delete_btn');
+    if(bulkDelBtn) {
+        bulkDelBtn.addEventListener('click', async () => {
+            const checkboxes = document.querySelectorAll('.config-checkbox:checked');
+            if(checkboxes.length === 0) return;
+            
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `Delete ${checkboxes.length} configurations?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete all!'
+            });
+            
+            if (result.isConfirmed) {
+                // Bulk delete loop
+                let successCount = 0;
+                for (const box of checkboxes) {
+                    try {
+                         const name = box.value;
+                         const res = await fetch(api.deleteExtraConfig, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({name})
+                         });
+                         if (res.ok) successCount++;
+                    } catch(e) {}
+                }
+                Swal.fire('Deleted', `${successCount} configurations removed.`, 'success');
+                fetchExtraConfigs();
+            }
+        });
+    }
+
+    const addExtraConfig = (name, uri) => {
+        if (!name || !uri) return;
+        
+        let lowerUri = uri.toLowerCase();
+        if (!lowerUri.startsWith("vmess://") && !lowerUri.startsWith("vless://") && !lowerUri.startsWith("ss://") && !lowerUri.startsWith("trojan://")) {
+             Swal.fire('Error', 'Invalid URI format', 'error');
+             return;
+        }
+
+        fetch(api.addExtraConfig, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, uri})
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.detail || 'Failed to add config');
+            }
+            return data;
+        })
+        .then(resp => {
+            Swal.fire('Success', resp.detail || 'Configuration added.', 'success');
+            document.getElementById('add_extra_config_form').reset();
+            document.getElementById('addConfigModal').classList.add('hidden');
+            fetchExtraConfigs();
+        })
+        .catch(e => Swal.fire('Error', e.message || 'Failed to add config', 'error'));
+    };
+
+    const deleteExtraConfig = (name) => {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will remove the external proxy configuration.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(api.deleteExtraConfig, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name})
+                })
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.detail || 'Failed to delete config');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    Swal.fire('Deleted', data.detail || 'Configuration has been removed.', 'success');
+                    fetchExtraConfigs();
+                })
+                .catch(e => Swal.fire('Error', 'Failed to delete: ' + e.message, 'error'));
+            }
+        });
+    };
+
+    const saveEditConfigBtn = document.getElementById('save_edit_config_btn');
+    if (saveEditConfigBtn) {
+        saveEditConfigBtn.addEventListener('click', () => {
+            const originalName = document.getElementById('edit_config_original_name').value;
+            const newName = document.getElementById('edit_config_name').value;
+            const uri = document.getElementById('edit_config_uri').value;
+            
+            if (!newName || !uri) {
+                Swal.fire('Error', 'Name and URI are required', 'error');
+                return;
+            }
+            
+            let lowerUri = uri.toLowerCase();
+            if (!lowerUri.startsWith("vmess://") && !lowerUri.startsWith("vless://") && !lowerUri.startsWith("ss://") && !lowerUri.startsWith("trojan://")) {
+                 Swal.fire('Error', 'Invalid URI format', 'error');
+                 return;
+            }
+
+            fetch(api.editExtraConfig, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: originalName,
+                    new_name: newName,
+                    uri: uri
+                })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Failed to update config');
+                return data;
+            })
+            .then(data => {
+                Swal.fire('Success', data.detail || 'Configuration updated.', 'success');
+                document.getElementById('editConfigModal').classList.add('hidden');
+                fetchExtraConfigs();
+            })
+            .catch(e => Swal.fire('Error', e.message, 'error'));
+        });
+    }
+
+    const addBtn = document.getElementById('add_extra_config_btn');
+    if(addBtn) {
+        addBtn.addEventListener('click', () => {
+            const name = document.getElementById('extra_config_name').value;
+            const uri = document.getElementById('extra_config_uri').value;
+            addExtraConfig(name, uri);
+        });
+    }
+
+    const bulkBtn = document.getElementById('bulk_import_btn');
+    if(bulkBtn) {
+        bulkBtn.addEventListener('click', async () => {
+            const input = document.getElementById('bulk_config_input').value;
+            if (!input.trim()) return;
+
+            const lines = input.split('\n');
+            const configsToAdd = [];
+            const usedNames = new Set();
+            
+            lines.forEach(line => {
+                let uri = line.trim();
+                if(!uri) return;
+
+                // Strip artifact from URI so it's clean in DB
+                uri = uri.replace(/%20%5B%2ACIDR%5D/gi, "");
+                
+                let name = "";
+                const hashIndex = uri.lastIndexOf('#');
+                if(hashIndex > -1) {
+                    let rawName = uri.substring(hashIndex + 1);
+                    // rawName is now cleaner, but we decode it
+                    name = decodeURIComponent(rawName);
+                } else {
+                    try {
+                        const u = new URL(uri);
+                        if(u.hash.length > 1) name = decodeURIComponent(u.hash.substring(1));
+                    } catch(e) {}
+                }
+                
+                if(!name) name = "Proxy " + (configsToAdd.length + 1);
+                
+                let uniqueName = name;
+                let c = 2;
+                while(usedNames.has(uniqueName)) {
+                    uniqueName = `${name} (${c})`;
+                    c++;
+                }
+                usedNames.add(uniqueName);
+                
+                configsToAdd.push({name: uniqueName, uri});
+            });
+            
+            if (configsToAdd.length === 0) {
+                Swal.fire('Warning', 'No valid links found', 'warning');
+                return;
+            }
+
+            const spinner = bulkBtn.querySelector('.spinner-border');
+            bulkBtn.disabled = true;
+            if(spinner) spinner.classList.remove('hidden');
+
+            let success = 0;
+            for (const config of configsToAdd) {
+                try {
+                    const res = await fetch(api.addExtraConfig, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(config)
+                    });
+                    if (res.ok) success++;
+                } catch(e) { console.error(e); }
+            }
+
+            bulkBtn.disabled = false;
+            if(spinner) spinner.classList.add('hidden');
+            document.getElementById('bulkConfigModal').classList.add('hidden');
+            document.getElementById('bulk_config_input').value = '';
+            Swal.fire('Completed', `Imported ${success} configs.`, 'success');
+            fetchExtraConfigs();
+        });
+    }
+
+    fetchExtraConfigs();
+});
+
+// Alpine component definition
+document.addEventListener('alpine:init', () => {
+    Alpine.data('countrySelector', (initialValue = '') => ({
+        search: '',
+        selectedCode: initialValue,
+        isOpen: false,
+        
+        get filteredCountries() {
+             const list = window.countriesList || [];
+             if (this.search === '') return list;
+             return list.filter(c => c.name.toLowerCase().includes(this.search.toLowerCase()));
+        },
+        
+        get selectedCountry() {
+            if (!this.selectedCode) return null;
+            // Handle "CODE|Name" format
+            const parts = this.selectedCode.split('|');
+            const list = window.countriesList || [];
+            if (parts.length < 2 && this.selectedCode.length === 2) {
+                 // Try to recover if just code provided
+                 const found = list.find(c => c.code === this.selectedCode);
+                 return found ? found : {code: this.selectedCode, name: this.selectedCode};
+            }
+            return { 
+                code: parts[0], 
+                name: parts[1] || parts[0]
+            };
+        },
+        
+        select(country) {
+            this.selectedCode = `${country.code}|${country.name}`;
+            this.search = '';
+            this.isOpen = false;
+        },
+        
+        setupEvents() {
+             this.$el.addEventListener('set-location', (e) => {
+                this.selectedCode = e.detail;
+            });
+            this.$el.addEventListener('reset-location', () => {
+                this.selectedCode = '';
+                this.search = '';
+            });
+        }
+    }));
+});
+</script>
+{% endblock %}
+
+{% block javascripts %}
+<!-- SweetAlert2 is loaded in base.html -->
+{% endblock %}

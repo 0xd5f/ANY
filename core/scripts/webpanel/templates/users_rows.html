@@ -1,0 +1,88 @@
+{% if not users %}
+<tr>
+    <td colspan="13" class="text-center p-8 text-gray-500 dark:text-gray-400">
+        <div class="flex flex-col items-center justify-center">
+            <i class="fas fa-users text-4xl mb-3 text-gray-300 dark:text-zinc-600"></i>
+            <p>No users found matching your criteria.</p>
+        </div>
+    </td>
+</tr>
+{% else %}
+    {% for user in users|sort(attribute='username', case_sensitive=false) %}
+    <tr class="group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors border-b border-gray-100 dark:border-zinc-800 last:border-0 user-main-row" 
+        data-username="{{ user.username }}"
+        data-status="{{ user.status }}"
+        data-quota-raw="{{ user.quota }}"
+        data-traffic-used="{{ user.traffic_used }}"
+        data-usage-days-display="{{ user.usage_days_display }}"
+        data-expiry-days="{{ user.expiry_days }}"
+        data-note="{{ user.note or '' }}"
+        data-enable="{{ 'true' if user.enable else 'false' }}"
+        data-unlimited-ip="{{ 'true' if user.unlimited_ip else 'false' }}"
+    >
+        <td class="px-4 py-3">
+             <input type="checkbox" class="user-checkbox rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700" value="{{ user.username }}">
+        </td>
+        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ loop.index + (offset if offset is defined else 0) }}</td>
+        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white" data-username="{{ user.username }}">{{ user.username }}</td>
+        <td class="px-4 py-3 hidden md:table-cell status-cell">
+             {% if user.status == "Online" %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-green-500 rounded-full"></span> Online {% if user.online_count > 0 %}({{ user.online_count }}){% endif %}
+                </span>
+            {% elif user.status == "Offline" %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-zinc-800 dark:text-gray-400">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-gray-400 rounded-full"></span> Offline
+                </span>
+            {% else %}
+                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-red-500 rounded-full"></span> {{ user.status }}
+                </span>
+            {% endif %}
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell traffic-cell text-gray-600 dark:text-gray-300 font-mono text-xs">{{ user.traffic_used }}</td>
+        <td class="px-4 py-3 hidden md:table-cell usage-days-cell text-gray-600 dark:text-gray-300">{{ user.usage_days_display }}</td>
+        <td class="px-4 py-3 hidden md:table-cell expiry-date-cell text-gray-600 dark:text-gray-300">{{ user.expiry_date }}</td>
+        <td class="px-4 py-3 hidden md:table-cell enable-cell">
+            {% if user.enable %}
+            <i class="fas fa-check-circle text-green-500"></i>
+            {% else %}
+            <i class="fas fa-times-circle text-red-500"></i>
+            {% endif %}
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell note-cell text-gray-500 text-xs">
+            {% if user.note %}
+                <span title="{{ user.note }}" class="block truncate max-w-[150px]">{{ user.note }}</span>
+            {% endif %}
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell requires-iplimit-service unlimited-ip-cell text-center">
+            {% if user.unlimited_ip %}
+            <i class="fas fa-check-circle text-green-500"></i>
+            {% else %}
+            <i class="fas fa-times-circle text-red-500"></i>
+            {% endif %}
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell text-nowrap">
+            <a href="#" class="text-gray-400 hover:text-primary-600 transition-colors config-link" data-toggle="modal" data-target="#qrcodeModal" data-username="{{ user.username }}">
+                <i class="fas fa-qrcode text-lg"></i>
+            </a>
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell text-right">
+            <div class="flex justify-end gap-2">
+                <button type="button" class="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 edit-user" data-user="{{ user.username }}" data-toggle="modal" data-target="#editUserModal" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="p-1.5 rounded-lg text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 reset-user" data-user="{{ user.username }}" title="Reset Traffic">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button type="button" class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 delete-user" data-user="{{ user.username }}" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+        <td class="d-md-none text-center hidden">
+            <!-- Mobile details button placeholder if needed -->
+        </td>
+    </tr>
+    {% endfor %}
+{% endif %}

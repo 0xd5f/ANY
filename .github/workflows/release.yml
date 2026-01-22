@@ -1,0 +1,89 @@
+name: Create Release on Version Change
+
+on:
+  push:
+    paths:
+      - 'VERSION'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22.x'
+        cache-dependency-path: core/scripts/auth/go.sum
+
+    - name: Read version from VERSION file
+      id: get_version
+      run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+    - name: Initialize Go module
+      working-directory: ./core/scripts/auth
+      run: |
+        go mod init hysteria_auth
+        go mod tidy
+
+    - name: Build and Package for linux-amd64
+      id: package_amd64
+      run: |
+        (cd core/scripts/auth && GOOS=linux GOARCH=amd64 go build -o user_auth .)
+        zip_name="Blitz-amd64.zip"
+        zip -r "$zip_name" . \
+          -x ".git/*" \
+             ".github/*" \
+             ".gitignore" \
+             "CONTRIBUTING.md" \
+             "LICENSE" \
+             "README*.md" \
+             "SECURITY.md" \
+             "changelog" \
+             "core/scripts/auth/go.*" \
+             "core/scripts/auth/user_auth.go"
+        rm core/scripts/auth/user_auth
+        echo "zip_name=$zip_name" >> $GITHUB_OUTPUT
+
+
+    - name: Build and Package for linux-arm64
+      id: package_arm64
+      run: |
+        (cd core/scripts/auth && GOOS=linux GOARCH=arm64 go build -o user_auth .)
+        zip_name="Blitz-arm64.zip"
+        zip -r "$zip_name" . \
+          -x ".git/*" \
+             ".github/*" \
+             ".gitignore" \
+             "CONTRIBUTING.md" \
+             "LICENSE" \
+             "README*.md" \
+             "SECURITY.md" \
+             "changelog" \
+             "core/scripts/auth/go.*" \
+             "core/scripts/auth/user_auth.go"
+        rm core/scripts/auth/user_auth
+        echo "zip_name=$zip_name" >> $GITHUB_OUTPUT
+
+
+    - name: Read changelog for release description
+      id: get_changelog
+      run: |
+        changelog=$(cat changelog)
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$changelog" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_version.outputs.version }}
+        name: "${{ steps.get_version.outputs.version }}"
+        body: ${{ steps.get_changelog.outputs.changelog }}
+        files: |
+          ${{ steps.package_amd64.outputs.zip_name }}
+          ${{ steps.package_arm64.outputs.zip_name }}
+        draft: false
+        prerelease: false

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">API Documentation</h1>
+</div>
+
+<div class="space-y-6">
+
+    <!-- Introduction Card -->
+    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Introduction</h2>
+        <p class="text-gray-600 dark:text-zinc-400 mb-4">
+            Welcome to the ANY Panel API documentation. This API allows you to programmatically manage users, nodes, and system settings.
+            All API endpoints are prefixed with <code class="bg-gray-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-sm text-pink-500 font-mono">/api/v1</code>.
+        </p>
+        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-r">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-key text-blue-500"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-bold text-blue-800 dark:text-blue-300">Authentication</h3>
+                    <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        You can authenticate using the <strong>API Token</strong> found in <em>Settings > Telegram/API</em>.
+                        Include it in the <code>Authorization</code> header of your requests.
+                    </p>
+                    <div class="mt-2 bg-white/50 dark:bg-black/20 p-2 rounded border border-blue-100 dark:border-blue-900/30 font-mono text-xs">
+                        Authorization: your-secret-api-token
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users API -->
+    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            <i class="fas fa-users text-primary-500"></i> Users API
+        </h2>
+
+        <div class="space-y-6">
+            <!-- Get All Users -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold font-mono">GET</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Retrieve a list of all registered users.</p>
+                
+                <h4 class="text-xs font-semibold uppercase text-gray-500 mb-2">Response Example</h4>
+                <div class="bg-gray-50 dark:bg-zinc-950 rounded-lg p-3 overflow-x-auto">
+<pre class="text-xs font-mono text-gray-700 dark:text-zinc-400">
+[
+  {
+    "username": "user1",
+    "password": "secretparams",
+    "traffic_limit": "20.0 GB",
+    "expiration_date": "2024-12-31 (30 days left)",
+    "status": "Online",
+    "traffic_used": "1.5 GB", 
+    "traffic_usage_percent": 7.5
+  }
+]
+</pre>
+                </div>
+            </div>
+
+            <!-- Get Single User -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold font-mono">GET</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users/{username}</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Get details for a specific user.</p>
+            </div>
+
+             <!-- Get User URI -->
+             <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold font-mono">GET</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users/{username}/uri</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Get connection URIs (hy2://...) and subscription link for a user.</p>
+                <div class="bg-gray-50 dark:bg-zinc-950 rounded-lg p-3 overflow-x-auto">
+<pre class="text-xs font-mono text-gray-700 dark:text-zinc-400">
+{
+  "username": "user1",
+  "ipv4": "hy2://password@1.2.3.4:443?...",
+  "ipv6": "hy2://password@[2001:...]:443?...",
+  "normal_sub": "https://domain.com/sub/password#Hysteria2",
+  "nodes": [
+     { "name": "Node1", "uri": "hy2://..." }
+  ]
+}
+</pre>
+                </div>
+            </div>
+
+            <!-- Create User -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold font-mono">POST</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Create a new user.</p>
+                
+                <h4 class="text-xs font-semibold uppercase text-gray-500 mb-2">Parameters</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-zinc-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-800 dark:text-zinc-400">
+                            <tr>
+                                <th class="px-4 py-2">Field</th>
+                                <th class="px-4 py-2">Type</th>
+                                <th class="px-4 py-2">Required</th>
+                                <th class="px-4 py-2">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800">
+                                <td class="px-4 py-2 font-mono">username</td>
+                                <td class="px-4 py-2">string</td>
+                                <td class="px-4 py-2 text-red-500">Yes</td>
+                                <td class="px-4 py-2">Unique username</td>
+                            </tr>
+                            <tr class="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800">
+                                <td class="px-4 py-2 font-mono">password</td>
+                                <td class="px-4 py-2">string</td>
+                                <td class="px-4 py-2">No</td>
+                                <td class="px-4 py-2">User password (auto-generated if empty)</td>
+                            </tr>
+                             <tr class="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800">
+                                <td class="px-4 py-2 font-mono">traffic_limit</td>
+                                <td class="px-4 py-2">int</td>
+                                <td class="px-4 py-2">No</td>
+                                <td class="px-4 py-2">Traffic limit in GB (0 for unlimited)</td>
+                            </tr>
+                             <tr class="bg-white dark:bg-zinc-900">
+                                <td class="px-4 py-2 font-mono">expiration_days</td>
+                                <td class="px-4 py-2">int</td>
+                                <td class="px-4 py-2">No</td>
+                                <td class="px-4 py-2">Days specific until expiration</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Edit User -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold font-mono">PATCH</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users/{username}</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Edit an existing user. Send only the fields you want to update.</p>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-zinc-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-800 dark:text-zinc-400">
+                            <tr>
+                                <th class="px-4 py-2">Field</th>
+                                <th class="px-4 py-2">Type</th>
+                                <th class="px-4 py-2">Description</th>
+                            </tr>
+                        </thead>
+                         <tbody>
+                            <tr class="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800">
+                                <td class="px-4 py-2 font-mono">new_traffic_limit</td>
+                                <td class="px-4 py-2">int</td>
+                                <td class="px-4 py-2">New traffic limit in GB</td>
+                            </tr>
+                             <tr class="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800">
+                                <td class="px-4 py-2 font-mono">new_expiration_days</td>
+                                <td class="px-4 py-2">int</td>
+                                <td class="px-4 py-2">Extend expiration by N days</td>
+                            </tr>
+                             <tr class="bg-white dark:bg-zinc-900">
+                                <td class="px-4 py-2 font-mono">blocked</td>
+                                <td class="px-4 py-2">boolean</td>
+                                <td class="px-4 py-2">Set true to disable user</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Delete User -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold font-mono">DELETE</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users/{username}</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Remove a user permanently.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- System API -->
+    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            <i class="fas fa-server text-indigo-500"></i> System API
+        </h2>
+
+        <div class="space-y-6">
+            <!-- Get Status -->
+            <div class="border-b border-gray-100 dark:border-zinc-800 pb-0 last:border-0 last:pb-0">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold font-mono">GET</span>
+                    <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/status</code>
+                </div>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Get current system resource usage (CPU, RAM, Disk).</p>
+                
+                <div class="bg-gray-50 dark:bg-zinc-950 rounded-lg p-3 overflow-x-auto">
+<pre class="text-xs font-mono text-gray-700 dark:text-zinc-400">
+{
+  "cpu": 15.2,
+  "ram": 45.8,
+  "disk": 22.1,
+  "uptime": "2 days, 4 hours"
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

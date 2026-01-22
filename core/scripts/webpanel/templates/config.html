@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Config Editor{% endblock %}
+
+{% block content %}
+<div class="p-6"
+     id="config-container"
+     data-get-file-url="{{ url_for('get_file') }}"
+     data-set-file-url="{{ url_for('set_file') }}">
+    
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">JSON Configuration</h1>
+            <p class="text-zinc-500 dark:text-zinc-400 text-sm mt-1">Directly edit the raw configuration file.</p>
+        </div>
+        <div class="flex space-x-3">
+             <button id="restore-button" class="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-100 rounded-xl transition-colors font-medium text-sm flex items-center">
+                <i class="fas fa-undo mr-2"></i> Restore
+            </button>
+            <button id="save-button" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm flex items-center">
+                <i class="fas fa-save mr-2"></i> Save Changes
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl p-1 border border-zinc-200 dark:border-zinc-800 shadow-sm h-[750px]" style="height: 750px;">
+        <div id="jsoneditor" class="w-full h-full rounded-xl overflow-hidden"></div>
+    </div>
+</div>
+
+<style>
+    /* JSON Editor Customization for Dark Mode */
+    .jsoneditor {
+        border: none !important;
+        background-color: #ffffff;
+    }
+    .dark .jsoneditor {
+        background-color: #18181b !important;
+    }
+    .jsoneditor-menu {
+        background-color: #f4f4f5 !important; /* Zinc-100 */
+        border-bottom: 1px solid #e4e4e7 !important; /* Zinc-200 */
+        color: #18181b !important;
+    }
+    .dark .jsoneditor-menu {
+        background-color: #18181b !important; /* Zinc-900 */
+        border-bottom: 1px solid #27272a !important; /* Zinc-800 */
+        color: #f4f4f5 !important;
+    }
+    .jsoneditor-contextmenu .jsoneditor-menu-item:hover {
+        background-color: #3f3f46 !important; 
+        color: white !important;
+    }
+    
+    /* Main Code Area */
+    .jsoneditor-outer {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    div.jsoneditor-tree {
+        background-color: transparent !important;
+    }
+
+    /* Text Colors */
+    .dark .jsoneditor-field, .dark .jsoneditor-value {
+        color: #e4e4e7 !important;
+    }
+    .dark .jsoneditor-tree button {
+        color: #a1a1aa !important;
+    }
+    
+    /* Hide the branding if possible or style it */
+    .jsoneditor-statusbar {
+        background-color: #f4f4f5 !important;
+        border-top: 1px solid #e4e4e7 !important;
+        color: #71717a !important;
+    }
+    .dark .jsoneditor-statusbar {
+        background-color: #18181b !important;
+        border-top: 1px solid #27272a !important;
+        color: #a1a1aa !important;
+    }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+<!-- JSON Editor JS directly via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.0.3/jsoneditor.min.js"></script>
+<!-- JSON Editor CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.0.3/jsoneditor.min.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ url_for('assets', path='js/config.js') }}?v=final2"></script>
+<script>
+    // Add dark mode class to jsoneditor based on html class
+    const updateJsonEditorTheme = () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        const editor = document.getElementById('jsoneditor');
+        if (isDark) {
+            editor.classList.add('dark');
+        } else {
+            editor.classList.remove('dark');
+        }
+    }
+    
+    // Observer for dark mode changes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                updateJsonEditorTheme();
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    updateJsonEditorTheme();
+</script>
+{% endblock %}

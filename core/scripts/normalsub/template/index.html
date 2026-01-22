@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ username }} | Subscription</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#006FEE', // HeroUI Blue
+                            600: '#005BC4',
+                            700: '#004493',
+                        },
+                        dark: {
+                            card: '#18181b',
+                            bg: '#000000',
+                            border: '#27272a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-panel {
+            background: rgba(24, 24, 27, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-black dark:text-white min-h-screen transition-colors duration-300">
+
+    <div class="fixed top-4 right-4 z-50">
+        <button id="theme-toggle" class="p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur border border-white/10 transition-all text-gray-600 dark:text-gray-300">
+            <i class="fas fa-sun dark:hidden"></i>
+            <i class="fas fa-moon hidden dark:inline-block"></i>
+        </button>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- New Header Card matching design -->
+        <div class="bg-dark-card rounded-2xl p-6 mb-4 flex items-center gap-4 dark:bg-[#151517] dark:border dark:border-zinc-800">
+             <div class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                 <i class="fas fa-check text-emerald-500 text-xl"></i>
+             </div>
+             <div>
+                 <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ username }}</h1>
+                 <p class="text-gray-500 dark:text-gray-400 text-sm">Expires in {{ days_remaining }} days</p>
+             </div>
+        </div>
+
+        {% if blocked %}
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-center mb-8">
+            <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-2"></i>
+            <h2 class="text-xl font-bold text-red-700 dark:text-red-400">Account Suspended</h2>
+            <p class="text-red-600 dark:text-red-300 mt-1">Please contact support for assistance.</p>
+        </div>
+        {% else %}
+        
+        <!-- Stats Grid (New Design) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+             
+             <!-- Username Card -->
+             <div class="bg-gray-50 dark:bg-[#151517] border border-blue-500/30 rounded-2xl p-4 relative overflow-hidden">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-user-circle text-blue-500"></i>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Username</p>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white truncate" title="{{ username }}">{{ username }}</h3>
+             </div>
+
+             <!-- Status Card -->
+             <div class="bg-gray-50 dark:bg-[#151517] border border-emerald-500/30 rounded-2xl p-4 relative overflow-hidden">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-check-circle text-emerald-500"></i>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ status }}</h3>
+             </div>
+
+             <!-- Expiration Card -->
+             <div class="bg-gray-50 dark:bg-[#151517] border border-red-500/30 rounded-2xl p-4 relative overflow-hidden">
+                 <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-calendar-alt text-red-500"></i>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expires</p>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ expiration_date }}</h3>
+             </div>
+
+            <!-- Traffic Card -->
+             <div class="bg-gray-50 dark:bg-[#151517] border border-yellow-500/30 rounded-2xl p-4 relative overflow-hidden">
+                <div class="flex items-center gap-2 mb-2">
+                   <i class="fas fa-exchange-alt text-yellow-500"></i>
+                   <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Traffic</p>
+               </div>
+               <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ usage }}</h3>
+            </div>
+
+        </div>
+
+        <!-- Connection Section -->
+        <div class="bg-white dark:bg-[#151517] border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+             <div class="p-6 border-b border-gray-100 dark:border-zinc-800 flex flex-col items-center text-center">
+                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">Quick Connect</h2>
+                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Scan QR or Copy Link</p>
+                 
+                 <!-- Tabs -->
+                 <div class="flex flex-wrap justify-center gap-2 mt-6 p-1 bg-gray-100 dark:bg-black/50 rounded-xl border border-gray-200 dark:border-zinc-800">
+                     <button class="px-6 py-2 rounded-lg text-sm font-medium transition-all bg-white dark:bg-[#151517] shadow-sm text-primary-600 dark:text-primary-400 tab-btn border border-gray-200 dark:border-zinc-700" onclick="switchTab('general', this)">General</button>
+                     <button class="px-6 py-2 rounded-lg text-sm font-medium transition-all text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 tab-btn border border-transparent" onclick="switchTab('haap', this)">Haap</button>
+                 </div>
+             </div>
+
+             <div class="p-8">
+                 <!-- General Tab -->
+                 <div id="tab-general" class="tab-content transition-all duration-300">
+                     <div class="flex flex-col items-center">
+                         <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+                             <img src="{{ sublink_qrcode }}" alt="QR Code" class="w-48 h-48 object-contain">
+                         </div>
+                         <div class="w-full max-w-sm">
+                             <button onclick="copyToClipboard('{{ sub_link }}')" class="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 transform transition hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                                 <i class="fas fa-copy"></i> Copy Subscription Link
+                             </button>
+                             <p class="text-xs text-center text-gray-400 mt-3">Universal format for most clients</p>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- Haap Tab -->
+                 <div id="tab-haap" class="tab-content hidden transition-all duration-300">
+                    <div class="flex flex-col items-center">
+                        <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
+                            <img src="{{ sublink_qrcode }}" alt="QR Code" class="w-48 h-48 object-contain">
+                        </div>
+                        <div class="w-full max-w-sm">
+                            <a href="happ://{{ sub_link_encoded }}#{{ profile_title_encoded }}" class="block w-full py-3.5 px-6 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold shadow-lg shadow-orange-500/20 transform transition hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 no-underline">
+                                <i class="fas fa-file-import"></i> Import to Haap
+                            </a>
+                            <p class="text-xs text-center text-gray-400 mt-3">Import this link into Haap</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 border-t border-gray-100 dark:border-zinc-800 pt-8">
+                     <button id="toggle-nodes-btn" onclick="toggleExternalNodes()" class="w-full py-3 px-4 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300 font-semibold transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-network-wired"></i> Show External Nodes
+                     </button>
+                     
+                     <div id="external-nodes-container" class="hidden mt-6">
+                         {% if node_uris %}
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% for node in node_uris %}
+                            <div class="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex flex-col items-center">
+                                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 truncate max-w-full" title="{{ node.label }}">{{ node.label }}</h4>
+                                <div class="bg-white p-2 rounded-lg shadow-sm mb-3">
+                                    <img src="{{ node.qrcode }}" alt="Node QR" class="w-32 h-32">
+                                </div>
+                                <button onclick="copyToClipboard('{{ node.uri }}')" class="w-full py-2 px-3 text-xs bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
+                                    <i class="fas fa-copy mr-1"></i> Copy URI
+                                </button>
+                            </div>
+                            {% endfor %}
+                         </div>
+                         {% else %}
+                         <p class="text-center text-gray-400 text-sm">No external nodes available.</p>
+                         {% endif %}
+                     </div>
+                </div>
+
+             </div>
+        </div>
+        {% endif %}
+        
+        <footer class="text-center mt-12 text-sm text-gray-400 dark:text-zinc-500 pb-8">
+            <p>&copy; 2026 Powered by ANY Panel</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 translate-y-10 z-50 font-medium text-sm flex items-center gap-2">
+        <i class="fas fa-check-circle text-emerald-500"></i>
+        <span>Link copied to clipboard!</span>
+    </div>
+
+    <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Check local storage or system preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        // Tab Logic
+        function switchTab(tabId, btn) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            // Show selected
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            // Reset buttons
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                // Remove active classes
+                el.classList.remove('bg-white', 'dark:bg-[#151517]', 'shadow-sm', 'text-primary-600', 'dark:text-primary-400', 'border-gray-200', 'dark:border-zinc-700');
+                // Add inactive classes
+                el.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-zinc-400', 'dark:hover:text-zinc-200', 'border-transparent');
+            });
+            
+            // Active button
+            // Remove inactive classes
+            btn.classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-zinc-400', 'dark:hover:text-zinc-200', 'border-transparent');
+            // Add active classes
+            btn.classList.add('bg-white', 'dark:bg-[#151517]', 'shadow-sm', 'text-primary-600', 'dark:text-primary-400', 'border-gray-200', 'dark:border-zinc-700');
+        }
+
+        // Copy Logic
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10');
+                }, 2000);
+            });
+        }
+
+        function toggleExternalNodes() {
+            const container = document.getElementById('external-nodes-container');
+            const btn = document.getElementById('toggle-nodes-btn');
+            
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-network-wired"></i> Hide External Nodes';
+            } else {
+                container.classList.add('hidden');
+                btn.innerHTML = '<i class="fas fa-network-wired"></i> Show External Nodes';
+            }
+        }
+    </script>
+</body>
+</html>
+
