@@ -248,6 +248,71 @@ setup_python_env() {
     fi
 }
 
+configure_hysteria() {
+    log_info "Configuring Hysteria2..."
+    
+    if systemctl is-active --quiet hysteria-server.service; then
+        log_info "Hysteria server is already running. Skipping configuration."
+        return 0
+    fi
+
+    local port="1935"
+    local sni="github.com"
+
+    log_info "Auto-installing Hysteria2 with Port: $port and SNI: $sni"
+
+    if python3 core/cli.py install-hysteria2 --port "$port" --sni "$sni"; then
+        log_success "Hysteria2 configured successfully."
+        echo "SNI=$sni" > /etc/hysteria/.configs.env
+    else
+        log_error "Failed to configure Hysteria2."
+        exit 1
+    fi
+}
+
+configure_webpanel() {
+    log_info "Configuring Web Panel..."
+
+    if systemctl is-active --quiet hysteria-webpanel.service; then
+         log_info "Web Panel is already running."
+         return 0
+    fi
+
+    read -p "Do you want to configure a domain for the Web Panel? (y/n): " -n 1 -r configure_domain
+    echo
+    local domain_arg=""
+    if [[ $configure_domain =~ ^[Yy]$ ]]; then
+         read -p "Enter domain name: " domain_name
+         if [[ -n "$domain_name" ]]; then
+             domain_arg="--domain $domain_name"
+         fi
+    fi
+
+    read -p "Enter port for Web Panel (default: 8080): " panel_port
+    panel_port=${panel_port:-8080}
+    
+    # Generate random credentials
+    local admin_user="admin"
+    local admin_pass=$(pwgen -s 12 1)
+    
+    log_info "Installing Web Panel on port $panel_port..."
+    if python3 core/cli.py install-webpanel --port "$panel_port" --username "$admin_user" --password "$admin_pass" $domain_arg; then
+        log_success "Web Panel installed successfully."
+        echo -e "\n${BOLD}${GREEN}Web Panel Credentials:${NC}"
+        echo -e "URL: http://YOUR_IP:$panel_port (or https://$domain_name if configured)"
+        echo -e "Username: ${YELLOW}$admin_user${NC}"
+        echo -e "Password: ${YELLOW}$admin_pass${NC}\n"
+        
+        # Save credentials to a file for user reference
+        echo "Web Panel Credentials:" > /etc/hysteria/webpanel_credentials.txt
+        echo "Username: $admin_user" >> /etc/hysteria/webpanel_credentials.txt
+        echo "Password: $admin_pass" >> /etc/hysteria/webpanel_credentials.txt
+        log_info "Credentials saved to /etc/hysteria/webpanel_credentials.txt"
+    else
+        log_error "Failed to install Web Panel."
+    fi
+}
+
 add_alias() {
     log_info "Adding 'hys2' alias to .bashrc..."
     
@@ -278,6 +343,8 @@ main() {
     install_packages
     download_and_extract_release
     setup_python_env
+    configure_hysteria
+    configure_webpanel
     add_alias
     
     source ~/.bashrc &> /dev/null || true
