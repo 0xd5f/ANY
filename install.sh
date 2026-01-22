@@ -302,14 +302,21 @@ configure_webpanel() {
     panel_port=${panel_port:-8080}
     
     # Generate random credentials
-    local admin_user="admin"
-    local admin_pass=$(pwgen -s 12 1)
+    local admin_user=$(pwgen -A -0 8 1) # Generate random 8-char username (no numbers/symbols for easier typing, if preferred, or just mixed)
+    local admin_pass=$(pwgen -s 30 1)
     
     log_info "Installing Web Panel on port $panel_port..."
     if python3 core/cli.py webpanel -a start -d "$domain" -p "$panel_port" -au "$admin_user" -ap "$admin_pass"; then
         log_success "Web Panel installed successfully."
+        
+        local url_proto="http"
+        # Simple check if domain is NOT an IP address (contains at least one alpha char)
+        if [[ "$domain" =~ [a-zA-Z] ]]; then
+            url_proto="https"
+        fi
+        
         echo -e "\n${BOLD}${GREEN}Web Panel Credentials:${NC}"
-        echo -e "URL: http://YOUR_IP:$panel_port (or https://$domain_name if configured)"
+        echo -e "URL: ${url_proto}://${domain}:${panel_port}"
         echo -e "Username: ${YELLOW}$admin_user${NC}"
         echo -e "Password: ${YELLOW}$admin_pass${NC}\n"
         
@@ -359,8 +366,8 @@ main() {
     
     source ~/.bashrc &> /dev/null || true
     
-    echo -e "\n${YELLOW}Starting any in 3 seconds...${NC}"
-    sleep 3
+    echo -e "\n${YELLOW}Installation complete! Press Enter to launch the menu...${NC}"
+    read -r
     
     run_menu
 }
