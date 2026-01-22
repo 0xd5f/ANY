@@ -556,7 +556,12 @@ change_port_domain() {
 
 show_webpanel_url() {
     source /etc/hysteria/core/scripts/webpanel/.env
-    local webpanel_url="https://$DOMAIN:$PORT/$ROOT_PATH/"
+    local protocol="https"
+    # Check if DOMAIN is an IP address
+    if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        protocol="http"
+    fi
+    local webpanel_url="${protocol}://$DOMAIN:$PORT/$ROOT_PATH/"
     echo "$webpanel_url"
 }
 

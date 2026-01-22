@@ -306,27 +306,32 @@ configure_webpanel() {
     local admin_pass=$(pwgen -s 30 1)
     
     log_info "Installing Web Panel on port $panel_port..."
-    if python3 core/cli.py webpanel -a start -d "$domain" -p "$panel_port" -au "$admin_user" -ap "$admin_pass"; then
+    
+    if output=$(python3 core/cli.py webpanel -a start -d "$domain" -p "$panel_port" -au "$admin_user" -ap "$admin_pass" 2>&1); then
         log_success "Web Panel installed successfully."
         
-        local url_proto="http"
-        # Simple check if domain is NOT an IP address (contains at least one alpha char)
-        if [[ "$domain" =~ [a-zA-Z] ]]; then
-            url_proto="https"
-        fi
+        # Extract URL from output (it contains the secret path)
+        local full_url=$(echo "$output" | grep -o "accessible on: .*" | awk '{print $3}')
         
+        # Fallback if extraction failed for some reason
+        if [[ -z "$full_url" ]]; then
+             full_url=$(python3 core/cli.py get-webpanel-url --url-only)
+        fi
+
         echo -e "\n${BOLD}${GREEN}Web Panel Credentials:${NC}"
-        echo -e "URL: ${url_proto}://${domain}:${panel_port}"
+        echo -e "URL: $full_url"
         echo -e "Username: ${YELLOW}$admin_user${NC}"
         echo -e "Password: ${YELLOW}$admin_pass${NC}\n"
         
         # Save credentials to a file for user reference
         echo "Web Panel Credentials:" > /etc/hysteria/webpanel_credentials.txt
+        echo "URL: $full_url" >> /etc/hysteria/webpanel_credentials.txt
         echo "Username: $admin_user" >> /etc/hysteria/webpanel_credentials.txt
         echo "Password: $admin_pass" >> /etc/hysteria/webpanel_credentials.txt
         log_info "Credentials saved to /etc/hysteria/webpanel_credentials.txt"
     else
         log_error "Failed to install Web Panel."
+        echo "$output"
     fi
 }
 
