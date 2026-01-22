@@ -83,11 +83,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release delete ${{ steps.get_version.outputs.version }} --cleanup-tag -y || true
+        git push --delete origin ${{ steps.get_version.outputs.version }} || true
+        sleep 5
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.get_version.outputs.version }}
+        target_commitish: ${{ github.sha }}
         name: "${{ steps.get_version.outputs.version }}"
         body: ${{ steps.get_changelog.outputs.changelog }}
         files: |
