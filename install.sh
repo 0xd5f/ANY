@@ -287,6 +287,13 @@ configure_webpanel() {
     
     if [[ -n "$domain_name" ]]; then
          domain="$domain_name"
+         # Check if domain resolves
+         if ! getent hosts "$domain" > /dev/null 2>&1; then
+             log_warning "Warning: The domain '$domain' does not resolve to an IP address."
+             log_warning "You must configure DNS (A record) for this domain to point to this server."
+             log_warning "If you don't own this domain, please reinstall and choose NOT to configure a domain to use IP."
+             sleep 3
+         fi
     else
          log_info "Detecting public IP..."
          domain=$(curl -s https://api.ipify.org || curl -s https://ifconfig.me)

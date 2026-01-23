@@ -113,13 +113,19 @@ $DOMAIN:$PORT {
 }
 EOL
     else
+        # Check if DOMAIN is an IP address to enforce HTTP
+        ADDRESS_PREFIX=""
+        if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+             ADDRESS_PREFIX="http://"
+        fi
+
         cat <<EOL > "$CADDY_CONFIG_FILE"
 {
     admin off
     auto_https disable_redirects
 }
 
-$DOMAIN:$PORT {
+${ADDRESS_PREFIX}$DOMAIN:$PORT {
     route /$ROOT_PATH/* {
         reverse_proxy http://127.0.0.1:28260
     }
