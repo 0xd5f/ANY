@@ -74,14 +74,6 @@ If you installed the Web Panel, access it via your browser:
 *   **URL:** `http://YOUR_IP:PORT/YOUR_SECRET_PATH`
 *   **Default Port:** 8080 (or user defined)
 
-## ⚠️ Production Setup
-
-For a secure production environment, please follow these steps:
-
-1.  Copy `config.example.json` to `config.json` and update all secrets.
-2.  Copy `.env.example` to `.env` and set `DEBUG=false`.
-3.  Enable MongoDB authentication.
-4.  Refer to [PRODUCTION.md](PRODUCTION.md) for the complete guide.
 
 ## 📂 Project Structure
 
