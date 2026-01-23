@@ -1,102 +1,122 @@
-# Any Panel (Hysteria 2 Management Panel)
+<div align="center">
 
-A powerful and easy-to-use management panel for Hysteria 2 proxy server, built with Python and Bash.
+# ANY Panel
 
-## ⚠️ Production Setup
+### Hysteria 2 Management Made Simple
 
-Before deploying to production:
-1. Copy `config.example.json` to `config.json` and update all secrets
-2. Copy `.env.example` to `.env` and set `DEBUG=false`
-3. Enable MongoDB authentication
-4. See [PRODUCTION.md](PRODUCTION.md) for complete guide
+[![GitHub Release](https://img.shields.io/github/v/release/0xd5f/ANY?style=flat-square&color=blue)](https://github.com/0xd5f/ANY/releases)
+[![License](https://img.shields.io/github/license/0xd5f/ANY?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Ubuntu%20%7C%20Debian-orange?style=flat-square)](https://github.com/0xd5f/ANY)
 
-## Features
+<p align="center">
+  A powerful, automated, and user-friendly management panel for Hysteria 2 proxy server.<br>
+  Built with Python and Bash for maximum performance and ease of use.
+</p>
 
-- **User Management**: Add, remove, edit users with traffic limits and expiration dates.
-- **Traffic Monitoring**: Track usage and reset limits.
-- **Protocol Support**: Hysteria 2 with VLESS/Trojan compatibility.
-- **Web Panel**: (Optional) Admin interface for management.
-- **Telegram Bot**: (Optional) Control your server via Telegram.
-- **Installation**: One-click installation script.
+</div>
 
-## Requirements
+---
 
-- **OS**: Ubuntu 22.04+ or Debian 12+
-- **CPU**: Support for AVX instructions (Required for MongoDB 5.0+)
-- **Root Access**: Required for installation and management.
-- **Ports**: 
-  - Hysteria server port (User defined, default 443 or custom)
-  - SSH port (22)
+## ✨ Features
 
-## Installation
+| Feature | Description |
+| :--- | :--- |
+| 👥 **User Management** | Easily add, remove, and edit users with traffic limits and expiration dates. |
+| 📊 **Traffic Monitoring** | Real-time usage tracking and automatic limit enforcement. |
+| 🚀 **Protocol Support** | Full Hysteria 2 support with VLESS/Trojan compatibility. |
+| 💻 **Web Interface** | Modern, responsive web panel for managing your server from anywhere. |
+| 🤖 **Telegram Bot** | Control your server directly via a Telegram Bot. |
+| ⚡ **One-Click Install** | Automated script to get you up and running in seconds. |
 
-### Automatic Installation (Recommended)
+## 📋 Requirements
 
-To install the panel on a fresh server, clone the repository and run the installation script:
+*   **OS:** Ubuntu 22.04+ or Debian 12+
+*   **CPU:** x86_64 with AVX support (Required for MongoDB 5.0+)
+*   **Access:** Root privileges
+*   **Ports:** 443 (default) or any custom port
+
+## 🚀 Installation
+
+### Quick Start (Recommended)
+
+Run the following command on a fresh server to install automatically:
 
 ```bash
-bash <(curl https://raw.githubusercontent.com/0xd5f/ANY/main/install.sh)
+bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/install.sh)
 ```
 
+### Manual Installation
 
+If you prefer to install manually or from a local copy:
+
+1.  Upload the files to your server.
+2.  Run the installer:
+    ```bash
+    chmod +x install.sh
+    sudo ./install.sh
+    ```
+
+## 🛠 Usage
+
+Once installed, you can access the management menu at any time using the alias:
 
 ```bash
-# Clone the repository
-git clone https://github.com/0xd5f/any-panel.git /root/any-panel
-
-# Enter the directory
-cd /root/any-panel
-
-# Run the installer
-chmod +x install.sh
-sudo ./install.sh
+hys2
 ```
 
-### Manual / Local Installation
-
-If you have downloaded the files manually:
-
-1. Upload the files to your server.
-2. Ensure `core/`, `menu.sh`, and `requirements.txt` are in the same folder as `install.sh`.
-3. Run:
-   ```bash
-   chmod +x install.sh
-   sudo ./install.sh
-   ```
-
-## Usage
-
-After installation, you can manage the panel using the CLI menu:
-
+Or by running the script directly:
 ```bash
-hysteria-panel
-# OR directly via script
 ./menu.sh
 ```
 
-### Menu Options
-1. **Install Hysteria 2**: Set up the core server.
-2. **User Management**: Add, delete, or modify users.
-3. **Traffic**: View traffic usage.
-4. **Service Status**: Check if services are running.
-5. **Update**: Update the panel core.
+### 🖥️ Web Panel
+If you installed the Web Panel, access it via your browser:
+*   **URL:** `http://YOUR_IP:PORT/YOUR_SECRET_PATH`
+*   **Default Port:** 8080 (or user defined)
 
-## Project Structure
+## ⚠️ Production Setup
 
-- `core/`: Core Python modules for API and CLI interactions
-- `core/scripts/`: Scripts for Hysteria, Bot, Database management
-- `install.sh`: Main installation script
-- `menu.sh`: Interactive management menu
-- `requirements.txt`: Python dependencies
+For a secure production environment, please follow these steps:
 
-## Contributing
+1.  Copy `config.example.json` to `config.json` and update all secrets.
+2.  Copy `.env.example` to `.env` and set `DEBUG=false`.
+3.  Enable MongoDB authentication.
+4.  Refer to [PRODUCTION.md](PRODUCTION.md) for the complete guide.
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'Add some amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
+## 📂 Project Structure
 
-## License
+*   `core/` - Core Python modules and API logic
+*   `install.sh` - automated installation script
+*   `menu.sh` - Interactive CLI management menu
+*   `requirements.txt` - Python dependencies
 
-See [LICENSE](LICENSE) file for details.
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 💖 Sponsorship & Support
+
+If you find this project useful, please consider supporting its development!
+
+### 🖥️ Recommended Hosting
+[**4VPS.SU**](https://4vps.su/r/hcndRIOoxZGh) - Reliable and affordable VPS hosting.
+
+### 🪙 Crypto Donations
+
+Your support helps keep the project alive and updated.
+
+| Cryptocurrency | Address |
+| :--- | :--- |
+| **BTC** | `bc1qhtfxycw57z6c2xfsaa5hfp8gws4jjrnsyq57n4` |
+| **TRX (Tron)** | `TEmnHg48yLneutMqk9BDP79uMqQQ2LNFxx` |
+| **USDT (TRC20)** | `TEmnHg48yLneutMqk9BDP79uMqQQ2LNFxx` |
+| **TON** | `UQCIMGaysD8Ayl1lx_LAdld9NVnTcMxIF5lA-dlMmUqM1s96` |
+
+### 📞 Contact
+
+| Platform | Link |
+| :--- | :--- |
+| **Telegram** | [Oxd5f](https://t.me/Oxd5f) |
+| **Email** | `oxd5f@proton.me` |

@@ -1,6 +1,1 @@
-Add install script and update release workflow
-
-- Fixed config.json not being downloaded in install.sh
-- Fixed encoding issue in ip.py
-- Removed refs/heads from raw urls
-- Various bug fixes
+Release
