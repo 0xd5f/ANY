@@ -1,7 +1,8 @@
 import json
 import os
 import sys
-import fcntl
+if os.name != 'nt':
+    import fcntl
 import datetime
 import logging
 from typing import Dict, Any, Optional, List, Tuple
@@ -121,31 +122,47 @@ class TrafficManager:
         if username in live_traffic:
             updates['upload_bytes'] = user_data.get('upload_bytes', 0) + live_traffic[username].upload_bytes
             updates['download_bytes'] = user_data.get('download_bytes', 0) + live_traffic[username].download_bytes
-            
             if live_traffic[username].upload_bytes > 0 or live_traffic[username].download_bytes > 0:
                 has_traffic_now = True
 
-        is_online = online_count > 0 or has_traffic_now
+        is_online_realtime = online_count > 0 or has_traffic_now
         
-        if is_online and online_count == 0:
-            online_count = 1
+        now_ts = datetime.datetime.now().timestamp()
+        if is_online_realtime:
+            updates['last_active'] = now_ts
+        
+        try:
+            stored_last_active = user_data.get('last_active', 0)
+            if updates.get('last_active'):
+                last_active_val = updates['last_active']
+            else:
+                last_active_val = float(stored_last_active) if stored_last_active else 0
+            
+            is_recently_active = (now_ts - last_active_val) < 300
+        except (ValueError, TypeError):
+            is_recently_active = False
 
-        if user_data.get('online_count') != online_count:
-            updates['online_count'] = online_count
+        effective_online = is_online_realtime or is_recently_active
+
+        display_online_count = online_count
+        if effective_online and display_online_count == 0:
+            display_online_count = 1
+
+        if user_data.get('online_count') != display_online_count:
+            updates['online_count'] = display_online_count
 
         is_activated = "account_creation_date" in user_data
-        has_activity = is_online
-
-        if not is_activated and has_activity:
+        
+        if not is_activated and has_traffic_now:
             updates["account_creation_date"] = self.today_date
-            updates["status"] = STATUS_ONLINE if is_online else STATUS_OFFLINE
+            updates["status"] = STATUS_ONLINE
         elif is_activated:
-            new_status = STATUS_ONLINE if is_online else STATUS_OFFLINE
+            new_status = STATUS_ONLINE if effective_online else STATUS_OFFLINE
             if user_data.get("status") != new_status:
                 updates["status"] = new_status
-        elif not is_activated and not has_activity and user_data.get("status") != STATUS_OFFLINE:
+        elif not is_activated and not has_traffic_now and user_data.get("status") != STATUS_OFFLINE:
             updates["status"] = STATUS_OFFLINE
-            
+
         return updates
 
     def kick_expired_users(self):

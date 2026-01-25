@@ -86,6 +86,16 @@
                         Subscriptions
                     </button>
 
+                     <button @click="activeTab = 'decoy'" 
+                            :class="activeTab === 'decoy' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
+                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
+                         <div :class="activeTab === 'decoy' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                             <i class="fas fa-mask text-xs"></i>
+                        </div>
+                        Decoy Site
+                    </button>
+                    
                     <button @click="activeTab = 'telegram'" 
                             :class="activeTab === 'telegram' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
@@ -105,18 +115,6 @@
                         </div>
                         IP Limit
                     </button>
-
-                     <button @click="activeTab = 'change_ip'" 
-                            :class="activeTab === 'change_ip' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'change_ip' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
-                             <i class="fas fa-network-wired text-xs"></i>
-                        </div>
-                        Server IP
-                    </button>
-
-
                     
                     <button @click="activeTab = 'warp-content'" 
                             :class="activeTab === 'warp-content' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
@@ -128,26 +126,6 @@
                         WARP
                     </button>
 
-                    <button @click="activeTab = 'decoy'" 
-                            :class="activeTab === 'decoy' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'decoy' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
-                             <i class="fas fa-mask text-xs"></i>
-                        </div>
-                        Decoy Site
-                    </button>
-
-                    <button @click="activeTab = 'backup'" 
-                            :class="activeTab === 'backup' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'backup' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
-                             <i class="fas fa-hdd text-xs"></i>
-                        </div>
-                        Backup & Restore
-                    </button>
-
                     <button @click="activeTab = 'security'" 
                             :class="activeTab === 'security' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
                             class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
@@ -155,17 +133,17 @@
                              class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
                              <i class="fas fa-shield-alt text-xs"></i>
                         </div>
-                        Security
+                        Security & Config
                     </button>
                     
                 </nav>
             </div>
              <!-- Shim for hidden tabs logic - original code accessed these IDs for validation or activation -->
             <div id="subs-tab" :class="activeTab === 'subs' ? 'active' : ''" style="display:none"></div>
+            <div id="decoy-tab" :class="activeTab === 'decoy' ? 'active' : ''" style="display:none"></div>
             <div id="telegram-tab" :class="activeTab === 'telegram' ? 'active' : ''" style="display:none"></div>
             <div id="ip-limit-tab" :class="activeTab === 'ip-limit' ? 'active' : ''" style="display:none"></div>
             <div id="security-tab" :class="activeTab === 'security' ? 'active' : ''" style="display:none"></div>
-            <!-- ... others ... -->
         </div>
 
         <!-- Content Area -->
@@ -173,6 +151,16 @@
             
             <!-- Subscriptions Tab -->
             <div x-show="activeTab === 'subs'" id="subs" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
+                <!-- Header -->
+                 <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                            <i class="fas fa-rss"></i>
+                        </div>
+                         <h2 class="text-xl font-bold text-zinc-900 dark:text-white">Subscription Management</h2>
+                    </div>
+                </div>
+
                 <div x-data="{ subTab: 'normal' }">
                     <div class="flex space-x-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-6 w-fit">
                         <button @click="subTab = 'normal'" 
@@ -191,22 +179,26 @@
 
                     <div x-show="subTab === 'normal'" id="normal">
                         <form id="normal_sub_service_form">
-                           <div class="mb-4">
-                                <label for="normal_domain" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Domain</label>
-                                <input type="text" id="normal_domain" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="sub.example.com">
-                                <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">Please enter a valid domain.</div>
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div class="mb-4">
+                                    <label for="normal_domain" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Subscription Domain</label>
+                                    <input type="text" id="normal_domain" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="sub.example.com">
+                                    <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">Please enter a valid domain.</div>
+                               </div>
+                               <div class="mb-6">
+                                    <label for="normal_port" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Subscription Port</label>
+                                    <input type="text" id="normal_port" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., 8080">
+                                    <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">Please enter a valid port.</div>
+                               </div>
                            </div>
-                           <div class="mb-6">
-                                <label for="normal_port" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port</label>
-                                <input type="text" id="normal_port" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., 8080">
-                                <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">Please enter a valid port.</div>
+                           <div class="flex space-x-3">
+                               <button id="normal_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>
+                                   Start Service
+                               </button>
+                                <button id="normal_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
+                                    Stop Service
+                                </button>
                            </div>
-                           <button id="normal_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>
-                               Start Service
-                           </button>
-                            <button id="normal_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
-                                Stop Service
-                            </button>
                         </form>
                     </div>
 
@@ -214,18 +206,16 @@
                          <form id="normal_sub_config_form">
                              <div class="mb-4">
                                 <label for="normal_subpath_input" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Subscription Path Segment</label>
-                                <input type="text" id="normal_subpath_input" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., mysub">
+                                <input type="text" id="normal_subpath_input" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., mysub">
                                 <p class="mt-1 text-sm text-zinc-500">This path will be part of the URL.</p>
                              </div>
                               <div class="mb-4">
                                 <label for="normal_profile_title_input" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Profile Title (Haap Name)</label>
-                                <input type="text" id="normal_profile_title_input" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., MyVPN">
-                                <p class="mt-1 text-sm text-zinc-500">Displayed as the subscription name in clients like Haap.</p>
+                                <input type="text" id="normal_profile_title_input" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., MyVPN">
                              </div>
                              <div class="mb-4">
                                 <label for="normal_support_url_input" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Support / Info URL</label>
-                                <input type="text" id="normal_support_url_input" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., https://t.me/support">
-                                <p class="mt-1 text-sm text-zinc-500">Optional: URL for the support button (Haap Info Link).</p>
+                                <input type="text" id="normal_support_url_input" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400" placeholder="e.g., https://t.me/support">
                              </div>
                              <div class="mb-6 flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
                                 <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
@@ -244,30 +234,32 @@
 
             <!-- Telegram Tab -->
             <div x-show="activeTab === 'telegram'" id="telegram" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
-                <!-- Panel API Token Display -->
-                <div class="mb-8 pb-6 border-b border-zinc-100 dark:border-zinc-800">
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Panel API Access</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Panel API Token (For External Bots/Scripts)</label>
-                            <div class="relative" x-data="{ copied: false }">
-                                <input type="text" readonly value="{{ api_token }}" class="w-full px-4 py-2 pr-20 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 font-mono text-sm">
-                                <button type="button" @click="navigator.clipboard.writeText('{{ api_token }}'); copied = true; setTimeout(() => copied = false, 2000)" 
-                                        class="absolute right-2 top-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-colors"
-                                        :class="copied ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-white hover:bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 shadow-sm'">
-                                    <span x-text="copied ? 'Copied!' : 'Copy'"></span>
-                                </button>
-                            </div>
-                            <p class="mt-1 text-xs text-zinc-500">Provide this token in the <code>Authorization</code> header to access the Panel API.</p>
+                <!-- Header -->
+                 <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
+                            <i class="fab fa-telegram-plane"></i>
                         </div>
+                         <h2 class="text-xl font-bold text-zinc-900 dark:text-white">Telegram Integration</h2>
+                    </div>
+                </div>
+
+                <div class="p-4 mb-8 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700">
+                    <h3 class="text-sm font-semibold text-zinc-900 dark:text-white mb-2">Panel API Token</h3>
+                    <div class="relative" x-data="{ copied: false }">
+                        <input type="text" readonly value="{{ api_token }}" class="w-full px-4 py-2 pr-20 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono text-sm">
+                        <button type="button" @click="navigator.clipboard.writeText('{{ api_token }}'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="absolute right-2 top-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-colors"
+                                :class="copied ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300'">
+                            <span x-text="copied ? 'Copied!' : 'Copy'"></span>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Bot Info Display -->
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Telegram Bot Settings</h3>
-                <div id="telegram_bot_card" class="mb-6 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hidden">
+                <div id="telegram_bot_card" class="mb-6 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700 bg-blue-50 dark:bg-blue-900/10 hidden">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                        <div class="w-12 h-12 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center text-blue-500 shadow-sm">
                              <i class="fab fa-telegram-plane text-2xl"></i>
                         </div>
                         <div>
@@ -275,42 +267,52 @@
                             <p id="tbot_username" class="text-sm text-zinc-500">@username</p>
                         </div>
                         <div class="ml-auto">
-                             <a id="tbot_link" href="#" target="_blank" class="px-4 py-2 text-xs font-medium bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
-                                Open in Telegram
-                             </a>
+                             <a id="tbot_link" href="#" target="_blank" class="px-4 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors">Open</a>
                         </div>
                     </div>
                 </div>
 
                 <form id="telegram_form">
-                    <div class="mb-4" data-group="start-only">
-                        <label for="telegram_api_token" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">API Token</label>
-                        <input type="text" id="telegram_api_token" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-mono text-sm placeholder-zinc-400/50" placeholder="000000000:AAAA...">
-                    </div>
-                     <div class="mb-4" data-group="start-only">
-                        <label for="telegram_admin_id" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Admin ID</label>
-                        <input type="text" id="telegram_admin_id" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-mono text-sm placeholder-zinc-400/50" placeholder="123456789">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mb-4" data-group="start-only">
+                            <label for="telegram_api_token" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Bot API Token</label>
+                            <input type="text" id="telegram_api_token" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-mono text-sm placeholder-zinc-400/50" placeholder="123456789:ABCdef...">
+                        </div>
+                         <div class="mb-4" data-group="start-only">
+                            <label for="telegram_admin_id" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Admin User ID</label>
+                            <input type="text" id="telegram_admin_id" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-mono text-sm placeholder-zinc-400/50" placeholder="123456789">
+                        </div>
                     </div>
                     <div class="mb-6">
-                        <label for="telegram_backup_interval" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Backup Interval (Hours)</label>
-                        <input type="number" id="telegram_backup_interval" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" min="1" placeholder="12">
+                        <label for="telegram_backup_interval" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Auto-Backup Interval (Hours)</label>
+                        <input type="number" id="telegram_backup_interval" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" min="1" placeholder="12">
                     </div>
                     <div class="flex space-x-3">
-                        <button id="telegram_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Start</button>
+                        <button id="telegram_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Start Bot</button>
                         <button id="telegram_save_interval" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm' style="display:none">Save Interval</button>
-                        <button id="telegram_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display:none">Stop</button>
+                        <button id="telegram_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display:none">Stop Bot</button>
                     </div>
                 </form>
             </div>
 
             <!-- IP Limit Tab -->
             <div x-show="activeTab === 'ip-limit'" id="ip-limit" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
+                 <!-- Header -->
+                 <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                         <h2 class="text-xl font-bold text-zinc-900 dark:text-white">IP Limiter</h2>
+                    </div>
+                </div>
+
                  <div x-data="{ ipLimitTab: 'ip-limit-service' }">
                     <div class="flex space-x-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-6 w-fit">
                         <button @click="ipLimitTab = 'ip-limit-service'" 
                                 :class="ipLimitTab === 'ip-limit-service' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'"
                                 class="px-4 py-2 text-sm font-medium rounded-lg transition-all"
-                                id="ip-limit-service-tab">Service Control</button>
+                                id="ip-limit-service-tab">Service Itself</button>
                          <button @click="ipLimitTab = 'ip-limit-config-content'" 
                                 :class="ipLimitTab === 'ip-limit-config-content' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'"
                                 class="px-4 py-2 text-sm font-medium rounded-lg transition-all"
@@ -319,21 +321,23 @@
 
                      <div x-show="ipLimitTab === 'ip-limit-service'" id="ip-limit-service">
                         <form id="ip_limit_service_form" class="space-x-2">
-                             <button id="ip_limit_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Start</button>
-                            <button id="ip_limit_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">Stop</button>
-                            <button id="ip_limit_clean" type='button' class='px-6 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl shadow-lg shadow-yellow-500/20 transition-all font-medium text-sm' style="display: none;">Clean Database</button>
+                             <button id="ip_limit_start" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Start Service</button>
+                            <button id="ip_limit_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">Stop Service</button>
+                            <button id="ip_limit_clean" type='button' class='px-6 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl shadow-lg shadow-yellow-500/20 transition-all font-medium text-sm' style="display: none;">Clean Logs</button>
                         </form>
                     </div>
 
                     <div x-show="ipLimitTab === 'ip-limit-config-content'" id="ip-limit-config-content">
                         <form id="ip_limit_config_form">
-                            <div class="mb-4">
-                                <label for="block_duration" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Block Duration (seconds)</label>
-                                <input type="text" id="block_duration" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 60">
-                            </div>
-                            <div class="mb-6">
-                                <label for="max_ips" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Max IPs per User</label>
-                                <input type="text" id="max_ips" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="mb-4">
+                                    <label for="block_duration" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Block Duration (s)</label>
+                                    <input type="text" id="block_duration" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 60">
+                                </div>
+                                <div class="mb-6">
+                                    <label for="max_ips" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Max IPs</label>
+                                    <input type="text" id="max_ips" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="e.g. 3">
+                                </div>
                             </div>
                             <button id="ip_limit_change_config" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>Save Configuration</button>
                         </form>
@@ -341,37 +345,14 @@
                 </div>
             </div>
 
-            <!-- Change IP Tab -->
-            <div x-show="activeTab === 'change_ip'" id="change_ip" class="tab-pane">
-                 <!-- Main IP Input -->
-                <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 mb-6">
-                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4">Local Server IP / Domain</h3>
-                    <form id="change_ip_form">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label for="ipv4" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">IPv4 / Domain</label>
-                                <input type="text" id="ipv4" value="{{ ipv4 or '' }}" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="Enter IPv4 or Domain">
-                            </div>
-                             <div>
-                                <label for="ipv6" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">IPv6 / Domain</label>
-                                <input type="text" id="ipv6" value="{{ ipv6 or '' }}" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="Enter IPv6 or Domain">
-                            </div>
-                        </div>
-                        <button id="ip_change" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>Save</button>
-                    </form>
-                </div>
-            </div>
-
-
-
-            <!-- WARP -->
+             <!-- WARP -->
             <div x-show="activeTab === 'warp-content'" id="warp-content" class="tab-pane">
                  <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-8 text-center" id="warp_initial_controls">
                      <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
                          <i class="fas fa-rocket text-2xl"></i>
                      </div>
                      <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">Cloudflare WARP</h3>
-                     <p class="text-zinc-500 mb-6 max-w-md mx-auto">Enhance your connection privacy and unlock content with WARP.</p>
+                     <p class="text-zinc-500 mb-6 max-w-md mx-auto">Enhance your server's routing capabilities to access blocked content (Netflix, ChatGPT, etc.) using Cloudflare WARP.</p>
                      
                      <button id="warp_start_btn" type='button' class='px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium'>
                          Install & Start WARP
@@ -380,29 +361,46 @@
 
                 <div id="warp_active_controls" style="display:none;" class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-bold text-zinc-900 dark:text-white flex items-center">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span> WARP Active
-                        </h3>
-                        <button id="warp_stop_btn" class="text-red-500 hover:text-red-700 text-sm font-medium">Uninstall</button>
+                         <div class="flex items-center gap-3">
+                            <div class="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-600 rounded-lg">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                             <h2 class="text-xl font-bold text-zinc-900 dark:text-white">WARP Configuration</h2>
+                        </div>
+                        <div class="flex gap-3">
+                             <div class="flex items-center px-3 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span> Active
+                            </div>
+                            <button id="warp_stop_btn" class="text-red-500 hover:text-red-700 text-sm font-medium">Uninstall</button>
+                        </div>
                     </div>
 
                     <form id="warp_config_form" class="space-y-4">
                          <div class="flex items-center justify-between p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/20">
-                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer" for="warp_all_traffic">Route All Traffic</label>
+                             <div>
+                                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block cursor-pointer" for="warp_all_traffic">Route All Traffic</label>
+                                <p class="text-xs text-zinc-500 mt-1">Route all outbound server traffic through WARP.</p>
+                             </div>
                             <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
                                 <input type="checkbox" id="warp_all_traffic" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-blue-500 checked:bg-blue-500"/>
                                 <label for="warp_all_traffic" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
                             </div>
                         </div>
                          <div class="flex items-center justify-between p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/20">
-                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer" for="warp_popular_sites">Route Popular Sites (Netflix, ChatGPT...)</label>
+                             <div>
+                                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block cursor-pointer" for="warp_popular_sites">Route Popular Sites</label>
+                                <p class="text-xs text-zinc-500 mt-1">Optimize routing for Netflix, Disney+, ChatGPT, etc.</p>
+                             </div>
                              <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
                                 <input type="checkbox" id="warp_popular_sites" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-blue-500 checked:bg-blue-500"/>
                                 <label for="warp_popular_sites" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
                             </div>
                         </div>
                         <div class="flex items-center justify-between p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/20">
-                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer" for="warp_domestic_sites">Route Domestic Sites</label>
+                            <div>
+                                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block cursor-pointer" for="warp_domestic_sites">Route Domestic Sites</label>
+                                <p class="text-xs text-zinc-500 mt-1">Route domestic traffic through WARP (usually not recommended).</p>
+                             </div>
                             <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
                                 <input type="checkbox" id="warp_domestic_sites" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-blue-500 checked:bg-blue-500"/>
                                 <label for="warp_domestic_sites" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 cursor-pointer"></label>
@@ -417,68 +415,101 @@
 
             <!-- Decoy Site -->
             <div x-show="activeTab === 'decoy'" id="decoy" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
-                <form id="decoy_form">
-                    <div class="mb-4">
-                        <label for="decoy_domain" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Decoy Domain</label>
-                        <input type="text" id="decoy_domain" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="example.com">
+                 <!-- Header -->
+                 <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="p-2 bg-pink-100 dark:bg-pink-900/30 text-pink-600 rounded-lg">
+                            <i class="fas fa-mask"></i>
+                        </div>
+                         <h2 class="text-xl font-bold text-zinc-900 dark:text-white">Decoy Site</h2>
                     </div>
-                     <div class="mb-6">
-                        <label for="decoy_path" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Decoy Site Path</label>
-                        <input type="text" id="decoy_path" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="/var/www/html">
+                    <p class="text-zinc-500 dark:text-zinc-400 text-sm">Configure a fake website to disguise your proxy traffic.</p>
+                </div>
+
+                <form id="decoy_form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mb-4">
+                            <label for="decoy_domain" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Decoy Domain</label>
+                            <input type="text" id="decoy_domain" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="example.com">
+                        </div>
+                         <div class="mb-6">
+                            <label for="decoy_path" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Decoy Site Path</label>
+                            <input type="text" id="decoy_path" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white" placeholder="/var/www/html">
+                        </div>
                     </div>
                     <div class="flex space-x-3">
-                         <button id="decoy_setup" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Setup</button>
-                         <button id="decoy_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display:none">Stop</button>
+                         <button id="decoy_setup" type='button' class='px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>Setup Decoy</button>
+                         <button id="decoy_stop" type='button' class='px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display:none">Stop Decoy</button>
                     </div>
                 </form>
                 <div class="mt-6 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700">
-                    <p id="decoy_status_message" class="text-sm text-zinc-600 dark:text-zinc-400 font-mono">Loading status...</p>
+                    <p id="decoy_status_message" class="text-sm text-zinc-600 dark:text-zinc-400 font-mono flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-500"></i> <span class="loading-text">Loading status...</span>
+                    </p>
                 </div>
             </div>
-
-            <!-- Backup -->
-            <div x-show="activeTab === 'backup'" id="backup" class="tab-pane">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Restore -->
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
-                        <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4"><i class="fas fa-upload mr-2 text-emerald-500"></i> Restore</h3>
-                        <p class="text-sm text-zinc-500 mb-4">Restore panel from a .zip backup.</p>
-                        
-                        <div class="mb-4">
-                             <input type="file" id="backup_file" accept=".zip" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/30 dark:file:text-emerald-400">
-                        </div>
-                        <button id="upload_backup" type='button' class='w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'>
-                            Restore Now
-                        </button>
-                        <div id="backup_status" class="mt-2 text-xs text-zinc-500"></div>
-                    </div>
-
-                    <!-- Backup -->
-                    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4"><i class="fas fa-download mr-2 text-blue-500"></i> Backup</h3>
-                            <p class="text-sm text-zinc-500 mb-4">Download a full backup of all settings.</p>
-                        </div>
-                        <button id="download_backup" type='button' class='w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
-                            Download Backup
-                        </button>
-                    </div>
-                </div>
-            </div>
-
+            
             <!-- Security Tab -->
-            <div x-show="activeTab === 'security'" id="security" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
+            <div x-show="activeTab === 'security'" id="security" class="tab-pane bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 ml-0">
+                <!-- Header -->
+                 <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                         <div class="p-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                         <h2 class="text-xl font-bold text-zinc-900 dark:text-white">Security & Configuration</h2>
+                    </div>
+                </div>
+                
+                 <!-- Domain & Port & Backup Combined -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                     <!-- Server IP -->
+                     <div class="p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30">
+                        <h3 class="text-sm font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                            <i class="fas fa-network-wired mr-2 text-indigo-500"></i> Server IPs
+                        </h3>
+                         <form id="change_ip_form" class="space-y-3">
+                             <div>
+                                <input type="text" id="ipv4" value="{{ ipv4 or '' }}" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm" placeholder="IPv4 / Domain">
+                            </div>
+                             <div>
+                                <input type="text" id="ipv6" value="{{ ipv6 or '' }}" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm" placeholder="IPv6 / Domain">
+                            </div>
+                             <button id="ip_change" type='button' class='w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-all font-medium text-xs'>Update IPs</button>
+                        </form>
+                    </div>
+
+                    <!-- Backup Actions -->
+                     <div class="p-5 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 flex flex-col justify-between">
+                         <div>
+                            <h3 class="text-sm font-bold text-zinc-900 dark:text-white mb-2 flex items-center">
+                                <i class="fas fa-save mr-2 text-blue-500"></i> System Backup
+                            </h3>
+                             <p class="text-xs text-zinc-500 mb-4">Create a backup of users and settings.</p>
+                         </div>
+                         <div class="flex gap-2">
+                            <button id="download_backup" type='button' class='flex-1 py-2 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 rounded-lg transition-all font-medium text-xs'>
+                                <i class="fas fa-download mr-1"></i> Download
+                            </button>
+                             <button onclick="document.getElementById('backup_file').click()" type='button' class='flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-all font-medium text-xs'>
+                                <i class="fas fa-upload mr-1"></i> Restore
+                            </button>
+                            <input type="file" id="backup_file" accept=".zip" class="hidden">
+                         </div>
+                     </div>
+                </div>
+
+
                 <!-- Telegram 2FA -->
-                <div class="mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-8">
+                <div class="mb-8 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                     <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                        <i class="fab fa-telegram-plane mr-2 text-blue-500"></i> Telegram Authentication
+                        <i class="fab fa-telegram-plane mr-2 text-blue-500"></i> Telegram 2FA
                     </h3>
-                    <p class="text-sm text-zinc-500 mb-4">Requrie a verification code sent to the Telegram bot when logging in.</p>
                     
-                    <div class="flex items-center justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700">
+                    <div class="flex items-center justify-between">
                         <div>
-                             <h4 class="font-medium text-zinc-900 dark:text-white">Enable Two-Factor Authentication</h4>
-                             <p class="text-xs text-zinc-500 mt-1">Make sure the Telegram bot is started.</p>
+                             <h4 class="font-medium text-zinc-900 dark:text-white text-sm">Two-Factor Authentication</h4>
+                             <p class="text-xs text-zinc-500 mt-1">Require a code from the bot to login.</p>
                         </div>
                         <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
                             <input type="checkbox" name="telegram_auth" id="telegram_auth_toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200 ease-in-out border-zinc-300 dark:border-zinc-600 checked:translate-x-full checked:border-blue-500 checked:bg-blue-500"/>
@@ -488,99 +519,72 @@
                 </div>
 
                 <!-- Admin Credentials -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                        <i class="fas fa-key mr-2 text-amber-500"></i> Panel Credentials
+                    </h3>
+                    <form id="change_credentials_form" class="bg-zinc-50 dark:bg-zinc-800/30 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="new_username" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">New Username</label>
+                                <input type="text" id="new_username" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="Optional">
+                            </div>
+                            <div>
+                                <label for="new_password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">New Password</label>
+                                <div class="flex gap-2">
+                                    <input type="password" id="new_password" class="form-control flex-1 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="Optional">
+                                    <button type="button" id="toggle_password_visibility_btn" class="px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl text-zinc-500 transition-colors">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="save_credentials_btn" type='button' class='px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-500/20 transition-all font-medium text-sm'>
+                            Update Login Details
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Domain, Port, Path -->
                 <div>
-                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                        <i class="fas fa-user-shield mr-2 text-emerald-500"></i> Change Credentials
+                     <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                        <i class="fas fa-globe mr-2 text-cyan-500"></i> Panel Access URL
                     </h3>
-                    <form id="change_credentials_form">
-                        <div class="mb-4">
-                            <label for="new_username" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">New Username</label>
-                            <input type="text" id="new_username" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="Leave empty to keep current">
-                        </div>
-                        <div class="mb-4">
-                            <label for="new_password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">New Password</label>
-                            <div class="flex gap-2">
-                                <input type="password" id="new_password" class="flex-1 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="Leave empty to keep current">
-                                <button type="button" id="generate_password_btn" class="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-xl text-zinc-600 dark:text-zinc-300 transition-colors" title="Generate Strong Password">
-                                    <i class="fas fa-magic"></i>
-                                </button>
-                                <button type="button" id="toggle_password_visibility_btn" class="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-xl text-zinc-600 dark:text-zinc-300 transition-colors" title="Show/Hide Password">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                    <div class="bg-zinc-50 dark:bg-zinc-800/30 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 space-y-6">
+                        
+                        <!-- Domain/Port -->
+                        <form id="change_domain_port_form">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-500 mb-1">Panel Domain</label>
+                                    <input type="text" id="panel_domain" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="panel.example.com">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-zinc-500 mb-1">Panel Port</label>
+                                    <input type="number" id="panel_port" class="form-control w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="8080">
+                                </div>
                             </div>
-                        </div>
-                        <div class="mb-6">
-                             <label for="confirm_password" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Confirm Password</label>
-                            <input type="password" id="confirm_password" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400">
-                        </div>
-                        <button id="save_credentials_btn" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
-                            Update Credentials
-                        </button>
-                    </form>
-                </div>
+                            <button id="save_domain_port_btn" type='button' class='text-xs text-blue-600 hover:text-blue-700 font-medium'>Update Domain & Port</button>
+                        </form>
 
-                <!-- Domain & Port -->
-                <div class="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
-                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                        <i class="fas fa-globe mr-2 text-cyan-500"></i> Domain & Port
-                    </h3>
-                    <p class="text-sm text-zinc-500 mb-4">
-                        Change the domain and port where the panel is accessible.
-                    </p>
-                    
-                    <form id="change_domain_port_form">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label for="panel_domain" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Domain / IP</label>
-                                <input type="text" id="panel_domain" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="e.g. panel.example.com">
-                            </div>
-                            <div>
-                                <label for="panel_port" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port</label>
-                                <input type="number" id="panel_port" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="e.g. 8080">
-                            </div>
-                        </div>
+                        <div class="border-t border-zinc-200 dark:border-zinc-700 pt-6"></div>
 
-                        <button id="save_domain_port_btn" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
-                            Update Configuration
-                        </button>
-                    </form>
-                     <div class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100 dark:border-yellow-900/30 text-xs text-yellow-700 dark:text-yellow-400">
-                        <i class="fas fa-exclamation-triangle mr-1"></i> Changing these settings will restart the panel service immediately. You will lose connection and must reconnect using the new details.
-                    </div>
-                </div>
-
-                <!-- Secret Panel Path -->
-                <div class="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800">
-                    <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                        <i class="fas fa-eye-slash mr-2 text-purple-500"></i> Secret Panel Path
-                    </h3>
-                    <p class="text-sm text-zinc-500 mb-4">
-                        Hide your panel behind a custom URL path. <br>
-                        Current URL: <code id="current_panel_url" class="bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">...</code>
-                    </p>
-                    
-                    <form id="change_root_path_form">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Panel Path ID</label>
-                            <div class="flex gap-2">
-                                <input type="text" id="root_path_input" class="flex-1 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="e.g. secret123 (or leave empty for root)">
-                                <button type="button" id="generate_random_path_btn" class="px-3 py-2 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-xl text-zinc-600 dark:text-zinc-300 transition-colors" title="Generate Random">
-                                    <i class="fas fa-random"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap gap-2">
-                            <button id="save_root_path_btn" data-action="set" type='button' class='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
-                                Update Path
-                            </button>
-                            <button id="disable_root_path_btn" type='button' class='px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl border border-red-500/20 transition-all font-medium text-sm'>
-                                Disable (Use Root)
-                            </button>
-                        </div>
-                    </form>
-                     <div class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-100 dark:border-yellow-900/30 text-xs text-yellow-700 dark:text-yellow-400">
-                        <i class="fas fa-exclamation-triangle mr-1"></i> Changing this will restart the panel. You will need to access it via the new URL.
+                        <!-- Secret Path -->
+                         <form id="change_root_path_form">
+                           <div class="mb-3">
+                                <label class="block text-xs font-medium text-zinc-500 mb-1">Secret Path ID (Hide Login Page)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="root_path_input" class="form-control flex-1 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400" placeholder="e.g. secret123">
+                                    <button type="button" id="generate_random_path_btn" class="px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-xl text-zinc-500 transition-colors">
+                                        <i class="fas fa-random"></i>
+                                    </button>
+                                </div>
+                           </div>
+                           <div class="flex gap-4">
+                               <button id="save_root_path_btn" data-action="set" type='button' class='text-xs text-purple-600 hover:text-purple-700 font-medium'>Set Secret Path</button>
+                               <button id="disable_root_path_btn" type='button' class='text-xs text-zinc-500 hover:text-red-500 font-medium'>Disable Path</button>
+                           </div>
+                        </form>
                     </div>
                 </div>
             </div>

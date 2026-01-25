@@ -4,6 +4,9 @@ function updateServerInfo() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('cpu-usage').textContent = data.cpu_usage;
+            const cpuBar = document.getElementById('cpu-bar-visual');
+            if (cpuBar) cpuBar.style.width = data.cpu_usage;
+
             document.getElementById('ram-usage').textContent = `${data.ram_usage} / ${data.total_ram}`;
             document.getElementById('online-users').textContent = data.online_users;
             document.getElementById('uptime').textContent = data.uptime;
@@ -57,9 +60,9 @@ function updateServiceBox(serviceName, status) {
     if (serviceName === 'hysteria2') {
         const restartBtn = document.getElementById('restart-hysteria2-btn');
         if (status === true) {
-            restartBtn.style.display = 'none';
+            restartBtn.classList.add('hidden');
         } else {
-            restartBtn.style.display = 'block';
+            restartBtn.classList.remove('hidden');
         }
     }
 }

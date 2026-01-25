@@ -325,13 +325,6 @@
             });
         });
         observer.observe(document.documentElement, { attributes: true });
-        
-        // Initial check
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-             document.documentElement.classList.add('dark');
-        } else {
-             document.documentElement.classList.remove('dark');
-        }
     </script>
     {% endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>

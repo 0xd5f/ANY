@@ -61,7 +61,7 @@ If you prefer to install manually or from a local copy:
 Once installed, you can access the management menu at any time using the alias:
 
 ```bash
-hys2
+pany
 ```
 
 Or by running the script directly:

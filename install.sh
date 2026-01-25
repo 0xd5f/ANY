@@ -343,13 +343,18 @@ configure_webpanel() {
 }
 
 add_alias() {
-    log_info "Adding 'hys2' alias to .bashrc..."
+    log_info "Adding 'pany' alias to .bashrc..."
     
-    if ! grep -q "alias hys2='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
-        echo "alias hys2='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
-        log_success "Added 'hys2' alias to .bashrc"
+    if ! grep -q "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
+        echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
+        log_success "Added 'pany' alias to .bashrc"
     else
-        log_info "Alias 'hys2' already exists in .bashrc"
+        log_info "Alias 'pany' already exists in .bashrc"
+    fi
+    
+    # Remove old alias if it exists
+    if grep -q "alias hys2=" ~/.bashrc; then
+        sed -i '/alias hys2=/d' ~/.bashrc
     fi
 }
 

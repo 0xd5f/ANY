@@ -183,6 +183,14 @@ download_and_extract_latest_release() {
     
     rm "$temp_zip"
     info "Cleaned up temporary file."
+
+    # Update Alias
+    if ! grep -q "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
+        warn "Updating command alias from 'hys2' to 'pany'..."
+        sed -i '/alias hys2=/d' ~/.bashrc
+        echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
+        success "Alias updated: use 'pany' to open the menu."
+    fi
 }
 
 declare -a ACTIVE_SERVICES_BEFORE_UPGRADE=()
