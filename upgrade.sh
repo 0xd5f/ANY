@@ -185,10 +185,9 @@ download_and_extract_latest_release() {
     info "Cleaned up temporary file."
 
     warn "Updating command alias to 'pany'..."
-    sed -i '/alias hys2=/d' ~/.bashrc
-    sed -i '/alias pany=/d' ~/.bashrc
-    echo "alias pany='bash /etc/hysteria/menu.sh'" >> ~/.bashrc
-    source ~/.bashrc &> /dev/null || true
+    sed -i '/alias hys2=/d' ~/.bashrc 2>/dev/null || true
+    sed -i '/alias pany=/d' ~/.bashrc 2>/dev/null || true
+    echo "alias pany='bash /etc/hysteria/menu.sh'" >> ~/.bashrc 2>/dev/null || true
     success "Alias updated: use 'pany' to open the menu."
 }
 
@@ -337,9 +336,10 @@ else
     warn "⚠️ hysteria-server.service is not active. Check logs if needed."
 fi
 
-source ~/.bashrc &> /dev/null || true
-
 info "Upgrade process finished. Launching menu..."
+echo ""
+warn "Note: To use 'pany' command, run: exec bash"
+echo ""
 cd "$HYSTERIA_INSTALL_DIR"
 chmod +x menu.sh
 ./menu.sh
