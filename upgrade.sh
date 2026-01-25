@@ -279,6 +279,8 @@ if id -u hysteria >/dev/null 2>&1; then
 fi
 chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/kick.py"
 chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/auth/user_auth"
+chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/server_info.py" 2>/dev/null || true
+chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/wrapper_uri.py" 2>/dev/null || true
 success "Permissions updated."
 
 info "Setting up virtual environment and installing dependencies..."

@@ -223,6 +223,10 @@ download_and_extract_release() {
     else
         log_warning "Auth binary not found at $auth_binary. The installation might be incomplete."
     fi
+    
+    chmod +x /etc/hysteria/core/scripts/hysteria2/server_info.py 2>/dev/null || true
+    chmod +x /etc/hysteria/core/scripts/hysteria2/wrapper_uri.py 2>/dev/null || true
+    log_success "Set execute permissions for Python scripts."
 }
 
 setup_python_env() {
@@ -381,6 +385,9 @@ main() {
     
     source ~/.bashrc &> /dev/null || true
     
+    echo -e "\n${BOLD}${CYAN}IMPORTANT:${NC} To use the 'pany' command directly, please restart your shell."
+    echo -e "Run this command now: ${BOLD}exec bash${NC}\n"
+
     echo -e "\n${YELLOW}Installation complete! Press Enter to launch the menu...${NC}"
     read -r
     
