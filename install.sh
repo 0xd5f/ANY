@@ -278,9 +278,8 @@ configure_webpanel() {
          return 0
     fi
 
-    read -p "Do you want to configure a domain for the Web Panel? (y/n): " -n 1 -r configure_domain
-    echo
-    local domain_arg=""
+    read -p "Do you want to configure a domain for the Web Panel? (y/n): " configure_domain
+    local domain_name=""
     if [[ $configure_domain =~ ^[Yy]$ ]]; then
          read -p "Enter domain name: " domain_name
     fi
