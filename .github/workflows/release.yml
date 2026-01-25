@@ -22,7 +22,7 @@ jobs:
 
     - name: Read version from VERSION file
       id: get_version
-      run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+      run: echo "version=$(cat VERSION | tr -d '[:space:]')" >> $GITHUB_OUTPUT
 
     - name: Initialize Go module
       working-directory: ./core/scripts/auth
@@ -81,6 +81,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ steps.get_version.outputs.version }}
         target_commitish: ${{ github.sha }}
         name: "${{ steps.get_version.outputs.version }}"
