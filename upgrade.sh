@@ -26,7 +26,7 @@ check_avx_support() {
         error "CPU does not support the required AVX instruction set for MongoDB."
         info "Your system is not compatible with this version."
         info "Please use the 'nodb' upgrade script instead:"
-        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/any-panel/nodb/upgrade.sh)${RESET}"
+        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/upgrade.sh)${RESET}"
         error "Upgrade aborted."
         exit 1
     fi
@@ -160,7 +160,7 @@ download_and_extract_latest_release() {
     info "Detected architecture: $arch"
 
     local zip_name="any-${arch}.zip"
-    local download_url="https://github.com/0xd5f/any-panel/releases/latest/download/${zip_name}"
+    local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
     local temp_zip="/tmp/${zip_name}"
 
     info "Downloading latest release from ${download_url}..."
