@@ -80,7 +80,7 @@ check_os_version() {
         log_error "CPU does not support the required AVX instruction set for MongoDB."
         log_info "For systems without AVX support, you can use the 'nodb' version of the panel."
         log_info "To install it, please run the following command:"
-        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/ReturnFI/any/nodb/install.sh)${NC}"
+        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/install.sh)${NC}"
         log_error "Installation aborted."
         exit 1
     fi
