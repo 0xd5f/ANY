@@ -213,6 +213,11 @@ download_and_extract_release() {
         exit 1
     fi
     
+    # Fix CRLF line endings for scripts/configs
+    log_info "Fixing line endings..."
+    find /etc/hysteria -type f \( -name "*.sh" -o -name "*.py" -o -name "*.json" -o -name "*.md" -o -name "changelog" \) -exec sed -i 's/\r$//' {} +
+    log_success "Line endings fixed."
+
     rm "$temp_zip"
     log_info "Cleaned up temporary file."
     
