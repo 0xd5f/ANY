@@ -3,10 +3,12 @@
 set -euo pipefail
 trap 'echo -e "\n❌ An error occurred. Aborting."; exit 1' ERR
 
+# ========== Variables ==========
 HYSTERIA_INSTALL_DIR="/etc/hysteria"
 HYSTERIA_VENV_DIR="$HYSTERIA_INSTALL_DIR/hysteria2_venv"
 MIGRATE_SCRIPT_PATH="$HYSTERIA_INSTALL_DIR/core/scripts/db/migrate_users.py"
 
+# ========== Color Setup ==========
 GREEN=$(tput setaf 2)
 RED=$(tput setaf 1)
 YELLOW=$(tput setaf 3)
@@ -18,6 +20,7 @@ success() { echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')] [OK] - ${RESET} $1";
 warn() { echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] - ${RESET} $1"; }
 error() { echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] - ${RESET} $1"; }
 
+# ========== Check AVX Support ==========
 check_avx_support() {
     info "Checking CPU for AVX support (required for MongoDB)..."
     if grep -q -m1 -o -E 'avx|avx2|avx512' /proc/cpuinfo; then
@@ -26,12 +29,13 @@ check_avx_support() {
         error "CPU does not support the required AVX instruction set for MongoDB."
         info "Your system is not compatible with this version."
         info "Please use the 'nodb' upgrade script instead:"
-        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/upgrade.sh)${RESET}"
+        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/nodb/upgrade.sh)${RESET}"
         error "Upgrade aborted."
         exit 1
     fi
 }
 
+# ========== Fix Caddy Repository ==========
 fix_caddy_repo() {
     info "Checking Caddy repository configuration..."
     local caddy_source_list="/etc/apt/sources.list.d/caddy-stable.list"
@@ -67,6 +71,7 @@ fix_caddy_repo() {
     fi
 }
 
+# ========== Install MongoDB ==========
 install_mongodb() {
     info "Checking for MongoDB..."
     if ! command -v mongod &>/dev/null; then
@@ -132,6 +137,7 @@ migrate_normalsub_path() {
     fi
 }
 
+# ========== New Function to Migrate Data ==========
 migrate_json_to_mongo() {
     info "Checking for user data migration..."
     if [[ -f "$HYSTERIA_INSTALL_DIR/users.json" ]]; then
@@ -159,7 +165,7 @@ download_and_extract_latest_release() {
     esac
     info "Detected architecture: $arch"
 
-    local zip_name="any-${arch}.zip"
+    local zip_name="ANY-${arch}.zip"
     local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
     local temp_zip="/tmp/${zip_name}"
 
@@ -183,14 +189,9 @@ download_and_extract_latest_release() {
     
     rm "$temp_zip"
     info "Cleaned up temporary file."
-
-    warn "Updating command alias to 'pany'..."
-    sed -i '/alias hys2=/d' ~/.bashrc 2>/dev/null || true
-    sed -i '/alias pany=/d' ~/.bashrc 2>/dev/null || true
-    echo "alias pany='bash /etc/hysteria/menu.sh'" >> ~/.bashrc 2>/dev/null || true
-    success "Alias updated: use 'pany' to open the menu."
 }
 
+# ========== Capture Active Services ==========
 declare -a ACTIVE_SERVICES_BEFORE_UPGRADE=()
 ALL_SERVICES=(
     hysteria-caddy.service
@@ -212,13 +213,19 @@ for SERVICE in "${ALL_SERVICES[@]}"; do
     fi
 done
 
+# ========== Check AVX Support Prerequisite ==========
 check_avx_support
 
+# ========== Fix Caddy Repo Prerequisite ==========
 fix_caddy_repo
 
+# ========== Install MongoDB Prerequisite ==========
 install_mongodb
 
+# ========== Migrate NormalSub Path (if necessary) ==========
+# migrate_normalsub_path
 
+# ========== Backup Files ==========
 cd /root
 TEMP_DIR=$(mktemp -d)
 FILES=(
@@ -249,8 +256,10 @@ for FILE in "${FILES[@]}"; do
     fi
 done
 
+# ========== Download and Replace Installation ==========
 download_and_extract_latest_release
 
+# ========== Restore Backup ==========
 info "Restoring configuration and data files..."
 for FILE in "${FILES[@]}"; do
     BACKUP="$TEMP_DIR/$FILE"
@@ -262,6 +271,7 @@ for FILE in "${FILES[@]}"; do
     fi
 done
 
+# ========== Update Configuration ==========
 info "Updating Hysteria configuration for HTTP authentication..."
 auth_block='{"type": "http", "http": {"url": "http://127.0.0.1:28262/auth"}}'
 if [[ -f "$HYSTERIA_INSTALL_DIR/config.json" ]]; then
@@ -271,6 +281,7 @@ else
     warn "config.json not found after restore. Skipping auth update."
 fi
 
+# ========== Permissions ==========
 info "Setting ownership and permissions..."
 if id -u hysteria >/dev/null 2>&1; then
     chown hysteria:hysteria "$HYSTERIA_INSTALL_DIR/ca.key" "$HYSTERIA_INSTALL_DIR/ca.crt" 2>/dev/null || true
@@ -279,10 +290,9 @@ if id -u hysteria >/dev/null 2>&1; then
 fi
 chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/kick.py"
 chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/auth/user_auth"
-chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/server_info.py" 2>/dev/null || true
-chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/wrapper_uri.py" 2>/dev/null || true
 success "Permissions updated."
 
+# ========== Virtual Environment ==========
 info "Setting up virtual environment and installing dependencies..."
 cd "$HYSTERIA_INSTALL_DIR"
 python3 -m venv "$HYSTERIA_VENV_DIR"
@@ -291,8 +301,10 @@ pip install --upgrade pip >/dev/null
 pip install -r requirements.txt >/dev/null
 success "Python environment ready."
 
+# ========== Data Migration ==========
 migrate_json_to_mongo
 
+# ========== Systemd Services ==========
 info "Ensuring systemd services are configured..."
 if source "$HYSTERIA_INSTALL_DIR/core/scripts/scheduler.sh"; then
     if ! check_auth_server_service; then
@@ -310,6 +322,7 @@ else
     warn "Failed to source scheduler.sh, continuing without service setup..."
 fi
 
+# ========== Restart Services ==========
 info "Reloading systemd daemon..."
 systemctl daemon-reload
 
@@ -320,32 +333,27 @@ else
     for SERVICE in "${ACTIVE_SERVICES_BEFORE_UPGRADE[@]}"; do
         info "Attempting to restart $SERVICE..."
         systemctl enable "$SERVICE" &>/dev/null || warn "Could not enable $SERVICE. It might not exist."
-        if systemctl restart "$SERVICE" 2>/dev/null; then
-            sleep 2
-            if systemctl is-active --quiet "$SERVICE"; then
-                success "$SERVICE restarted successfully and is active."
-            else
-                warn "$SERVICE failed to start or is not active."
-                warn "Showing last 5 log entries for $SERVICE:"
-                journalctl -u "$SERVICE" -n 5 --no-pager
-            fi
+        systemctl restart "$SERVICE"
+        sleep 2
+        if systemctl is-active --quiet "$SERVICE"; then
+            success "$SERVICE restarted successfully and is active."
         else
-            warn "$SERVICE failed to restart. It might need manual configuration."
+            warn "$SERVICE failed to restart or is not active."
+            warn "Showing last 5 log entries for $SERVICE:"
             journalctl -u "$SERVICE" -n 5 --no-pager
         fi
     done
 fi
 
+# ========== Final Check ==========
 if systemctl is-active --quiet hysteria-server.service; then
     success "🎉 Upgrade completed successfully!"
 else
     warn "⚠️ hysteria-server.service is not active. Check logs if needed."
 fi
 
+# ========== Launch Menu ==========
 info "Upgrade process finished. Launching menu..."
-echo ""
-warn "Note: To use 'pany' command, run: exec bash"
-echo ""
 cd "$HYSTERIA_INSTALL_DIR"
 chmod +x menu.sh
 ./menu.sh

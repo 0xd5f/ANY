@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source /etc/hysteria/core/scripts/utils.sh 2>/dev/null || { echo "Error: Cannot load utils.sh. Please reinstall the panel."; exit 1; }
-source /etc/hysteria/core/scripts/path.sh 2>/dev/null || { echo "Error: Cannot load path.sh. Please reinstall the panel."; exit 1; }
+source /etc/hysteria/core/scripts/utils.sh
+source /etc/hysteria/core/scripts/path.sh
 source /etc/hysteria/core/scripts/services_status.sh >/dev/null 2>&1
 
 check_services() {
@@ -416,7 +416,7 @@ edit_ips() {
 }
 
 hysteria_upgrade(){
-    bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/upgrade.sh)
+    bash <(curl https://raw.githubusercontent.com/0xd5f/ANY/main/upgrade.sh)
 }
 
 warp_configure_handler() {
@@ -1087,167 +1087,166 @@ ip_limit_handler() {
     done
 }
 
-
-display_menu_users() {
-    clear
-    echo -e "${LPurple}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${LPurple}║${NC}                   ${green}USER MANAGEMENT${NC}                        ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[1]${NC} ✨ Add New User       ${cyan}[6]${NC} 📊 Check Traffic        ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[2]${NC} 📝 Edit User          ${cyan}[7]${NC} 🔗 Show User URI        ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[3]${NC} 📄 List All Users     ${cyan}[8]${NC} 📦 Bulk Add Users       ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[4]${NC} ❌ Remove User        ${cyan}[9]${NC} 🦶 Kick User            ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[5]${NC} 🔁 Reset User Data    ${cyan}[10]${NC}🔍 Get User Info        ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${red}[0]${NC} 🔙 Return to Main Menu                              ${LPurple}║${NC}"
-    echo -e "${LPurple}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo -ne "${yellow}➜ Select option: ${NC}"
-}
-
-menu_users() {
-    local choice
-    while true; do
-        display_menu_users
-        read -r choice
-        case $choice in
-            1) hysteria2_add_user_handler ;;
-            2) hysteria2_edit_user_handler ;;
-            3) hysteria2_list_users_handler ;;
-            4) hysteria2_remove_user_handler ;;
-            5) hysteria2_reset_user_handler ;;
-            6) python3 $CLI_PATH traffic-status ;;
-            7) hysteria2_show_user_uri_handler ;;
-            8) hysteria2_bulk_add_users_handler ;: ;; # Assuming bulk logic exists or reuse add
-            9) hysteria2_kick_user_handler ;; # Needs verification if handler exists, otherwise generic
-            10) hysteria2_get_user_handler ;;
-            0) return ;;
-            *) echo -e "${red}Invalid option.${NC}" ; sleep 1 ;;
-        esac
-        echo ; read -rp "Press Enter..."
-    done
-}
-
-display_menu_server() {
-    clear
-    echo -e "${LPurple}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${LPurple}║${NC}                   ${green}SERVER SETTINGS${NC}                        ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[1]${NC} 🔌 Change Port        ${cyan}[5]${NC} 🎭 Masquerade Config    ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[2]${NC} 🌐 Change SNI Domain  ${cyan}[6]${NC} 🌍 Update GeoFiles      ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[3]${NC} 🔒 Manage OBFS        ${cyan}[7]${NC} 📡 IPv4/IPv6 Config    ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[4]${NC} 🛠️  Reinstall Core                                  ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${red}[0]${NC} 🔙 Return to Main Menu                              ${LPurple}║${NC}"
-    echo -e "${LPurple}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo -ne "${yellow}➜ Select option: ${NC}"
-}
-
-menu_server() {
-    local choice
-    while true; do
-        display_menu_server
-        read -r choice
-        case $choice in
-            1) hysteria2_change_port_handler ;;
-            2) hysteria2_change_sni_handler ;;
-            3) obfs_handler ;;
-            4) hysteria2_install_handler ;;
-            5) masquerade_handler ;;
-            6) geo_update_handler ;;
-            7) edit_ips ;;
-            0) return ;;
-            *) echo -e "${red}Invalid option.${NC}" ; sleep 1 ;;
-        esac
-        echo ; read -rp "Press Enter..."
-    done
-}
-
-display_menu_tools() {
-    clear
-    echo -e "${LPurple}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${LPurple}║${NC}                 ${green}INTEGRATIONS & TOOLS${NC}                      ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[1]${NC} 📊 Web Panel Manager  ${cyan}[5]${NC} 🚀 Install TCP Brutal   ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[2]${NC} 🤖 Telegram Bot       ${cyan}[6]${NC} 🛡️  IP Limiter Config   ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[3]${NC} 🔗 Normal-Sub Links   ${cyan}[7]${NC} 🌩️  Install WARP        ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[4]${NC} 📦 SingBox Stats      ${cyan}[8]${NC} ⚙️  Configure WARP      ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${red}[0]${NC} 🔙 Return to Main Menu                              ${LPurple}║${NC}"
-    echo -e "${LPurple}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo -ne "${yellow}➜ Select option: ${NC}"
-}
-
-menu_tools() {
-    local choice
-    while true; do
-        display_menu_tools
-        read -r choice
-        case $choice in
-            1) webpanel_handler ;;
-            2) telegram_bot_handler ;;
-            3) normalsub_handler ;;
-            4) singbox_handler ;;
-            5) python3 $CLI_PATH install-tcp-brutal ;;
-            6) ip_limit_handler ;;
-            7) python3 $CLI_PATH install-warp ;;
-            8) warp_configure_handler ;;
-            0) return ;;
-            *) echo -e "${red}Invalid option.${NC}" ; sleep 1 ;;
-        esac
-        echo ; read -rp "Press Enter..."
-    done
-}
-
 display_main_menu() {
     clear
-    define_colors
-    
-    # Simple Header
-    echo -e "${LPurple}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${LPurple}║${NC}                   ${green}ANY PANEL${NC} - ${white}v2.0${NC}                          ${LPurple}║${NC}"
-    echo -e "${LPurple}╚══════════════════════════════════════════════════════════════╝${NC}"
-    
-    # Compact Status
-    echo -e " ${gray}System:${NC} ${white}$OS${NC} | ${gray}IP:${NC} ${white}$IP${NC} | ${gray}Load:${NC} ${white}$CPU${NC}"
-    
-    check_services_compact() {
-        if systemctl is-active --quiet hysteria-server.service; then echo -ne "${green}● Core Active${NC}"; else echo -ne "${red}● Core Down${NC}"; fi
-        echo -ne " | "
-        if systemctl is-active --quiet hysteria-webpanel.service; then echo -e "${green}● Panel Active${NC}"; else echo -e "${red}● Panel Down${NC}"; fi
-    }
-    echo -ne " " ; check_services_compact
-    echo -e "${LPurple}────────────────────────────────────────────────────────────────${NC}"
+    tput setaf 7 ; tput setab 4 ; tput bold
+    echo -e "◇────────────────🚀 Welcome To ANY Panel 🚀─────────────────◇"
+    tput sgr0
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
 
-    # Main Grid
-    echo -e "${LPurple}║${NC} ${cyan}[1]${NC} 👥 User Manager       ${cyan}[2]${NC} ⚙️  Server Settings     ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[3]${NC} 🛠️  Tools & Apps       ${cyan}[4]${NC} 🔄 Check Updates       ${LPurple}║${NC}"
-    echo -e "${LPurple}║${NC} ${cyan}[5]${NC} ♻️  Restart Service    ${cyan}[6]${NC} 🗑️  Uninstall Panel     ${LPurple}║${NC}"
-    echo -e "${LPurple}╠══════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${LPurple}║${NC} ${red}[0]${NC} 🚪 Exit Menu                                        ${LPurple}║${NC}"
-    echo -e "${LPurple}╚══════════════════════════════════════════════════════════════╝${NC}"
-    
-    echo -ne "${yellow}➜ Action: ${NC}"
+    printf "\033[0;32m• OS:  \033[0m%-25s \033[0;32m• ARCH:  \033[0m%-25s\n" "$OS" "$ARCH"
+    printf "\033[0;32m• ISP: \033[0m%-25s \033[0;32m• CPU:   \033[0m%-25s\n" "$ISP" "$CPU"
+    printf "\033[0;32m• IP:  \033[0m%-25s \033[0;32m• RAM:   \033[0m%-25s\n" "$IP" "$RAM"
+
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+        check_core_version
+        check_version
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -e "${yellow}                   ☼ Services Status ☼                   ${NC}"
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+
+        check_services
+
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -e "${yellow}                   ☼ Main Menu ☼                   ${NC}"
+
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -e "${green}[1] ${NC}↝ Hysteria2 Menu"
+    echo -e "${cyan}[2] ${NC}↝ Advance Menu"
+    echo -e "${cyan}[3] ${NC}↝ Update Panel"
+    echo -e "${red}[0] ${NC}↝ Exit"
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -ne "${yellow}➜ Enter your option: ${NC}"
 }
 
 main_menu() {
+    clear
+    local choice
     while true; do
         get_system_info
         display_main_menu
         read -r choice
         case $choice in
-            1) menu_users ;;
-            2) menu_server ;;
-            3) menu_tools ;;
-            4) 
-               python3 $CLI_PATH update-hysteria2 
-               hysteria_upgrade 
-               ;;
-            5) python3 $CLI_PATH restart-hysteria2 ;;
-            6) python3 $CLI_PATH uninstall-hysteria2 ;;
+            1) hysteria2_menu ;;
+            2) advance_menu ;;
+            3) hysteria_upgrade ;;
             0) exit 0 ;;
-            *) echo -e "${red}Invalid option. Please try again.${NC}" ; sleep 1 ;;
+            *) echo "Invalid option. Please try again." ;;
         esac
+        echo
+        read -rp "Press Enter to continue..."
     done
 }
 
+display_hysteria2_menu() {
+    clear
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+
+    echo -e "${yellow}                   ☼ ANY Menu ☼                   ${NC}"
+
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+
+    echo -e "${green}[1] ${NC}↝ Install and Configure Hysteria2"
+    echo -e "${cyan}[2] ${NC}↝ Add User"
+    echo -e "${cyan}[3] ${NC}↝ Edit User"
+    echo -e "${cyan}[4] ${NC}↝ Reset User"
+    echo -e "${cyan}[5] ${NC}↝ Remove User"
+    echo -e "${cyan}[6] ${NC}↝ Get User"
+    echo -e "${cyan}[7] ${NC}↝ List Users"
+    echo -e "${cyan}[8] ${NC}↝ Check Traffic Status"
+    echo -e "${cyan}[9] ${NC}↝ Show User URI"
+
+    echo -e "${red}[0] ${NC}↝ Back to Main Menu"
+
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+
+    echo -ne "${yellow}➜ Enter your option: ${NC}"
+}
+
+hysteria2_menu() {
+    clear
+    local choice
+    while true; do
+        get_system_info
+        display_hysteria2_menu
+        read -r choice
+        case $choice in
+            1) hysteria2_install_handler ;;
+            2) hysteria2_add_user_handler ;;
+            3) hysteria2_edit_user_handler ;;
+            4) hysteria2_reset_user_handler ;;
+            5) hysteria2_remove_user_handler  ;;
+            6) hysteria2_get_user_handler ;;
+            7) hysteria2_list_users_handler ;;
+            8) python3 $CLI_PATH traffic-status ;;
+            9) hysteria2_show_user_uri_handler ;;
+            0) return ;;
+            *) echo "Invalid option. Please try again." ;;
+        esac
+        echo
+        read -rp "Press Enter to continue..."
+    done
+}
+
+display_advance_menu() {
+    clear
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -e "${yellow}                   ☼ Advance Menu ☼                   ${NC}"
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -e "${green}[1] ${NC}↝ Install TCP Brutal"
+    echo -e "${green}[2] ${NC}↝ Install WARP"
+    echo -e "${cyan}[3] ${NC}↝ Configure WARP"
+    echo -e "${red}[4] ${NC}↝ Uninstall WARP"
+    echo -e "${green}[5] ${NC}↝ Telegram Bot"
+    echo -e "${green}[6] ${NC}↝ SingBox SubLink(${red}Deprecated${NC})"
+    echo -e "${green}[7] ${NC}↝ Normal-SUB SubLink"
+    echo -e "${green}[8] ${NC}↝ Web Panel"
+    echo -e "${cyan}[9] ${NC}↝ Change Port Hysteria2"
+    echo -e "${cyan}[10] ${NC}↝ Change SNI Hysteria2"
+    echo -e "${cyan}[11] ${NC}↝ Manage OBFS"
+    echo -e "${cyan}[12] ${NC}↝ Change IPs(4-6)"
+    echo -e "${cyan}[13] ${NC}↝ Update geo Files"
+    echo -e "${cyan}[14] ${NC}↝ Manage Masquerade"
+    echo -e "${cyan}[15] ${NC}↝ Restart Hysteria2"
+    echo -e "${cyan}[16] ${NC}↝ Update Core Hysteria2"
+    echo -e "${cyan}[17] ${NC}↝ IP Limiter Menu"
+    echo -e "${red}[18] ${NC}↝ Uninstall Hysteria2"
+    echo -e "${red}[0] ${NC}↝ Back to Main Menu"
+    echo -e "${LPurple}◇──────────────────────────────────────────────────────────────────────◇${NC}"
+    echo -ne "${yellow}➜ Enter your option: ${NC}"
+}
+
+advance_menu() {
+    clear
+    local choice
+    while true; do
+        display_advance_menu
+        read -r choice
+        case $choice in
+            1) python3 $CLI_PATH install-tcp-brutal ;;
+            2) python3 $CLI_PATH install-warp ;;
+            3) warp_configure_handler ;;
+            4) python3 $CLI_PATH uninstall-warp ;;
+            5) telegram_bot_handler ;;
+            6) singbox_handler ;;
+            7) normalsub_handler ;;
+            8) webpanel_handler ;;
+            9) hysteria2_change_port_handler ;;
+            10) hysteria2_change_sni_handler ;;
+            11) obfs_handler ;;
+            12) edit_ips ;;
+            13) geo_update_handler ;;
+            14) masquerade_handler ;;
+            15) python3 $CLI_PATH restart-hysteria2 ;;
+            16) python3 $CLI_PATH update-hysteria2 ;;
+            17) ip_limit_handler ;;
+            18) python3 $CLI_PATH uninstall-hysteria2 ;;
+            0) return ;;
+            *) echo "Invalid option. Please try again." ;;
+        esac
+        echo
+        read -rp "Press Enter to continue..."
+    done
+}
+define_colors
 main_menu

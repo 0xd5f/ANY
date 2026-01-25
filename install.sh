@@ -80,7 +80,7 @@ check_os_version() {
         log_error "CPU does not support the required AVX instruction set for MongoDB."
         log_info "For systems without AVX support, you can use the 'nodb' version of the panel."
         log_info "To install it, please run the following command:"
-        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/main/install.sh)${NC}"
+        echo -e "${YELLOW}bash <(curl -sL https://raw.githubusercontent.com/0xd5f/ANY/nodb/install.sh)${NC}"
         log_error "Installation aborted."
         exit 1
     fi
@@ -132,7 +132,7 @@ install_mongodb() {
 
 
 install_packages() {
-    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release" "cron")
+    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release")
     local MISSING_PACKAGES=()
     
     log_info "Checking required packages..."
@@ -167,7 +167,7 @@ install_packages() {
 }
 
 download_and_extract_release() {
-    log_info "Downloading and extracting any panel..."
+    log_info "Downloading and extracting ANY panel..."
 
     if [ -d "/etc/hysteria" ]; then
         log_warning "Directory /etc/hysteria already exists."
@@ -192,41 +192,27 @@ download_and_extract_release() {
     esac
     log_info "Detected architecture: $arch"
 
-    local zip_name="any-${arch}.zip"
-    
-    # Check for local files first
-    if [ -f "menu.sh" ] && [ -f "requirements.txt" ] && [ -d "core" ]; then
-        log_info "Local files detected. Installing from current directory..."
-        mkdir -p /etc/hysteria
-        cp -r ./* /etc/hysteria/
-        log_success "Local files copied."
+    local zip_name="ANY-${arch}.zip"
+    local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
+    local temp_zip="/tmp/${zip_name}"
+
+    log_info "Downloading from ${download_url}..."
+    if curl -sL -o "$temp_zip" "$download_url"; then
+        log_success "Download complete."
     else
-        local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
-        local temp_zip="/tmp/${zip_name}"
+        log_error "Failed to download the release asset. Please check the URL and your connection."
+        exit 1
+    fi
 
-        log_info "Downloading from ${download_url}..."
-        if curl -sL -o "$temp_zip" "$download_url"; then
-            log_success "Download complete."
-        else
-            log_error "Failed to download the release asset. Please check the URL and your connection."
-            exit 1
-        fi
-
-        log_info "Extracting to /etc/hysteria..."
-        mkdir -p /etc/hysteria
-        if unzip -q "$temp_zip" -d /etc/hysteria; then
-            log_success "Extracted successfully."
-        else
-            log_error "Failed to extract the archive."
-            exit 1
-        fi
+    log_info "Extracting to /etc/hysteria..."
+    mkdir -p /etc/hysteria
+    if unzip -q "$temp_zip" -d /etc/hysteria; then
+        log_success "Extracted successfully."
+    else
+        log_error "Failed to extract the archive."
+        exit 1
     fi
     
-    # Fix CRLF line endings for scripts/configs
-    log_info "Fixing line endings..."
-    find /etc/hysteria -type f \( -name "*.sh" -o -name "*.py" -o -name "*.json" -o -name "*.md" -o -name "changelog" \) -exec sed -i 's/\r$//' {} +
-    log_success "Line endings fixed."
-
     rm "$temp_zip"
     log_info "Cleaned up temporary file."
     
@@ -237,10 +223,6 @@ download_and_extract_release() {
     else
         log_warning "Auth binary not found at $auth_binary. The installation might be incomplete."
     fi
-    
-    chmod +x /etc/hysteria/core/scripts/hysteria2/server_info.py 2>/dev/null || true
-    chmod +x /etc/hysteria/core/scripts/hysteria2/wrapper_uri.py 2>/dev/null || true
-    log_success "Set execute permissions for Python scripts."
 }
 
 setup_python_env() {
@@ -266,115 +248,14 @@ setup_python_env() {
     fi
 }
 
-configure_hysteria() {
-    log_info "Configuring Hysteria2..."
-    
-    if systemctl is-active --quiet hysteria-server.service; then
-        log_info "Hysteria server is already running. Skipping configuration."
-        return 0
-    fi
-
-    local port="1935"
-    local sni="github.com"
-
-    log_info "Auto-installing Hysteria2 with Port: $port and SNI: $sni"
-
-    if python3 core/cli.py install-hysteria2 --port "$port" --sni "$sni"; then
-        log_success "Hysteria2 configured successfully."
-        echo "SNI=$sni" > /etc/hysteria/.configs.env
-        
-        # Determine IPs and save to .configs.env
-        log_info "Detecting server IPs..."
-        python3 core/cli.py ip-address
-    else
-        log_error "Failed to configure Hysteria2."
-        exit 1
-    fi
-}
-
-configure_webpanel() {
-    log_info "Configuring Web Panel..."
-
-    if systemctl is-active --quiet hysteria-webpanel.service; then
-         log_info "Web Panel is already running."
-         return 0
-    fi
-
-    read -p "Do you want to configure a domain for the Web Panel? (y/n): " configure_domain
-    local domain_name=""
-    if [[ $configure_domain =~ ^[Yy]$ ]]; then
-         read -p "Enter domain name: " domain_name
-    fi
-    
-    if [[ -n "$domain_name" ]]; then
-         domain="$domain_name"
-         # Check if domain resolves
-         if ! getent hosts "$domain" > /dev/null 2>&1; then
-             log_warning "Warning: The domain '$domain' does not resolve to an IP address."
-             log_warning "You must configure DNS (A record) for this domain to point to this server."
-             log_warning "If you don't own this domain, please reinstall and choose NOT to configure a domain to use IP."
-             sleep 3
-         fi
-    else
-         log_info "Detecting public IP..."
-         domain=$(curl -s https://api.ipify.org || curl -s https://ifconfig.me)
-         if [[ -z "$domain" ]]; then
-             log_warning "Could not detect public IP. Using 'localhost'."
-             domain="localhost"
-         else
-             log_info "Using public IP as domain: $domain"
-         fi
-    fi
-
-    read -p "Enter port for Web Panel (default: 8080): " panel_port
-    panel_port=${panel_port:-8080}
-    
-    # Generate random credentials
-    local admin_user=$(pwgen -A -0 8 1) # Generate random 8-char username (no numbers/symbols for easier typing, if preferred, or just mixed)
-    local admin_pass=$(pwgen -s 30 1)
-    
-    log_info "Installing Web Panel on port $panel_port..."
-    
-    if output=$(python3 core/cli.py webpanel -a start -d "$domain" -p "$panel_port" -au "$admin_user" -ap "$admin_pass" 2>&1); then
-        log_success "Web Panel installed successfully."
-        
-        # Extract URL from output (it contains the secret path)
-        local full_url=$(echo "$output" | grep -o "accessible on: .*" | awk '{print $3}')
-        
-        # Fallback if extraction failed for some reason
-        if [[ -z "$full_url" ]]; then
-             full_url=$(python3 core/cli.py get-webpanel-url --url-only)
-        fi
-
-        echo -e "\n${BOLD}${GREEN}Web Panel Credentials:${NC}"
-        echo -e "URL: $full_url"
-        echo -e "Username: ${YELLOW}$admin_user${NC}"
-        echo -e "Password: ${YELLOW}$admin_pass${NC}\n"
-        
-        # Save credentials to a file for user reference
-        echo "Web Panel Credentials:" > /etc/hysteria/webpanel_credentials.txt
-        echo "URL: $full_url" >> /etc/hysteria/webpanel_credentials.txt
-        echo "Username: $admin_user" >> /etc/hysteria/webpanel_credentials.txt
-        echo "Password: $admin_pass" >> /etc/hysteria/webpanel_credentials.txt
-        log_info "Credentials saved to /etc/hysteria/webpanel_credentials.txt"
-    else
-        log_error "Failed to install Web Panel."
-        echo "$output"
-    fi
-}
-
 add_alias() {
-    log_info "Adding 'pany' alias to .bashrc..."
+    log_info "Adding 'hys2' alias to .bashrc..."
     
-    if ! grep -q "alias pany=" ~/.bashrc; then
-        echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
-        log_success "Added 'pany' alias to .bashrc"
+    if ! grep -q "alias hys2='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
+        echo "alias hys2='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
+        log_success "Added 'hys2' alias to .bashrc"
     else
-        log_info "Alias 'pany' already exists in .bashrc"
-    fi
-    
-    if grep -q "alias hys2=" ~/.bashrc; then
-        sed -i '/alias hys2=/d' ~/.bashrc
+        log_info "Alias 'hys2' already exists in .bashrc"
     fi
 }
 
@@ -382,35 +263,27 @@ run_menu() {
     log_info "Preparing to run menu..."
     
     cd /etc/hysteria || { log_error "Failed to change to /etc/hysteria directory"; exit 1; }
-    
-    # Extra safety: Ensure encoding is correct before running
-    sed -i 's/\r$//' menu.sh
     chmod +x menu.sh || { log_error "Failed to make menu.sh executable"; exit 1; }
     
     log_info "Starting menu..."
-    echo -e "\n${BOLD}${GREEN}======== Launching any Menu ========${NC}\n"
-    bash ./menu.sh
+    echo -e "\n${BOLD}${GREEN}======== Launching ANY Menu ========${NC}\n"
+    ./menu.sh
 }
 
 main() {
-    echo -e "\n${BOLD}${BLUE}======== any Setup Script ========${NC}\n"
+    echo -e "\n${BOLD}${BLUE}======== ANY Setup Script ========${NC}\n"
     
     check_root
     check_os_version
     install_packages
     download_and_extract_release
     setup_python_env
-    configure_hysteria
-    configure_webpanel
     add_alias
     
     source ~/.bashrc &> /dev/null || true
     
-    echo -e "\n${BOLD}${CYAN}IMPORTANT:${NC} To use the 'pany' command directly, please restart your shell."
-    echo -e "Run this command now: ${BOLD}exec bash${NC}\n"
-
-    echo -e "\n${YELLOW}Installation complete! Press Enter to launch the menu...${NC}"
-    read -r
+    echo -e "\n${YELLOW}Starting ANY in 3 seconds...${NC}"
+    sleep 3
     
     run_menu
 }
