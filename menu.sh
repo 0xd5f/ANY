@@ -1,7 +1,15 @@
 #!/bin/bash
 
-source /etc/hysteria/core/scripts/utils.sh
-source /etc/hysteria/core/scripts/path.sh
+if ! source /etc/hysteria/core/scripts/utils.sh 2>/dev/null; then
+    echo "Error: Cannot load utils.sh"
+    exit 1
+fi
+
+if ! source /etc/hysteria/core/scripts/path.sh 2>/dev/null; then
+    echo "Error: Cannot load path.sh"
+    exit 1
+fi
+
 source /etc/hysteria/core/scripts/services_status.sh >/dev/null 2>&1
 
 check_services() {
