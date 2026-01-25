@@ -12,9 +12,26 @@ define_colors() {
 get_system_info() {
     OS=$(lsb_release -d | awk -F'\t' '{print $2}')
     ARCH=$(uname -m)
-    IP_API_DATA=$(curl -s https://ipapi.co/json/ -4)
-    ISP=$(echo "$IP_API_DATA" | jq -r '.org')
-    IP=$(echo "$IP_API_DATA" | jq -r '.ip')
+    
+    # Try multiple services for IP
+    IP_API_DATA=""
+    if ! IP_API_DATA=$(curl -s --max-time 3 https://ipapi.co/json/ -4); then
+        IP_API_DATA=""
+    fi
+    
+    if [ -n "$IP_API_DATA" ]; then
+        ISP=$(echo "$IP_API_DATA" | jq -r '.org')
+        IP=$(echo "$IP_API_DATA" | jq -r '.ip')
+    else
+        # Fallback 1
+        IP=$(curl -s --max-time 3 https://api.ipify.org)
+        if [ -z "$IP" ]; then
+             # Fallback 2
+             IP=$(curl -s --max-time 3 https://ifconfig.me)
+        fi
+        ISP="Unknown"
+    fi
+    
     CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4 "%"}')
     RAM=$(free -m | awk 'NR==2{printf "%.2f%%", $3*100/$2 }')
 }

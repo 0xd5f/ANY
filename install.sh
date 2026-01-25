@@ -193,24 +193,33 @@ download_and_extract_release() {
     log_info "Detected architecture: $arch"
 
     local zip_name="any-${arch}.zip"
-    local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
-    local temp_zip="/tmp/${zip_name}"
-
-    log_info "Downloading from ${download_url}..."
-    if curl -sL -o "$temp_zip" "$download_url"; then
-        log_success "Download complete."
+    
+    # Check for local files first
+    if [ -f "menu.sh" ] && [ -f "requirements.txt" ] && [ -d "core" ]; then
+        log_info "Local files detected. Installing from current directory..."
+        mkdir -p /etc/hysteria
+        cp -r ./* /etc/hysteria/
+        log_success "Local files copied."
     else
-        log_error "Failed to download the release asset. Please check the URL and your connection."
-        exit 1
-    fi
+        local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
+        local temp_zip="/tmp/${zip_name}"
 
-    log_info "Extracting to /etc/hysteria..."
-    mkdir -p /etc/hysteria
-    if unzip -q "$temp_zip" -d /etc/hysteria; then
-        log_success "Extracted successfully."
-    else
-        log_error "Failed to extract the archive."
-        exit 1
+        log_info "Downloading from ${download_url}..."
+        if curl -sL -o "$temp_zip" "$download_url"; then
+            log_success "Download complete."
+        else
+            log_error "Failed to download the release asset. Please check the URL and your connection."
+            exit 1
+        fi
+
+        log_info "Extracting to /etc/hysteria..."
+        mkdir -p /etc/hysteria
+        if unzip -q "$temp_zip" -d /etc/hysteria; then
+            log_success "Extracted successfully."
+        else
+            log_error "Failed to extract the archive."
+            exit 1
+        fi
     fi
     
     # Fix CRLF line endings for scripts/configs
@@ -369,11 +378,14 @@ run_menu() {
     log_info "Preparing to run menu..."
     
     cd /etc/hysteria || { log_error "Failed to change to /etc/hysteria directory"; exit 1; }
+    
+    # Extra safety: Ensure encoding is correct before running
+    sed -i 's/\r$//' menu.sh
     chmod +x menu.sh || { log_error "Failed to make menu.sh executable"; exit 1; }
     
     log_info "Starting menu..."
     echo -e "\n${BOLD}${GREEN}======== Launching any Menu ========${NC}\n"
-    ./menu.sh
+    bash ./menu.sh
 }
 
 main() {

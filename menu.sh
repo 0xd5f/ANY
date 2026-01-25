@@ -1245,9 +1245,6 @@ main_menu() {
             5) python3 $CLI_PATH restart-hysteria2 ;;
             6) python3 $CLI_PATH uninstall-hysteria2 ;;
             0) exit 0 ;;
-            *) echo -e "${red}Error: Invalid Input${NC}" ; sleep 0.5 ;;
-        esac
-    done
-}
-m a i n _ m e n u  
- 
+            *) echo -e "${red}
+
+main_menu
