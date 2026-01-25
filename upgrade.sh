@@ -189,6 +189,7 @@ download_and_extract_latest_release() {
         warn "Updating command alias from 'hys2' to 'pany'..."
         sed -i '/alias hys2=/d' ~/.bashrc
         echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
+        source ~/.bashrc
         success "Alias updated: use 'pany' to open the menu."
     fi
 }
