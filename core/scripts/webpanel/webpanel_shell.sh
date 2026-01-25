@@ -1,5 +1,5 @@
 #!/bin/bash
-source /etc/hysteria/core/scripts/utils.sh
+source /etc/hysteria/core/scripts/hysteria2/utils.sh
 define_colors
 
 CADDY_CONFIG_FILE="/etc/hysteria/core/scripts/webpanel/Caddyfile"

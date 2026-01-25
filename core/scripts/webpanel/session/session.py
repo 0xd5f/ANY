@@ -26,7 +26,7 @@ class SessionStorage:
 
 class SessionManager:
 
-    def __init__(self, storage: SessionStorage, expiration_minutes: int = 60):
+    def __init__(self, storage: SessionStorage, expiration_minutes: int = 1440):
         self.storage = storage
         self.expiration = timedelta(minutes=expiration_minutes)
 

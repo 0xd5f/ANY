@@ -132,7 +132,7 @@ install_mongodb() {
 
 
 install_packages() {
-    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release")
+    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release" "cron")
     local MISSING_PACKAGES=()
     
     log_info "Checking required packages..."
@@ -345,14 +345,13 @@ configure_webpanel() {
 add_alias() {
     log_info "Adding 'pany' alias to .bashrc..."
     
-    if ! grep -q "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
-        echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
+    if ! grep -q "alias pany=" ~/.bashrc; then
+        echo "alias pany='bash /etc/hysteria/menu.sh'" >> ~/.bashrc
         log_success "Added 'pany' alias to .bashrc"
     else
         log_info "Alias 'pany' already exists in .bashrc"
     fi
     
-    # Remove old alias if it exists
     if grep -q "alias hys2=" ~/.bashrc; then
         sed -i '/alias hys2=/d' ~/.bashrc
     fi

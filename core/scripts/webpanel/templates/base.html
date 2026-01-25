@@ -198,6 +198,11 @@
                         Api
                     </a>
 
+                    <a href="{{ url_for('changelog') }}" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.path == url_for('changelog') %}bg-primary-500/10 text-primary-500 dark:text-blue-400{% else %}text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800{% endif %}">
+                        <i class="fas fa-history w-5 h-5 mr-3 {% if request.path == url_for('changelog') %}text-primary-500 dark:text-blue-400{% else %}text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300{% endif %}"></i>
+                        Changelog
+                    </a>
+
                     <a href="{{ url_for('reseller_page') }}" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group {% if request.path == url_for('reseller_page') %}bg-primary-500/10 text-primary-500 dark:text-blue-400{% else %}text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800{% endif %}">
                         <i class="fas fa-robot w-5 h-5 mr-3 {% if request.path == url_for('reseller_page') %}text-primary-500 dark:text-blue-400{% else %}text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300{% endif %}"></i>
                         Bot Resell

@@ -20,3 +20,7 @@ async def robots_txt(request: Request):
 async def api_docs(request: Request, templates: Jinja2Templates = Depends(get_templates)):
     return templates.TemplateResponse('api_docs.html', {'request': request})
 
+
+@router.get('/changelog', name='changelog')
+async def changelog(request: Request, templates: Jinja2Templates = Depends(get_templates)):
+    return templates.TemplateResponse('changelog.html', {'request': request})

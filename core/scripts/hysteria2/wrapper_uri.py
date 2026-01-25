@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import init_paths
 import os
 import sys

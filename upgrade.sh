@@ -184,14 +184,12 @@ download_and_extract_latest_release() {
     rm "$temp_zip"
     info "Cleaned up temporary file."
 
-    # Update Alias
-    if ! grep -q "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" ~/.bashrc; then
-        warn "Updating command alias from 'hys2' to 'pany'..."
-        sed -i '/alias hys2=/d' ~/.bashrc
-        echo "alias pany='source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/menu.sh'" >> ~/.bashrc
-        source ~/.bashrc
-        success "Alias updated: use 'pany' to open the menu."
-    fi
+    warn "Updating command alias to 'pany'..."
+    sed -i '/alias hys2=/d' ~/.bashrc
+    sed -i '/alias pany=/d' ~/.bashrc
+    echo "alias pany='bash /etc/hysteria/menu.sh'" >> ~/.bashrc
+    source ~/.bashrc &> /dev/null || true
+    success "Alias updated: use 'pany' to open the menu."
 }
 
 declare -a ACTIVE_SERVICES_BEFORE_UPGRADE=()
@@ -338,6 +336,8 @@ if systemctl is-active --quiet hysteria-server.service; then
 else
     warn "⚠️ hysteria-server.service is not active. Check logs if needed."
 fi
+
+source ~/.bashrc &> /dev/null || true
 
 info "Upgrade process finished. Launching menu..."
 cd "$HYSTERIA_INSTALL_DIR"
