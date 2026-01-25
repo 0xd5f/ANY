@@ -43,7 +43,7 @@ jobs:
              "LICENSE" \
              "README*.md" \
              "SECURITY.md" \
-             "changelog" \
+             "changelog.md" \
              "core/scripts/auth/go.*" \
              "core/scripts/auth/user_auth.go"
         rm core/scripts/auth/user_auth
@@ -63,7 +63,7 @@ jobs:
              "LICENSE" \
              "README*.md" \
              "SECURITY.md" \
-             "changelog" \
+             "changelog.md" \
              "core/scripts/auth/go.*" \
              "core/scripts/auth/user_auth.go"
         rm core/scripts/auth/user_auth
@@ -73,7 +73,7 @@ jobs:
     - name: Read changelog for release description
       id: get_changelog
       run: |
-        changelog=$(cat changelog)
+        changelog=$(cat changelog.md)
         echo "changelog<<EOF" >> $GITHUB_OUTPUT
         echo "$changelog" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
