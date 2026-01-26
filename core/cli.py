@@ -584,13 +584,14 @@ def normalsub(action: str, domain: str, port: int, subpath: str):
 @click.option('--expiration-minutes', '-e', required=False, help='Expiration minutes for WebPanel session', type=int, default=20)
 @click.option('--debug', '-g', is_flag=True, help='Enable debug mode for WebPanel', default=False)
 @click.option('--decoy-path', '-dp', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True), help='Optional path to serve as a decoy site (only for start action)')
-def webpanel(action: str, domain: str, port: int, admin_username: str, admin_password: str, expiration_minutes: int, debug: bool, decoy_path: str | None):
+@click.option('--self-signed', '-ss', is_flag=True, help='Generate and use a self-signed certificate (useful for Cloudflare Full SSL)', default=False)
+def webpanel(action: str, domain: str, port: int, admin_username: str, admin_password: str, expiration_minutes: int, debug: bool, decoy_path: str | None, self_signed: bool):
     try:
         if action == 'start':
             if not domain or not port or not admin_username or not admin_password:
                 raise click.UsageError('Error: the --domain, --port, --admin-username, and --admin-password are required for the start action.')
             
-            cli_api.start_webpanel(domain, port, admin_username, admin_password, expiration_minutes, debug, decoy_path) 
+            cli_api.start_webpanel(domain, port, admin_username, admin_password, expiration_minutes, debug, decoy_path, self_signed) 
 
             services_status = cli_api.get_services_status()
             if not services_status:

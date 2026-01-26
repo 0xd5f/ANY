@@ -684,12 +684,12 @@ def stop_normalsub():
     run_cmd(['bash', Command.INSTALL_NORMALSUB.value, 'stop'])
 
 
-def start_webpanel(domain: str, port: int, admin_username: str, admin_password: str, expiration_minutes: int, debug: bool, decoy_path: str):
+def start_webpanel(domain: str, port: int, admin_username: str, admin_password: str, expiration_minutes: int, debug: bool, decoy_path: str, self_signed: bool):
     if not domain or not port or not admin_username or not admin_password or not expiration_minutes:
         raise InvalidInputError('Error: Both --domain and --port are required for the start action.')
     run_cmd(
         ['bash', Command.SHELL_WEBPANEL.value, 'start',
-         domain, str(port), admin_username, admin_password, str(expiration_minutes), str(debug).lower(), str(decoy_path)]
+         domain, str(port), admin_username, admin_password, str(expiration_minutes), str(debug).lower(), str(decoy_path), str(self_signed).lower()]
     )
 
 

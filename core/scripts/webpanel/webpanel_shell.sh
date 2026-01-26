@@ -47,6 +47,7 @@ update_env_file() {
     local expiration_minutes=$5
     local debug=$6
     local decoy_path=$7
+    local self_signed=$8
 
     local api_token=$(openssl rand -hex 32) 
     local root_path=$(openssl rand -hex 16)
@@ -60,6 +61,7 @@ API_TOKEN=$api_token
 ADMIN_USERNAME=$admin_username
 ADMIN_PASSWORD=$admin_password_hash
 EXPIRATION_MINUTES=$expiration_minutes
+SELF_SIGNED=$self_signed
 EOL
 
     if [ -n "$decoy_path" ] && [ "$decoy_path" != "None" ]; then
@@ -73,6 +75,14 @@ update_caddy_file() {
     if [ -z "$DOMAIN" ] || [ -z "$PORT" ]; then
         echo -e "${red}Error: One or more environment variables are missing.${NC}"
         return 1
+    fi
+    
+    local tls_config=""
+    if [ "$SELF_SIGNED" == "true" ]; then
+        echo "Generating self-signed certificate for $DOMAIN..."
+        mkdir -p /etc/hysteria/core/scripts/webpanel/certs
+        openssl req -x509 -newkey rsa:4096 -keyout /etc/hysteria/core/scripts/webpanel/certs/privkey.pem -out /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem -days 3650 -nodes -subj "/CN=$DOMAIN" >/dev/null 2>&1
+        tls_config="tls /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem /etc/hysteria/core/scripts/webpanel/certs/privkey.pem"
     fi
 
     if [ -z "$ROOT_PATH" ] || [ "$ROOT_PATH" == "/" ]; then
@@ -94,6 +104,7 @@ update_caddy_file() {
 }
 
 ${ADDRESS_PREFIX}$DOMAIN:$PORT {
+    $tls_config
     reverse_proxy http://127.0.0.1:28260
 }
 EOL
@@ -119,6 +130,7 @@ EOL
 }
 
 ${ADDRESS_PREFIX}$DOMAIN:$PORT {
+    $tls_config
     route /$ROOT_PATH/* {
 
         reverse_proxy http://127.0.0.1:28260
@@ -142,12 +154,14 @@ EOL
 }
 
 ${ADDRESS_PREFIX}$DOMAIN:$PORT {
+    $tls_config
     route /$ROOT_PATH/* {
         reverse_proxy http://127.0.0.1:28260
     }
     
     @blocked {
         not path /$ROOT_PATH/*
+
     }
     
     abort @blocked
@@ -213,10 +227,11 @@ start_service() {
     local expiration_minutes=$5
     local debug=$6
     local decoy_path=$7 
+    local self_signed=$8
 
     install_dependencies
 
-    update_env_file "$domain" "$port" "$admin_username" "$admin_password" "$expiration_minutes" "$debug" "$decoy_path"
+    update_env_file "$domain" "$port" "$admin_username" "$admin_password" "$expiration_minutes" "$debug" "$decoy_path" "$self_signed"
     if [ $? -ne 0 ]; then
         echo -e "${red}Error: Failed to update the environment file.${NC}"
         return 1
@@ -611,10 +626,10 @@ stop_service() {
 case "$1" in
     start)
         if [ -z "$2" ] || [ -z "$3" ]; then
-            echo -e "${red}Usage: $0 start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH]${NC}"
+            echo -e "${red}Usage: $0 start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH] [SELF_SIGNED]${NC}"
             exit 1
         fi
-        start_service "$2" "$3" "$4" "$5" "$6" "$7" "$8"
+        start_service "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
         ;;
     stop)
         stop_service

@@ -771,7 +771,16 @@ webpanel_handler() {
                         echo "Passwords did NOT match. Please try again."
                     done
 
-                    python3 $CLI_PATH webpanel -a start -d "$domain" -p "$port" -au "$admin_username" -ap "$admin_password"
+                    while true; do
+                        read -p "Use self-signed certificate? (Recommended for Cloudflare Full SSL) [y/n]: " use_self_signed
+                        case "$use_self_signed" in
+                            y|Y) self_signed_flag="--self-signed"; break ;;
+                            n|N) self_signed_flag=""; break ;;
+                            *) echo "Please answer y or n." ;;
+                        esac
+                    done
+
+                    python3 $CLI_PATH webpanel -a start -d "$domain" -p "$port" -au "$admin_username" -ap "$admin_password" $self_signed_flag
                 fi
                 ;;
             2)
