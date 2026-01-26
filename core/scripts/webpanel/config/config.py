@@ -11,6 +11,7 @@ class Configs(BaseSettings):
     ADMIN_PASSWORD: str
     API_TOKEN: str
     EXPIRATION_MINUTES: int
+    SELF_SIGNED: bool = False
     ROOT_PATH: str = ""
     DECOY_PATH: str | None = None
     
