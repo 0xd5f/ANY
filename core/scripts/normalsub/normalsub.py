@@ -606,7 +606,7 @@ class HysteriaServer:
             fragment = request.query.get('fragment', '')
             
             if 'hiddify' in user_agent:
-                 return await self._handle_normalsub(request, username, user_info)
+                 return await self._handle_normalsub(request, username, user_info, password_token)
 
             if 'singbox' in user_agent or 'sing' in user_agent:
                 return await self._handle_singbox(username, fragment, user_info, password_token)

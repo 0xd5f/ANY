@@ -129,6 +129,9 @@
                     <button onclick="switchTab('haap', this)" class="tab-btn flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 border border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200">
                         Haap
                     </button>
+                    <button onclick="switchTab('hiddify', this)" class="tab-btn flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-500 dark:text-gray-400 border border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200">
+                        Hiddify
+                    </button>
                 </div>
             </div>
 
@@ -178,6 +181,28 @@
                             <i class="fas fa-file-import text-lg"></i>
                             <span>Import to Haap</span>
                         </a>
+                     </div>
+                </div>
+
+                <!-- Hiddify Tab Content -->
+                <div id="tab-hiddify" class="tab-content hidden opacity-0 transition-opacity duration-300">
+                     <div class="flex flex-col items-center">
+                        <div class="relative group cursor-pointer" onclick="copyToClipboard('hiddify://import/{{ sub_link_encoded }}#{{ profile_title_encoded }}', 'Hiddify Link Copied!')">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+                            <div class="relative p-4 bg-white dark:bg-white rounded-xl shadow-sm border border-gray-100 dark:border-gray-200">
+                                <img src="{{ hiddify_qrcode }}" alt="Hiddify QR" class="w-48 h-48 md:w-56 md:h-56 object-contain mix-blend-multiply dark:mix-blend-normal">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8 w-full">
+                            <a href="hiddify://import/{{ sub_link_encoded }}#{{ profile_title_encoded }}" class="btn-press w-full py-4 px-6 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-xl shadow-purple-500/20 flex items-center justify-center gap-3 transition-colors no-underline">
+                                <i class="fas fa-bolt text-lg"></i>
+                                <span>Import to Hiddify</span>
+                            </a>
+                            <p class="mt-4 text-center text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                                Universal client for Sing-box, Xray, and more. Optimized for stability.
+                            </p>
+                        </div>
                      </div>
                 </div>
 
