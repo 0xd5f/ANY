@@ -47,6 +47,11 @@ update_core() {
     info "Updating core directory..."
     if [ -d "$TEMP_DIR/core" ]; then
         cp -rf "$TEMP_DIR/core" "$HYSTERIA_INSTALL_DIR/"
+
+        if [ -f "$TEMP_DIR/VERSION" ]; then
+            cp -f "$TEMP_DIR/VERSION" "$HYSTERIA_INSTALL_DIR/"
+            success "VERSION file updated."
+        fi
         
         chmod -R +x "$HYSTERIA_INSTALL_DIR/core/scripts" || true
         chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/kick.py" || true
