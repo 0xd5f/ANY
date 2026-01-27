@@ -3,11 +3,9 @@
 set -euo pipefail
 trap 'echo -e "\n❌ An error occurred. Aborting."; exit 1' ERR
 
-# ========== Variables ==========
 HYSTERIA_INSTALL_DIR="/etc/hysteria"
 TEMP_DIR=$(mktemp -d)
 
-# ========== Color Setup ==========
 GREEN=$(tput setaf 2)
 RED=$(tput setaf 1)
 BLUE=$(tput setaf 4)
@@ -17,7 +15,6 @@ info() { echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] - ${RESET} $1"; }
 success() { echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')] [OK] - ${RESET} $1"; }
 error() { echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] - ${RESET} $1"; }
 
-# ========== Main Upgrade Logic ==========
 update_core() {
     local arch
     case $(uname -m) in
@@ -49,10 +46,8 @@ update_core() {
     
     info "Updating core directory..."
     if [ -d "$TEMP_DIR/core" ]; then
-        # Copy core folder content to /etc/hysteria/core, overwriting existing files
         cp -rf "$TEMP_DIR/core" "$HYSTERIA_INSTALL_DIR/"
         
-        # Set permissions again just in case new files were added
         chmod -R +x "$HYSTERIA_INSTALL_DIR/core/scripts" || true
         chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/hysteria2/kick.py" || true
         chmod +x "$HYSTERIA_INSTALL_DIR/core/scripts/auth/user_auth" || true
@@ -64,7 +59,6 @@ update_core() {
     fi
 }
 
-# ========== Execution ==========
 info "Starting lightweight upgrade (Core only)..."
 
 update_core
@@ -73,7 +67,6 @@ info "Restarting services..."
 systemctl restart hysteria-webpanel
 systemctl restart hysteria-normal-sub.service
 
-# Remove temp directory
 rm -rf "$TEMP_DIR"
 
 success "🎉 Core upgrade completed successfully!"

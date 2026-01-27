@@ -606,7 +606,7 @@ class HysteriaServer:
             fragment = request.query.get('fragment', '')
             
             if 'hiddify' in user_agent:
-                 return await self._handle_singbox(username, fragment, user_info, password_token)
+                 return await self._handle_normalsub(request, username, user_info, password_token)
 
             if 'singbox' in user_agent or 'sing' in user_agent:
                 return await self._handle_singbox(username, fragment, user_info, password_token)
@@ -717,7 +717,8 @@ class HysteriaServer:
             'Subscription-Userinfo': f"upload={user_info.upload_bytes}; download={user_info.download_bytes}; total={user_info.max_download_bytes}; expire={user_info.expiration_timestamp}",
             'Profile-Title': self.config.profile_title,
             'Profile-Update-Interval': '1',
-            'Profile-Web-Page-Url': web_page_url
+            'Profile-Web-Page-Url': web_page_url,
+            'Content-Disposition': f'attachment; filename="{self.config.profile_title}.txt"'
         }
         
         if self.config.support_url:
