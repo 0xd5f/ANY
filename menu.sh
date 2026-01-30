@@ -783,7 +783,39 @@ webpanel_handler() {
                         read -p "Use self-signed certificate? (Recommended for Cloudflare Full SSL) [y/n]: " use_self_signed
                         case "$use_self_signed" in
                             y|Y) self_signed_flag="--self-signed"; break ;;
-                            n|N) self_signed_flag=""; break ;;
+                            n|N) 
+                                self_signed_flag=""
+                                
+                                # Ask for Certbot
+                                echo ""
+                                read -p "Do you want to generate a trusted certificate using Certbot (Let's Encrypt)? [y/n]: " use_certbot
+                                if [[ "$use_certbot" =~ ^[Yy]$ ]]; then
+                                    if ! command -v certbot &> /dev/null; then
+                                        echo -e "${yellow}Certbot is not installed. Installing...${NC}"
+                                        apt-get update -qq && apt-get install -y certbot -qq
+                                    fi
+
+                                    local cert_email="anypanel@mail.ru"
+                                    
+                                    echo -e "${blue}Stopping standard web servers to free up port 80/443...${NC}"
+                                    systemctl stop nginx &>/dev/null || true
+                                    systemctl stop apache2 &>/dev/null || true
+                                    
+                                    echo -e "${blue}Requesting certificate for $domain using email $cert_email...${NC}"
+                                    if certbot certonly --standalone --agree-tos --non-interactive --email "$cert_email" -d "$domain"; then
+                                        echo -e "${green}Certificate obtained successfully!${NC}"
+                                        mkdir -p /etc/hysteria
+                                        ln -sf "/etc/letsencrypt/live/$domain/fullchain.pem" "/etc/hysteria/$domain.crt"
+                                        ln -sf "/etc/letsencrypt/live/$domain/privkey.pem" "/etc/hysteria/$domain.key"
+                                        chmod 644 "/etc/letsencrypt/live/$domain/fullchain.pem"
+                                    else
+                                        echo -e "${red}Failed to obtain certificate via Certbot.${NC}"
+                                        echo -e "${yellow}Check that your domain points to this IP and ports 80/443 are open.${NC}"
+                                        echo -e "${yellow}Falling back to standard Caddy automatic HTTPS (or self-signed if configured later).${NC}"
+                                    fi
+                                fi
+                                break 
+                                ;;
                             *) echo "Please answer y or n." ;;
                         esac
                     done
