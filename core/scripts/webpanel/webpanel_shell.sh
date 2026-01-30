@@ -1,5 +1,5 @@
 #!/bin/bash
-source /etc/hysteria/core/scripts/hysteria2/utils.sh
+source /etc/hysteria/core/scripts/utils.sh
 define_colors
 
 CADDY_CONFIG_FILE="/etc/hysteria/core/scripts/webpanel/Caddyfile"
@@ -47,7 +47,6 @@ update_env_file() {
     local expiration_minutes=$5
     local debug=$6
     local decoy_path=$7
-    local self_signed=$8
 
     local api_token=$(openssl rand -hex 32) 
     local root_path=$(openssl rand -hex 16)
@@ -61,7 +60,6 @@ API_TOKEN=$api_token
 ADMIN_USERNAME=$admin_username
 ADMIN_PASSWORD=$admin_password_hash
 EXPIRATION_MINUTES=$expiration_minutes
-SELF_SIGNED=$self_signed
 EOL
 
     if [ -n "$decoy_path" ] && [ "$decoy_path" != "None" ]; then
@@ -72,82 +70,9 @@ EOL
 update_caddy_file() {
     source /etc/hysteria/core/scripts/webpanel/.env
     
-    if [ -z "$DOMAIN" ] || [ -z "$PORT" ]; then
+    if [ -z "$DOMAIN" ] || [ -z "$ROOT_PATH" ] || [ -z "$PORT" ]; then
         echo -e "${red}Error: One or more environment variables are missing.${NC}"
         return 1
-    fi
-    
-    local tls_config=""
-    if [ "$SELF_SIGNED" == "true" ]; then
-        echo "Generating self-signed certificate for $DOMAIN..."
-        mkdir -p /etc/hysteria/core/scripts/webpanel/certs
-        openssl req -x509 -newkey rsa:4096 -keyout /etc/hysteria/core/scripts/webpanel/certs/privkey.pem -out /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem -days 3650 -nodes -subj "/CN=$DOMAIN" >/dev/null 2>&1
-        tls_config="tls /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem /etc/hysteria/core/scripts/webpanel/certs/privkey.pem"
-    else
-        if [[ -n "$CUSTOM_CERT" && -n "$CUSTOM_KEY" ]]; then
-             if [[ -f "$CUSTOM_CERT" && -f "$CUSTOM_KEY" ]]; then
-                 echo "Using custom certificate paths defined in settings."
-                 tls_config="tls $CUSTOM_CERT $CUSTOM_KEY"
-             else
-                 echo -e "${yellow}Warning: Custom certificate files not found at specified paths. Falling back to auto-search.${NC}"
-             fi
-        fi
-
-        if [ -z "$tls_config" ]; then
-            if [[ -f "/etc/hysteria/$DOMAIN.crt" && -f "/etc/hysteria/$DOMAIN.key" ]]; then
-                 echo "Found certificate for $DOMAIN in /etc/hysteria/, utilizing it."
-                 tls_config="tls /etc/hysteria/$DOMAIN.crt /etc/hysteria/$DOMAIN.key"
-            elif [[ -f "/etc/hysteria/server.crt" && -f "/etc/hysteria/server.key" ]]; then
-                 echo "Found server.crt/key in /etc/hysteria/, utilizing it."
-                 tls_config="tls /etc/hysteria/server.crt /etc/hysteria/server.key"
-            elif [[ -f "/etc/hysteria/cert.pem" && -f "/etc/hysteria/key.pem" ]]; then
-                 echo "Found cert.pem/key.pem in /etc/hysteria/, utilizing it."
-                 tls_config="tls /etc/hysteria/cert.pem /etc/hysteria/key.pem"
-            elif [[ -f "/etc/hysteria/fullchain.pem" && -f "/etc/hysteria/privkey.pem" ]]; then
-                 echo "Found fullchain.pem/privkey.pem in /etc/hysteria/, utilizing it."
-                 tls_config="tls /etc/hysteria/fullchain.pem /etc/hysteria/privkey.pem"
-            elif [[ -f "/etc/hysteria/ca.crt" && -f "/etc/hysteria/ca.key" ]]; then
-                 echo "Found ca.crt/ca.key in /etc/hysteria/, utilizing it."
-                 tls_config="tls /etc/hysteria/ca.crt /etc/hysteria/ca.key"
-            fi
-        fi
-    fi
-
-    if [ -z "$ROOT_PATH" ] || [ "$ROOT_PATH" == "/" ]; then
-        # Check if DOMAIN is an IP address to enforce HTTP
-        ADDRESS_PREFIX=""
-        if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-             ADDRESS_PREFIX="http://"
-        fi
-        
-        # Cloudflare HTTP ports - enforce http://
-        if [[ "$PORT" =~ ^(80|8080|8880|2052|2082|2086|2095)$ ]]; then
-             ADDRESS_PREFIX="http://"
-        fi
-        
-        cat <<EOL > "$CADDY_CONFIG_FILE"
-{
-    admin off
-    auto_https disable_redirects
-}
-
-${ADDRESS_PREFIX}$DOMAIN:$PORT {
-    $tls_config
-    reverse_proxy http://127.0.0.1:28260
-}
-EOL
-        return 0
-    fi
-
-    # Check if DOMAIN is an IP address to enforce HTTP
-    ADDRESS_PREFIX=""
-    if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            ADDRESS_PREFIX="http://"
-    fi
-
-    # Cloudflare HTTP ports - enforce http://
-    if [[ "$PORT" =~ ^(80|8080|8880|2052|2082|2086|2095)$ ]]; then
-         ADDRESS_PREFIX="http://"
     fi
 
     if [ -n "$DECOY_PATH" ] && [ "$DECOY_PATH" != "None" ] && [ "$PORT" -eq 443 ]; then
@@ -157,8 +82,7 @@ EOL
     auto_https disable_redirects
 }
 
-${ADDRESS_PREFIX}$DOMAIN:$PORT {
-    $tls_config
+$DOMAIN:$PORT {
     route /$ROOT_PATH/* {
 
         reverse_proxy http://127.0.0.1:28260
@@ -176,20 +100,20 @@ ${ADDRESS_PREFIX}$DOMAIN:$PORT {
 EOL
     else
         cat <<EOL > "$CADDY_CONFIG_FILE"
+# Global configuration
 {
     admin off
     auto_https disable_redirects
 }
 
-${ADDRESS_PREFIX}$DOMAIN:$PORT {
-    $tls_config
+# Listen for incoming requests on the specified domain and port
+$DOMAIN:$PORT {
     route /$ROOT_PATH/* {
         reverse_proxy http://127.0.0.1:28260
     }
     
     @blocked {
         not path /$ROOT_PATH/*
-
     }
     
     abort @blocked
@@ -199,6 +123,7 @@ EOL
         if [ -n "$DECOY_PATH" ] && [ "$DECOY_PATH" != "None" ] && [ "$PORT" -ne 443 ]; then
             cat <<EOL >> "$CADDY_CONFIG_FILE"
 
+# Decoy site on port 443
 $DOMAIN:443 {
     root * $DECOY_PATH
     file_server
@@ -218,6 +143,7 @@ After=network.target
 WorkingDirectory=/etc/hysteria/core/scripts/webpanel
 EnvironmentFile=/etc/hysteria/core/scripts/webpanel/.env
 ExecStart=/bin/bash -c 'source /etc/hysteria/hysteria2_venv/bin/activate && /etc/hysteria/hysteria2_venv/bin/python /etc/hysteria/core/scripts/webpanel/app.py'
+#Restart=always
 User=root
 Group=root
 
@@ -255,22 +181,10 @@ start_service() {
     local expiration_minutes=$5
     local debug=$6
     local decoy_path=$7 
-    local self_signed=$8
 
     install_dependencies
 
-    # Check for Python dependencies
-    if ! /etc/hysteria/hysteria2_venv/bin/python -c "import hypercorn, fastapi" > /dev/null 2>&1; then
-        echo -e "${yellow}Missing Python dependencies. Attempting to install...${NC}"
-        if /etc/hysteria/hysteria2_venv/bin/pip install -r /etc/hysteria/requirements.txt; then
-             echo -e "${green}Dependencies installed.${NC}"
-        else
-             echo -e "${red}Failed to install dependencies.${NC}"
-             return 1
-        fi
-    fi
-
-    update_env_file "$domain" "$port" "$admin_username" "$admin_password" "$expiration_minutes" "$debug" "$decoy_path" "$self_signed"
+    update_env_file "$domain" "$port" "$admin_username" "$admin_password" "$expiration_minutes" "$debug" "$decoy_path"
     if [ $? -ne 0 ]; then
         echo -e "${red}Error: Failed to update the environment file.${NC}"
         return 1
@@ -283,8 +197,8 @@ start_service() {
     fi
 
     systemctl daemon-reload
-    systemctl enable hysteria-webpanel.service
-    systemctl start hysteria-webpanel.service
+    systemctl enable hysteria-webpanel.service > /dev/null 2>&1
+    systemctl start hysteria-webpanel.service > /dev/null 2>&1
 
     if systemctl is-active --quiet hysteria-webpanel.service; then
         echo -e "${green}Hysteria web panel setup completed. The web panel is running locally on: http://127.0.0.1:28260/${NC}"
@@ -387,11 +301,13 @@ stop_decoy_site() {
     sed -i "/DECOY_PATH=/d" /etc/hysteria/core/scripts/webpanel/.env
     
     cat <<EOL > "$CADDY_CONFIG_FILE"
+# Global configuration
 {
     admin off
     auto_https disable_redirects
 }
 
+# Listen for incoming requests on the specified domain and port
 $DOMAIN:$PORT {
     route /$ROOT_PATH/* {
         reverse_proxy http://127.0.0.1:28260
@@ -463,10 +379,12 @@ reset_credentials() {
     fi
 
     if [ "$changes_made" = true ]; then
-        echo "Scheduling web panel restart..."
-        (sleep 3 && systemctl restart hysteria-webpanel.service) > /dev/null 2>&1 &
-        
-        echo -e "${green}Web panel credentials updated successfully. Service will restart in 3 seconds.${NC}"
+        echo "Restarting web panel service to apply changes..."
+        if systemctl restart hysteria-webpanel.service; then
+            echo -e "${green}Web panel credentials updated successfully.${NC}"
+        else
+            echo -e "${red}Failed to restart hysteria-webpanel service. Please restart it manually.${NC}"
+        fi
     else
         echo -e "${yellow}No changes were specified.${NC}"
     fi
@@ -499,31 +417,6 @@ change_expiration() {
     fi
 }
 
-set_telegram_auth() {
-    local enabled=$1
-
-    if [ -z "$enabled" ]; then
-        echo -e "${red}Usage: $0 settelegramauth <true|false>${NC}"
-        exit 1
-    fi
-
-    if [ ! -f "$WEBPANEL_ENV_FILE" ]; then
-        echo -e "${red}Error: Web panel .env file not found.${NC}"
-        exit 1
-    fi
-
-    if ! grep -q "TELEGRAM_AUTH_ENABLED=" "$WEBPANEL_ENV_FILE"; then
-        echo "TELEGRAM_AUTH_ENABLED=$enabled" | sudo tee -a "$WEBPANEL_ENV_FILE" > /dev/null
-    else
-        sudo sed -i "s|^TELEGRAM_AUTH_ENABLED=.*|TELEGRAM_AUTH_ENABLED=$enabled|" "$WEBPANEL_ENV_FILE"
-    fi
-    
-    echo "Scheduling web panel restart..."
-    (sleep 3 && systemctl restart hysteria-webpanel.service) > /dev/null 2>&1 &
-    
-    echo -e "${green}Telegram auth setting updated to $enabled. Service will restart in 3 seconds.${NC}"
-}
-
 change_root_path() {
     local new_root_path=$1
 
@@ -532,12 +425,9 @@ change_root_path() {
         exit 1
     fi
 
-    if [ -z "$new_root_path" ] || [ "$new_root_path" == "random" ]; then
+    if [ -z "$new_root_path" ]; then
         echo "Generating a new random root path..."
         new_root_path=$(openssl rand -hex 16)
-    elif [ "$new_root_path" == "off" ] || [ "$new_root_path" == "root" ] || [ "$new_root_path" == "/" ]; then
-        echo "Disabling custom root path (Serving at /)..."
-        new_root_path=""
     fi
 
     echo "Updating root path to: $new_root_path"
@@ -630,55 +520,9 @@ change_port_domain() {
     fi
 }
 
-config_ssl() {
-    local self_signed=$1
-
-    if [ ! -f "$WEBPANEL_ENV_FILE" ]; then
-        echo -e "${red}Error: Web panel .env file not found.${NC}"
-        exit 1
-    fi
-
-    if [ "$self_signed" == "true" ]; then
-        echo "Enabling self-signed certificate mode..."
-        if sudo sed -i "s|^SELF_SIGNED=.*|SELF_SIGNED=true|" "$WEBPANEL_ENV_FILE"; then
-             :
-        else
-             echo -e "${red}Failed to update .env file.${NC}"
-             exit 1
-        fi
-    else
-        echo "Disabling self-signed certificate mode (will use existing certs)..."
-        if sudo sed -i "s|^SELF_SIGNED=.*|SELF_SIGNED=false|" "$WEBPANEL_ENV_FILE"; then
-             :
-        else
-             echo -e "${red}Failed to update .env file.${NC}"
-             exit 1
-        fi
-    fi
-
-    echo "Updating Caddy configuration..."
-    if update_caddy_file; then
-        echo "Restarting Caddy service..."
-        if systemctl restart hysteria-caddy.service; then
-            echo -e "${green}SSL configuration updated successfully.${NC}"
-        else
-            echo -e "${red}Failed to restart Caddy service.${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${red}Failed to update Caddy configuration.${NC}"
-        exit 1
-    fi
-}
-
 show_webpanel_url() {
     source /etc/hysteria/core/scripts/webpanel/.env
-    local protocol="https"
-    # Check if DOMAIN is an IP address
-    if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        protocol="http"
-    fi
-    local webpanel_url="${protocol}://$DOMAIN:$PORT/$ROOT_PATH/"
+    local webpanel_url="https://$DOMAIN:$PORT/$ROOT_PATH/"
     echo "$webpanel_url"
 }
 
@@ -706,10 +550,10 @@ stop_service() {
 case "$1" in
     start)
         if [ -z "$2" ] || [ -z "$3" ]; then
-            echo -e "${red}Usage: $0 start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH] [SELF_SIGNED]${NC}"
+            echo -e "${red}Usage: $0 start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH]${NC}"
             exit 1
         fi
-        start_service "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+        start_service "$2" "$3" "$4" "$5" "$6" "$7" "$8"
         ;;
     stop)
         stop_service
@@ -731,9 +575,6 @@ case "$1" in
     changeexp)
         change_expiration "$2"
         ;;
-    settelegramauth)
-        set_telegram_auth "$2"
-        ;;
     changeroot)
         change_root_path "$2"
         ;;
@@ -747,46 +588,15 @@ case "$1" in
     api-token)
         show_webpanel_api_token
         ;;
-    ssl)
-        if [ -z "$2" ]; then
-             echo -e "${red}Usage: $0 ssl <true|false>${NC}"
-             exit 1
-        fi
-        config_ssl "$2"
-        ;;
-    ssl_paths)
-        if [ -z "$2" ] || [ -z "$3" ]; then
-             echo -e "${red}Usage: $0 ssl_paths <cert_path> <key_path>${NC}"
-             exit 1
-        fi
-        
-        # Verify files exist
-        if [ ! -f "$2" ] || [ ! -f "$3" ]; then
-             echo -e "${red}Error: Certificate or key file not found at specific paths.${NC}"
-             exit 1
-        fi
-
-        # Remove existing entries
-        sudo sed -i "/CUSTOM_CERT=/d" "$WEBPANEL_ENV_FILE"
-        sudo sed -i "/CUSTOM_KEY=/d" "$WEBPANEL_ENV_FILE"
-        
-        # Add new entries
-        echo "CUSTOM_CERT=$2" >> "$WEBPANEL_ENV_FILE"
-        echo "CUSTOM_KEY=$3" >> "$WEBPANEL_ENV_FILE"
-        
-        # Force self-signed off
-        config_ssl "false"
-        ;;
     *)
-        echo -e "${red}Usage: $0 {start|stop|decoy|stopdecoy|resetcreds|changeexp|changeroot|changedomain|url|api-token|ssl} [options]${NC}"
+        echo -e "${red}Usage: $0 {start|stop|decoy|stopdecoy|resetcreds|changeexp|changeroot|changedomain|url|api-token} [options]${NC}"
         echo -e "${yellow}start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH]${NC}"
         echo -e "${yellow}stop${NC}"
         echo -e "${yellow}decoy <DOMAIN> <PATH_TO_DECOY_SITE>${NC}"
-        echo -e "${yellow}ssl <true|false>${NC}"
         echo -e "${yellow}stopdecoy${NC}"
         echo -e "${yellow}resetcreds [-u new_username] [-p new_password]${NC}"
         echo -e "${yellow}changeexp <NEW_EXPIRATION_MINUTES>${NC}"
-        echo -e "${yellow}changeroot [NEW_ROOT_PATH|off|random] # Generates random if not provided, use 'off' to disable${NC}"
+        echo -e "${yellow}changeroot [NEW_ROOT_PATH] # Generates random if not provided${NC}"
         echo -e "${yellow}changedomain [-d new_domain] [-p new_port]${NC}"
         echo -e "${yellow}url${NC}"
         echo -e "${yellow}api-token${NC}"

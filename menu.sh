@@ -820,8 +820,8 @@ webpanel_handler() {
                                     echo ""
                                     echo -e "${yellow}Checking for existing certificates...${NC}"
                                     # Try to find any pair
-                                    found_crt=$(find /etc/hysteria -maxdepth 1 -name "*.crt" | head -n 1)
-                                    found_key=$(find /etc/hysteria -maxdepth 1 -name "*.key" | head -n 1)
+                                    found_crt=$(find /etc/hysteria -maxdepth 1 -name "*.crt" ! -name "ca.crt" | head -n 1)
+                                    found_key=$(find /etc/hysteria -maxdepth 1 -name "*.key" ! -name "ca.key" | head -n 1)
                                     
                                     if [[ -n "$found_crt" && -n "$found_key" ]]; then
                                         echo -e "Found certificate pair: $(basename $found_crt) / $(basename $found_key)"
