@@ -814,6 +814,28 @@ webpanel_handler() {
                                         echo -e "${yellow}Falling back to standard Caddy automatic HTTPS (or self-signed if configured later).${NC}"
                                     fi
                                 fi
+                                
+                                # Check if certs exist in /etc/hysteria matching domain
+                                if [[ ! -f "/etc/hysteria/$domain.crt" && ! -f "/etc/hysteria/$domain.key" ]]; then
+                                    echo ""
+                                    echo -e "${yellow}Checking for existing certificates...${NC}"
+                                    # Try to find any pair
+                                    found_crt=$(find /etc/hysteria -maxdepth 1 -name "*.crt" | head -n 1)
+                                    found_key=$(find /etc/hysteria -maxdepth 1 -name "*.key" | head -n 1)
+                                    
+                                    if [[ -n "$found_crt" && -n "$found_key" ]]; then
+                                        echo -e "Found certificate pair: $(basename $found_crt) / $(basename $found_key)"
+                                        read -p "Do you want to use this certificate for $domain? [y/n]: " use_existing
+                                        if [[ "$use_existing" =~ ^[Yy]$ ]]; then
+                                             ln -sf "$found_crt" "/etc/hysteria/$domain.crt"
+                                             ln -sf "$found_key" "/etc/hysteria/$domain.key"
+                                             echo -e "${green}Linked successfully using standard naming.${NC}"
+                                        fi
+                                    else
+                                        echo -e "${yellow}No valid certificates found in /etc/hysteria matching standard names.${NC}"
+                                        echo -e "Please ensure your certificates are named '${domain}.crt' and '${domain}.key' in /etc/hysteria/ or use the Web Panel settings to configure paths manually."
+                                    fi
+                                fi   
                                 break 
                                 ;;
                             *) echo "Please answer y or n." ;;
