@@ -31,4 +31,4 @@ def notify_admins(message):
 def version_monitoring():
     while True:
         check_version()
-        time.sleep(86400)
+        time.sleep(43200)

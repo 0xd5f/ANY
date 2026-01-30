@@ -83,6 +83,34 @@ update_caddy_file() {
         mkdir -p /etc/hysteria/core/scripts/webpanel/certs
         openssl req -x509 -newkey rsa:4096 -keyout /etc/hysteria/core/scripts/webpanel/certs/privkey.pem -out /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem -days 3650 -nodes -subj "/CN=$DOMAIN" >/dev/null 2>&1
         tls_config="tls /etc/hysteria/core/scripts/webpanel/certs/fullchain.pem /etc/hysteria/core/scripts/webpanel/certs/privkey.pem"
+    else
+        if [[ -n "$CUSTOM_CERT" && -n "$CUSTOM_KEY" ]]; then
+             if [[ -f "$CUSTOM_CERT" && -f "$CUSTOM_KEY" ]]; then
+                 echo "Using custom certificate paths defined in settings."
+                 tls_config="tls $CUSTOM_CERT $CUSTOM_KEY"
+             else
+                 echo -e "${yellow}Warning: Custom certificate files not found at specified paths. Falling back to auto-search.${NC}"
+             fi
+        fi
+
+        if [ -z "$tls_config" ]; then
+            if [[ -f "/etc/hysteria/$DOMAIN.crt" && -f "/etc/hysteria/$DOMAIN.key" ]]; then
+                 echo "Found certificate for $DOMAIN in /etc/hysteria/, utilizing it."
+                 tls_config="tls /etc/hysteria/$DOMAIN.crt /etc/hysteria/$DOMAIN.key"
+            elif [[ -f "/etc/hysteria/server.crt" && -f "/etc/hysteria/server.key" ]]; then
+                 echo "Found server.crt/key in /etc/hysteria/, utilizing it."
+                 tls_config="tls /etc/hysteria/server.crt /etc/hysteria/server.key"
+            elif [[ -f "/etc/hysteria/cert.pem" && -f "/etc/hysteria/key.pem" ]]; then
+                 echo "Found cert.pem/key.pem in /etc/hysteria/, utilizing it."
+                 tls_config="tls /etc/hysteria/cert.pem /etc/hysteria/key.pem"
+            elif [[ -f "/etc/hysteria/fullchain.pem" && -f "/etc/hysteria/privkey.pem" ]]; then
+                 echo "Found fullchain.pem/privkey.pem in /etc/hysteria/, utilizing it."
+                 tls_config="tls /etc/hysteria/fullchain.pem /etc/hysteria/privkey.pem"
+            elif [[ -f "/etc/hysteria/ca.crt" && -f "/etc/hysteria/ca.key" ]]; then
+                 echo "Found ca.crt/ca.key in /etc/hysteria/, utilizing it."
+                 tls_config="tls /etc/hysteria/ca.crt /etc/hysteria/ca.key"
+            fi
+        fi
     fi
 
     if [ -z "$ROOT_PATH" ] || [ "$ROOT_PATH" == "/" ]; then
@@ -602,6 +630,47 @@ change_port_domain() {
     fi
 }
 
+config_ssl() {
+    local self_signed=$1
+
+    if [ ! -f "$WEBPANEL_ENV_FILE" ]; then
+        echo -e "${red}Error: Web panel .env file not found.${NC}"
+        exit 1
+    fi
+
+    if [ "$self_signed" == "true" ]; then
+        echo "Enabling self-signed certificate mode..."
+        if sudo sed -i "s|^SELF_SIGNED=.*|SELF_SIGNED=true|" "$WEBPANEL_ENV_FILE"; then
+             :
+        else
+             echo -e "${red}Failed to update .env file.${NC}"
+             exit 1
+        fi
+    else
+        echo "Disabling self-signed certificate mode (will use existing certs)..."
+        if sudo sed -i "s|^SELF_SIGNED=.*|SELF_SIGNED=false|" "$WEBPANEL_ENV_FILE"; then
+             :
+        else
+             echo -e "${red}Failed to update .env file.${NC}"
+             exit 1
+        fi
+    fi
+
+    echo "Updating Caddy configuration..."
+    if update_caddy_file; then
+        echo "Restarting Caddy service..."
+        if systemctl restart hysteria-caddy.service; then
+            echo -e "${green}SSL configuration updated successfully.${NC}"
+        else
+            echo -e "${red}Failed to restart Caddy service.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${red}Failed to update Caddy configuration.${NC}"
+        exit 1
+    fi
+}
+
 show_webpanel_url() {
     source /etc/hysteria/core/scripts/webpanel/.env
     local protocol="https"
@@ -678,11 +747,42 @@ case "$1" in
     api-token)
         show_webpanel_api_token
         ;;
+    ssl)
+        if [ -z "$2" ]; then
+             echo -e "${red}Usage: $0 ssl <true|false>${NC}"
+             exit 1
+        fi
+        config_ssl "$2"
+        ;;
+    ssl_paths)
+        if [ -z "$2" ] || [ -z "$3" ]; then
+             echo -e "${red}Usage: $0 ssl_paths <cert_path> <key_path>${NC}"
+             exit 1
+        fi
+        
+        # Verify files exist
+        if [ ! -f "$2" ] || [ ! -f "$3" ]; then
+             echo -e "${red}Error: Certificate or key file not found at specific paths.${NC}"
+             exit 1
+        fi
+
+        # Remove existing entries
+        sudo sed -i "/CUSTOM_CERT=/d" "$WEBPANEL_ENV_FILE"
+        sudo sed -i "/CUSTOM_KEY=/d" "$WEBPANEL_ENV_FILE"
+        
+        # Add new entries
+        echo "CUSTOM_CERT=$2" >> "$WEBPANEL_ENV_FILE"
+        echo "CUSTOM_KEY=$3" >> "$WEBPANEL_ENV_FILE"
+        
+        # Force self-signed off
+        config_ssl "false"
+        ;;
     *)
-        echo -e "${red}Usage: $0 {start|stop|decoy|stopdecoy|resetcreds|changeexp|changeroot|changedomain|url|api-token} [options]${NC}"
+        echo -e "${red}Usage: $0 {start|stop|decoy|stopdecoy|resetcreds|changeexp|changeroot|changedomain|url|api-token|ssl} [options]${NC}"
         echo -e "${yellow}start <DOMAIN> <PORT> [ADMIN_USERNAME] [ADMIN_PASSWORD] [EXPIRATION_MINUTES] [DEBUG] [DECOY_PATH]${NC}"
         echo -e "${yellow}stop${NC}"
         echo -e "${yellow}decoy <DOMAIN> <PATH_TO_DECOY_SITE>${NC}"
+        echo -e "${yellow}ssl <true|false>${NC}"
         echo -e "${yellow}stopdecoy${NC}"
         echo -e "${yellow}resetcreds [-u new_username] [-p new_password]${NC}"
         echo -e "${yellow}changeexp <NEW_EXPIRATION_MINUTES>${NC}"

@@ -132,7 +132,7 @@ install_mongodb() {
 
 
 install_packages() {
-    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release")
+    local REQUIRED_PACKAGES=("jq" "curl" "pwgen" "python3" "python3-pip" "python3-venv" "bc" "zip" "unzip" "lsof" "gnupg" "lsb-release" "certbot" "cron")
     local MISSING_PACKAGES=()
     
     log_info "Checking required packages..."
@@ -225,6 +225,54 @@ download_and_extract_release() {
     fi
 }
 
+setup_certbot() {
+    log_info "Configuration of SSL Certificate..."
+    
+    echo -e "${YELLOW}Do you want to acquire a certificate via Certbot (Let's Encrypt)? (y/n)${NC}"
+    read -p "Select: " -n 1 -r REPLY
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Skipping Certbot setup."
+        return 0
+    fi
+
+    local email domain
+    echo -e "${BLUE}Enter your email address for Let's Encrypt registration:${NC}"
+    read -r email
+    
+    echo -e "${BLUE}Enter your domain name (A record must point to this server IP):${NC}"
+    read -r domain
+
+    if [[ -z "$email" || -z "$domain" ]]; then
+        log_error "Email or domain cannot be empty."
+        return 1
+    fi
+
+    log_info "Stopping potential conflicting services (nginx/apache)..."
+    systemctl stop nginx &>/dev/null || true
+    systemctl stop apache2 &>/dev/null || true
+
+    log_info "Requesting certificate for $domain..."
+    if certbot certonly --standalone --agree-tos --non-interactive --email "$email" -d "$domain"; then
+        log_success "Certificate obtained successfully."
+        
+        # Ensure /etc/hysteria exists
+        mkdir -p /etc/hysteria
+
+        # Symlink to /etc/hysteria for easier access in panel
+        log_info "Linking certificates to /etc/hysteria..."
+        ln -sf "/etc/letsencrypt/live/$domain/fullchain.pem" "/etc/hysteria/$domain.crt"
+        ln -sf "/etc/letsencrypt/live/$domain/privkey.pem" "/etc/hysteria/$domain.key"
+        
+        # Adjust permissions so the panel user can read them if needed
+        chmod 644 "/etc/letsencrypt/live/$domain/fullchain.pem"
+        
+        log_success "Certificates ready: /etc/hysteria/$domain.crt"
+    else
+        log_error "Certbot failed to obtain certificate. Please check your domain DNS and firewall."
+    fi
+}
+
 setup_python_env() {
     log_info "Setting up Python virtual environment..."
     
@@ -277,6 +325,7 @@ main() {
     check_os_version
     install_packages
     download_and_extract_release
+    setup_certbot
     setup_python_env
     add_alias
     

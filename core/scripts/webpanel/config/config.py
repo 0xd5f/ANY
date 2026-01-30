@@ -14,6 +14,8 @@ class Configs(BaseSettings):
     SELF_SIGNED: bool = False
     ROOT_PATH: str = ""
     DECOY_PATH: str | None = None
+    CUSTOM_CERT: str | None = None
+    CUSTOM_KEY: str | None = None
     
     TELEGRAM_AUTH_ENABLED: bool = False
     

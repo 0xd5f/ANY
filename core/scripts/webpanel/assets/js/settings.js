@@ -47,11 +47,17 @@ $(document).ready(function () {
         securitySetTelegramAuth: contentSection.dataset.securitySetTelegramAuthUrl,
         securityGetRootPath: contentSection.dataset.securityGetRootPathUrl,
         securityChangeRootPath: contentSection.dataset.securityChangeRootPathUrl,
-        securityChangeDomainPort: contentSection.dataset.securityChangeDomainPortUrl
+        securityChangeDomainPort: contentSection.dataset.securityChangeDomainPortUrl,
+
+        // SSL
+        sslToggle: contentSection.dataset.sslToggleUrl,
+        sslUpload: contentSection.dataset.sslUploadUrl,
+        sslPaths: contentSection.dataset.sslPathsUrl
     };
 
     initUI();
     initSecurity();
+    initSSL();
     fetchDecoyStatus();
     fetchNodes();
     fetchExtraConfigs();
@@ -1706,6 +1712,125 @@ $(document).ready(function () {
 
         $('#disable_root_path_btn').click(function() {
             updateRootPath('off', null);
+        });
+    }
+
+    function initSSL() {
+        // Toggle Handler
+        window.toggleSSLMode = function(isSelfSigned) {
+            Swal.fire({
+                title: 'Updating SSL Configuration...',
+                text: 'This will restart the panel. Please wait.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: API_URLS.sslToggle,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ self_signed: isSelfSigned }),
+                success: function(response) {
+                    Swal.fire({
+                        title: 'Success',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'Reload Page'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.detail || 'Failed to update SSL settings', 'error');
+                }
+            });
+        };
+
+        // Upload Handler
+        $('#upload_ssl_btn').click(function() {
+            const certFile = $('#ssl_cert_file')[0].files[0];
+            const keyFile = $('#ssl_key_file')[0].files[0];
+
+            if (!certFile || !keyFile) {
+                Swal.fire('Error', 'Please select both Certificate and Private Key files.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('cert_file', certFile);
+            formData.append('key_file', keyFile);
+
+            Swal.fire({
+                title: 'Uploading Certificates...',
+                text: 'This will verify and restart the panel.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: API_URLS.sslUpload,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    Swal.fire({
+                        title: 'Success',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'Reload Page'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.detail || 'Failed to upload certificates', 'error');
+                }
+            });
+        });
+
+        // Paths Handler
+        $('#save_ssl_paths_btn').click(function() {
+            const certPath = $('#custom_cert_path').val().trim();
+            const keyPath = $('#custom_key_path').val().trim();
+
+            if (!certPath || !keyPath) {
+                Swal.fire('Error', 'Please enter both certificate and private key paths.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Setting SSL Paths...',
+                text: 'Verifying paths and restarting panel...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: API_URLS.sslPaths,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ cert_path: certPath, key_path: keyPath }),
+                success: function(response) {
+                    Swal.fire({
+                        title: 'Success',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'Reload Page'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.detail || 'Failed to set SSL paths', 'error');
+                }
+            });
         });
     }
 });
