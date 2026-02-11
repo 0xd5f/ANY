@@ -159,9 +159,9 @@ async def check_obfs():
         raise HTTPException(status_code=400, detail=f'Error checking OBFS status: {str(e)}')
 
 @router.get('/enable-masquerade', response_model=DetailResponse, summary='Enable Hysteria2 masquerade')
-async def enable_masquerade():
+async def enable_masquerade(mode: str = 'string', proxy_url: str = ''):
     try:
-        response = cli_api.enable_hysteria2_masquerade()
+        response = cli_api.enable_hysteria2_masquerade(mode, proxy_url)
         return DetailResponse(detail=response)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Error: {str(e)}')
@@ -178,8 +178,8 @@ async def disable_masquerade():
 @router.get('/check-masquerade', response_model=GetMasqueradeStatusResponse, summary='Check Hysteria2 Masquerade Status')
 async def check_masquerade():
     try:
-        status_message = cli_api.get_hysteria2_masquerade_status()
-        return GetMasqueradeStatusResponse(status=status_message)
+        status = cli_api.get_hysteria2_masquerade_status()
+        return GetMasqueradeStatusResponse(**status)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Error checking Masquerade status: {str(e)}')
 
@@ -192,10 +192,10 @@ async def get_port_hopping_status():
         raise HTTPException(status_code=400, detail=f'Error: {str(e)}')
 
 @router.post('/port-hopping/enable', response_model=DetailResponse, summary='Enable Port Hopping')
-async def enable_port_hopping(port_range: str):
+async def enable_port_hopping(port_range: str, hop_interval: int = 30):
     try:
-        cli_api.enable_port_hopping(port_range)
-        return DetailResponse(detail=f'Port hopping enabled with range {port_range}.')
+        cli_api.enable_port_hopping(port_range, hop_interval)
+        return DetailResponse(detail=f'Port hopping enabled with range {port_range} (interval: {hop_interval}s).')
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Error: {str(e)}')
 

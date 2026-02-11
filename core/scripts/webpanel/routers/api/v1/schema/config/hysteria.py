@@ -18,10 +18,13 @@ class GetObfsResponse(BaseModel):
     obfs: str
     
 class GetMasqueradeStatusResponse(BaseModel):
-    status: str
+    enabled: bool = False
+    type: str = 'none'
+    url: str = ''
 
 class PortHoppingStatusResponse(BaseModel):
     enabled: bool
     port_range: str
     server_port: str
     iptables_active: bool = False
+    hop_interval: int = 30

@@ -70,7 +70,7 @@ def is_service_active(service_name: str) -> bool:
 
 def generate_uri(username: str, auth_password: str, ip: str, port: str, 
                  obfs_password: str, sha256: str, sni: str, ip_version: int, 
-                 insecure: bool, fragment_tag: str) -> str:
+                 insecure: bool, fragment_tag: str, mport: str = '') -> str:
     ip_part = f"[{ip}]" if ip_version == 6 and ':' in ip else ip
     uri_base = f"hy2://{username}:{auth_password}@{ip_part}:{port}"
     
@@ -83,6 +83,8 @@ def generate_uri(username: str, auth_password: str, ip: str, port: str,
         params.append(f"sni={sni}")
     
     params.append(f"insecure={'1' if insecure else '0'}")
+    if mport:
+        params.append(f"mport={mport}")
     
     query_string = "&".join(params)
     return f"{uri_base}?{query_string}#{fragment_tag}"
@@ -157,7 +159,6 @@ def show_uri(args: argparse.Namespace) -> None:
     hy2_env = load_hysteria2_env()
     port_hopping_enabled = hy2_env.get('PORT_HOPPING', 'false').lower() == 'true'
     port_hopping_range = hy2_env.get('PORT_HOPPING_RANGE', '')
-    display_port = port_hopping_range if port_hopping_enabled and port_hopping_range else local_port
 
     if args.all or args.ip_version == 4:
         if ip4 and ip4 != "None":
@@ -165,8 +166,9 @@ def show_uri(args: argparse.Namespace) -> None:
             if server_name and (args.all and ip6 and ip6 != "None"):
                   tag = f"{server_name} (IPv4)"
             
-            uri = generate_uri(args.username, auth_password, ip4, display_port, 
-                                 local_obfs_password, local_sha256, local_sni, 4, local_insecure, tag)
+            mport_val = port_hopping_range if port_hopping_enabled and port_hopping_range else ''
+            uri = generate_uri(args.username, auth_password, ip4, local_port, 
+                                 local_obfs_password, local_sha256, local_sni, 4, local_insecure, tag, mport_val)
             display_uri_and_qr(uri, tag, args, terminal_width)
             
     if args.all or args.ip_version == 6:
@@ -175,8 +177,9 @@ def show_uri(args: argparse.Namespace) -> None:
             if server_name and (args.all and ip4 and ip4 != "None"):
                   tag = f"{server_name} (IPv6)"
 
-            uri = generate_uri(args.username, auth_password, ip6, display_port, 
-                                 local_obfs_password, local_sha256, local_sni, 6, local_insecure, tag)
+            mport_val = port_hopping_range if port_hopping_enabled and port_hopping_range else ''
+            uri = generate_uri(args.username, auth_password, ip6, local_port, 
+                                 local_obfs_password, local_sha256, local_sni, 6, local_insecure, tag, mport_val)
             display_uri_and_qr(uri, tag, args, terminal_width)
 
     for node in nodes:

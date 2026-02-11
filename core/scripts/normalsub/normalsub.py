@@ -287,6 +287,7 @@ class SingboxConfigGenerator:
         self.default_sni = default_sni
         self._template_cache = None
         self.template_path = None
+        self.hop_interval = 30
 
     def set_template_path(self, path: str):
         self.template_path = path
@@ -311,7 +312,9 @@ class SingboxConfigGenerator:
             server_port = parsed_url.port
             auth_password = parsed_url.password
             auth_user = unquote(parsed_url.username or '')
-            obfs_password = parse_qs(parsed_url.query).get('obfs-password', [''])[0]
+            query_params = parse_qs(parsed_url.query)
+            obfs_password = query_params.get('obfs-password', [''])[0]
+            mport = query_params.get('mport', [''])[0]
             
             if auth_password:
                 if auth_user:
@@ -343,6 +346,12 @@ class SingboxConfigGenerator:
                 "type": "salamander",
                 "password": obfs_password
             }
+
+        if mport:
+            port_range = mport.replace('-', ':')
+            outbound_config["server_ports"] = [port_range]
+            outbound_config.pop("server_port", None)
+            outbound_config["hop_interval"] = f"{self.hop_interval}s"
 
         return outbound_config
 
@@ -487,6 +496,11 @@ class HysteriaServer:
         self.hysteria_cli = HysteriaCLI(self.config.hysteria_cli_path)
         self.singbox_generator = SingboxConfigGenerator(self.hysteria_cli, self.config.sni)
         self.singbox_generator.set_template_path(self.config.singbox_template_path)
+        panel_env = self._load_panel_config(self.config.sni_file)
+        try:
+            self.singbox_generator.hop_interval = int(panel_env.get('HOP_INTERVAL', '30'))
+        except (ValueError, TypeError):
+            self.singbox_generator.hop_interval = 30
         self.subscription_manager = SubscriptionManager(self.hysteria_cli, self.config)
         self.template_renderer = TemplateRenderer(self.config.template_dir, self.config)
         self.app = web.Application(middlewares=[

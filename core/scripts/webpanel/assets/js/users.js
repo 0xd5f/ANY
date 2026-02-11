@@ -961,6 +961,9 @@ $(function () {
         const jsonData = Object.fromEntries(formData.entries());
         jsonData.blocked = jsonData.blocked === 'on';
         jsonData.unlimited_ip = jsonData.unlimited_ip === 'on';
+        if (!jsonData.blocked) {
+            jsonData.renew_creation_date = true;
+        }
 
         Swal.fire({ title: 'Updating...', text: 'Please wait', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 

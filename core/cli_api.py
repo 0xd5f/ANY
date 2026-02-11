@@ -200,8 +200,8 @@ def change_hysteria2_sni(sni: str):
     run_cmd(['python3', Command.CHANGE_SNI_HYSTERIA2.value, sni])
 
 
-def enable_port_hopping(port_range: str):
-    run_cmd(['python3', Command.PORT_HOPPING.value, 'enable', '--range', port_range])
+def enable_port_hopping(port_range: str, hop_interval: int = 30):
+    run_cmd(['python3', Command.PORT_HOPPING.value, 'enable', '--range', port_range, '--interval', str(hop_interval)])
 
 
 def disable_port_hopping():
@@ -216,9 +216,10 @@ def get_port_hopping_status() -> dict:
         env_vars = dotenv_values(CONFIG_ENV_FILE)
         enabled = env_vars.get('PORT_HOPPING', 'false').lower() == 'true'
         port_range = env_vars.get('PORT_HOPPING_RANGE', '')
+        hop_interval = int(env_vars.get('HOP_INTERVAL', '30'))
         config = get_hysteria2_config_file()
         server_port = config.get('listen', '').split(':')[-1] if config else ''
-        return {"enabled": enabled, "port_range": port_range, "server_port": server_port, "iptables_active": False}
+        return {"enabled": enabled, "port_range": port_range, "server_port": server_port, "iptables_active": False, "hop_interval": hop_interval}
 
 
 def backup_hysteria2():
@@ -250,14 +251,22 @@ def check_hysteria2_obfs():
     result = subprocess.run(["python3", Command.MANAGE_OBFS.value, "--check"], check=True, capture_output=True, text=True)
     return result.stdout.strip()
 
-def enable_hysteria2_masquerade():
-    return run_cmd(['python3', Command.MASQUERADE_SCRIPT.value, '1'])
+def enable_hysteria2_masquerade(mode='string', proxy_url=''):
+    cmd = ['python3', Command.MASQUERADE_SCRIPT.value, '1', '--mode', mode]
+    if mode == 'proxy' and proxy_url:
+        cmd.extend(['--url', proxy_url])
+    return run_cmd(cmd)
 
 def disable_hysteria2_masquerade():
     return run_cmd(['python3', Command.MASQUERADE_SCRIPT.value, '2'])
 
 def get_hysteria2_masquerade_status():
-    return run_cmd(['python3', Command.MASQUERADE_SCRIPT.value, 'status'])
+    result = run_cmd(['python3', Command.MASQUERADE_SCRIPT.value, 'status'])
+    import json as _json
+    try:
+        return _json.loads(result)
+    except Exception:
+        return {'enabled': False, 'type': 'none', 'url': ''}
 
 
 def get_hysteria2_config_file() -> dict[str, Any]:
@@ -362,6 +371,21 @@ def edit_user(username: str, new_username: str | None, new_password: str | None,
 
     run_cmd(command_args)
 
+
+def renew_user(username: str, expiration_days: int | None = None, traffic_limit: int | None = None, reset_traffic: bool = True):
+    if not username:
+        raise InvalidInputError('Error: username is required')
+    creation_date = datetime.now().strftime('%Y-%m-%d')
+    command_args = ['python3', Command.EDIT_USER.value, username,
+                    '--creation-date', creation_date,
+                    '--blocked', 'false']
+    if expiration_days is not None:
+        command_args.extend(['--expiration-days', str(expiration_days)])
+    if traffic_limit is not None:
+        command_args.extend(['--traffic-gb', str(traffic_limit)])
+    if reset_traffic:
+        command_args.append('--reset-traffic')
+    run_cmd(command_args)
 
 def reset_user(username: str):
     run_cmd(['python3', Command.RESET_USER.value, username])
@@ -912,9 +936,6 @@ def get_ip_limiter_config() -> dict[str, int | None]:
     except Exception as e:
         print(f"Error reading IP Limiter config from .configs.env: {e}")
         return {"block_duration": None, "max_ips": None}
-
-def change_webpanel_root_path(new_path: str):
-    run_cmd(['bash', Command.WEBPANEL_SCRIPT.value, 'changeroot', new_path])
 
 
 def update_panel():

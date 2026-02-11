@@ -132,13 +132,11 @@ $(document).ready(function () {
             $.ajax({ url: API_URLS.checkMasquerade, type: "GET" })
         ]).then(([obfsResponse, masqueradeResponse]) => {
             const obfsStatus = obfsResponse.obfs;
-            const masqueradeStatus = masqueradeResponse.status;
-            
             const isObfsActive = obfsStatus === "OBFS is active.";
-            const isMasqueradeActive = masqueradeStatus === "Enabled";
+            const isMasqueradeActive = masqueradeResponse.enabled === true;
 
             updateObfsUI(obfsStatus, isMasqueradeActive);
-            updateMasqueradeUI(masqueradeStatus, isObfsActive);
+            updateMasqueradeUI(masqueradeResponse, isObfsActive);
 
         }).catch(error => {
             console.error("Failed to fetch statuses:", error);
@@ -174,30 +172,31 @@ $(document).ready(function () {
         }
     }
 
-    function updateMasqueradeUI(statusMessage, isObfsEnabled) {
+    function updateMasqueradeUI(data, isObfsEnabled) {
         const container = $("#masquerade_status_container");
         const msgElement = $("#masquerade_status_message");
         const enableBtn = $("#masquerade_enable_btn");
         const disableBtn = $("#masquerade_disable_btn");
+        const form = $("#masquerade_form");
         
         container.removeClass("border-success alert-success border-warning alert-warning border-danger alert-danger border-info alert-info");
         enableBtn.hide();
         disableBtn.hide();
+        form.hide();
 
         if (isObfsEnabled) {
             msgElement.text("Cannot be managed while OBFS is active.");
             container.addClass("border-info alert-info");
-        } else if (statusMessage === "Enabled") {
-            msgElement.text(statusMessage);
+        } else if (data.enabled) {
+            let label = data.type === 'proxy' ? 'Proxy: ' + data.url : 'String (502 Bad Gateway)';
+            msgElement.html('Enabled &mdash; <strong>' + label + '</strong>');
             disableBtn.show();
             container.addClass("border-success alert-success");
-        } else if (statusMessage === "Disabled") {
-            msgElement.text(statusMessage);
-            enableBtn.show();
-            container.addClass("border-warning alert-warning");
         } else {
-            msgElement.html(`<span class="text-danger">${statusMessage}</span>`);
-            container.addClass("border-danger alert-danger");
+            msgElement.text("Disabled");
+            enableBtn.show();
+            form.show();
+            container.addClass("border-warning alert-warning");
         }
     }
 
@@ -218,12 +217,25 @@ $(document).ready(function () {
     }
 
     function enableMasquerade() {
+        const mode = $("#masquerade_mode").val();
+        const proxyUrl = $("#masquerade_proxy_url").val();
+        if (mode === 'proxy' && !proxyUrl) {
+            Swal.fire('Error', 'Please enter a website URL for proxy mode.', 'error');
+            return;
+        }
+        const modeLabel = mode === 'proxy' ? `proxy mode (${proxyUrl})` : 'string mode (502 Bad Gateway)';
+        let url = API_URLS.enableMasquerade + '?mode=' + mode;
+        if (mode === 'proxy') url += '&proxy_url=' + encodeURIComponent(proxyUrl);
         confirmAction(
             "Enable Masquerade?", 
-            "This will enable the string masquerade mode.", 
-            () => sendRequest(API_URLS.enableMasquerade, "GET", null, "Masquerade enabled successfully!", "#masquerade_enable_btn", false, fetchAllStatuses)
+            `This will enable masquerade in ${modeLabel}.`, 
+            () => sendRequest(url, "GET", null, "Masquerade enabled successfully!", "#masquerade_enable_btn", false, fetchAllStatuses)
         );
     }
+
+    $("#masquerade_mode").on("change", function() {
+        $("#proxy_url_group").toggle($(this).val() === 'proxy');
+    });
 
     function disableMasquerade() {
         confirmAction(
@@ -283,9 +295,10 @@ $(document).ready(function () {
                 const disableBtn = $("#port_hopping_disable_btn");
 
                 if (data.enabled) {
-                    msg.html(`<span class="text-emerald-600 dark:text-emerald-400 font-medium">Active</span> — Range: <strong>${data.port_range}</strong> → Port ${data.server_port}`);
+                    msg.html(`<span class="text-emerald-600 dark:text-emerald-400 font-medium">Active</span> — Range: <strong>${data.port_range}</strong> → Port ${data.server_port} | Interval: ${data.hop_interval}s`);
                     container.addClass("border-emerald-200 dark:border-emerald-800");
                     $("#port_hopping_range").val(data.port_range);
+                    $("#hop_interval").val(data.hop_interval || 30);
                     enableBtn.text("Update");
                     disableBtn.show();
                 } else {
@@ -308,8 +321,12 @@ $(document).ready(function () {
         }
         $("#port_hopping_range").removeClass("is-invalid");
 
-        const url = API_URLS.portHoppingEnable + "?port_range=" + encodeURIComponent(range);
-        confirmAction("Enable Port Hopping?", `UDP ports ${range} will be redirected to the server port via iptables.`, () => {
+        let interval = parseInt($("#hop_interval").val()) || 30;
+        if (interval < 5) interval = 5;
+        if (interval > 300) interval = 300;
+
+        const url = API_URLS.portHoppingEnable + "?port_range=" + encodeURIComponent(range) + "&hop_interval=" + interval;
+        confirmAction("Enable Port Hopping?", `UDP ports ${range} will be redirected to the server port via iptables. Hop interval: ${interval}s.`, () => {
             sendRequest(url, "POST", null, "Port hopping enabled!", "#port_hopping_enable_btn", false, fetchPortHoppingStatus);
         });
     }

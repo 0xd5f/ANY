@@ -141,7 +141,7 @@ def add_iptables_rules(server_port, start_port, end_port):
             print(f"Warning: {' '.join(cmd[:2])} rule failed: {e.stderr.strip()}", file=sys.stderr)
 
 
-def enable(port_range_str):
+def enable(port_range_str, hop_interval=30):
     server_port = get_server_port()
     if not server_port:
         print("Error: Could not read server port from config.", file=sys.stderr)
@@ -162,9 +162,10 @@ def enable(port_range_str):
     env = load_env()
     env['PORT_HOPPING'] = 'true'
     env['PORT_HOPPING_RANGE'] = port_range_str.strip()
+    env['HOP_INTERVAL'] = str(int(hop_interval))
     save_env(env)
 
-    print(f"Port hopping enabled: {start_port}-{end_port} → {server_port}")
+    print(f"Port hopping enabled: {start_port}-{end_port} → {server_port} (interval: {hop_interval}s)")
 
 
 def disable():
@@ -179,6 +180,8 @@ def disable():
     env['PORT_HOPPING'] = 'false'
     if 'PORT_HOPPING_RANGE' in env:
         del env['PORT_HOPPING_RANGE']
+    if 'HOP_INTERVAL' in env:
+        del env['HOP_INTERVAL']
     save_env(env)
 
     print("Port hopping disabled.")
@@ -188,10 +191,11 @@ def status():
     env = load_env()
     enabled = env.get('PORT_HOPPING', 'false').lower() == 'true'
     port_range = env.get('PORT_HOPPING_RANGE', '')
+    hop_interval = int(env.get('HOP_INTERVAL', '30'))
     server_port = get_server_port()
 
     if not enabled or not port_range:
-        print(json.dumps({"enabled": False, "port_range": "", "server_port": server_port or "", "iptables_active": False}))
+        print(json.dumps({"enabled": False, "port_range": "", "server_port": server_port or "", "iptables_active": False, "hop_interval": 30}))
         return
 
     try:
@@ -204,7 +208,8 @@ def status():
         "enabled": enabled,
         "port_range": port_range,
         "server_port": server_port or "",
-        "iptables_active": has_rules
+        "iptables_active": has_rules,
+        "hop_interval": hop_interval
     }))
 
 
@@ -215,6 +220,8 @@ def main():
     enable_parser = subparsers.add_parser('enable')
     enable_parser.add_argument('--range', type=str, required=True,
                                help='Port range (e.g., 20000-50000)')
+    enable_parser.add_argument('--interval', type=int, default=30,
+                               help='Hop interval in seconds (default: 30)')
 
     subparsers.add_parser('disable')
     subparsers.add_parser('status')
@@ -222,7 +229,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'enable':
-        enable(args.range)
+        enable(args.range, args.interval)
     elif args.command == 'disable':
         disable()
     elif args.command == 'status':

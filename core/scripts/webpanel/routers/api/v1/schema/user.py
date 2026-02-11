@@ -72,6 +72,11 @@ class EditUserInputBody(BaseModel):
             raise ValueError('Username can only contain letters, numbers, and underscores.')
         return v
 
+class RenewUserInputBody(BaseModel):
+    expiration_days: Optional[int] = Field(None, description="New expiration days. If not provided, keeps the current value.")
+    traffic_limit: Optional[int] = Field(None, description="New traffic limit in GB. If not provided, keeps the current value.")
+    reset_traffic: bool = Field(True, description="Reset download/upload counters to zero.")
+
 class NodeUri(BaseModel):
     name: str
     uri: str

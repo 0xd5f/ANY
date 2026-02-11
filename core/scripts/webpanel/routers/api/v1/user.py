@@ -6,6 +6,7 @@ from .schema.user import (
     UserInfoResponse, 
     AddUserInputBody, 
     EditUserInputBody, 
+    RenewUserInputBody,
     UserUriResponse, 
     AddBulkUsersInputBody, 
     UsernamesRequest
@@ -132,9 +133,28 @@ async def edit_user_api(username: str, body: EditUserInputBody):
     try:
         cli_api.kick_users_by_name([username])
         cli_api.traffic_status(display_output=False)
+        renew = body.renew_creation_date
+        if body.blocked is False:
+            renew = True
         cli_api.edit_user(username, body.new_username, body.new_password, body.new_traffic_limit, body.new_expiration_days,
-                          body.renew_password, body.renew_creation_date, body.blocked, body.unlimited_ip, body.note)
+                          body.renew_password, renew, body.blocked, body.unlimited_ip, body.note)
         return DetailResponse(detail=f'User {username} has been edited.')
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f'Error: {str(e)}')
+
+
+@router.post('/{username}/renew', response_model=DetailResponse)
+async def renew_user_api(username: str, body: RenewUserInputBody = RenewUserInputBody()):
+    try:
+        user = cli_api.get_user(username)
+        if not user:
+            raise HTTPException(status_code=404, detail=f'User {username} not found.')
+        cli_api.kick_users_by_name([username])
+        cli_api.traffic_status(display_output=False)
+        cli_api.renew_user(username, body.expiration_days, body.traffic_limit, body.reset_traffic)
+        return DetailResponse(detail=f'Subscription for {username} has been renewed.')
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'Error: {str(e)}')
 

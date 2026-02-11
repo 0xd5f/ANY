@@ -180,7 +180,7 @@ def handle_edit_callback(call):
         result = run_cli_command(command)
         bot.send_message(call.message.chat.id, result)
     elif action == 'renew_creation':
-        command = f"python3 {CLI_PATH} edit-user -u \"{username}\" -rc"
+        command = f"python3 {CLI_PATH} edit-user -u \"{username}\" -rc --unblocked"
         result = run_cli_command(command)
         bot.send_message(call.message.chat.id, result)
     elif action == 'block_user':

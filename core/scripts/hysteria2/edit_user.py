@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from db.database import db
 
-def edit_user(username, new_username=None, new_password=None, traffic_gb=None, expiration_days=None, creation_date=None, blocked=None, unlimited_user=None, note=None):
+def edit_user(username, new_username=None, new_password=None, traffic_gb=None, expiration_days=None, creation_date=None, blocked=None, unlimited_user=None, note=None, reset_traffic=False):
     if db is None:
         print("Error: Database connection failed.", file=sys.stderr)
         return 1
@@ -46,6 +46,10 @@ def edit_user(username, new_username=None, new_password=None, traffic_gb=None, e
 
     if note is not None:
         updates['note'] = note
+
+    if reset_traffic:
+        updates['download_bytes'] = 0
+        updates['upload_bytes'] = 0
         
     try:
         if updates:
@@ -110,6 +114,7 @@ if __name__ == "__main__":
     parser.add_argument("--blocked", type=str_to_bool, help="Set blocked status (true/false).")
     parser.add_argument("--unlimited", dest="unlimited_user", type=str_to_bool, help="Set unlimited user status for IP limits (true/false).")
     parser.add_argument("--note", help="New note for the user. To clear the note, provide an empty string.")
+    parser.add_argument("--reset-traffic", dest="reset_traffic", action="store_true", help="Reset download/upload counters to zero.")
 
     args = parser.parse_args()
 
@@ -122,5 +127,6 @@ if __name__ == "__main__":
         creation_date=args.creation_date,
         blocked=args.blocked,
         unlimited_user=args.unlimited_user,
-        note=args.note
+        note=args.note,
+        reset_traffic=args.reset_traffic
     ))

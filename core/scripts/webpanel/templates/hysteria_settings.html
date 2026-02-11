@@ -129,7 +129,7 @@
                 </div>
 
                 <!-- Masquerade Content -->
-                <div x-show="activeTab === 'masquerade-content'" id="masquerade-content" role="tabpanel" class="tab-pane" style="display: none;" :style="activeTab === 'masquerade-content' ? 'display: block' : 'display: none'"> <!-- Alpine x-show handles display, but we add initial style for flicker prevention -->
+                <div x-show="activeTab === 'masquerade-content'" id="masquerade-content" role="tabpanel" class="tab-pane" style="display: none;" :style="activeTab === 'masquerade-content' ? 'display: block' : 'display: none'">
                     <div class="mb-4">
                         <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Masquerade Status</h5>
                         <div id="masquerade_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
@@ -143,6 +143,20 @@
                                <strong>Note:</strong> Masquerade cannot be active at the same time as OBFS.
                            </div>
                        </div>
+                    </div>
+                    <div id="masquerade_form" class="space-y-3 mb-4" style="display: none;">
+                        <div>
+                            <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Mode</label>
+                            <select id="masquerade_mode" class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                <option value="string">String (502 Bad Gateway)</option>
+                                <option value="proxy">Proxy (Mirror a real website)</option>
+                            </select>
+                        </div>
+                        <div id="proxy_url_group" style="display: none;">
+                            <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Website URL</label>
+                            <input type="url" id="masquerade_proxy_url" placeholder="https://www.google.com" class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            <p class="text-xs text-zinc-400 mt-1">DPI will see this website when probing your server.</p>
+                        </div>
                     </div>
                     <button id="masquerade_enable_btn" type='button' class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm' style="display: none;">
                         <i class="fas fa-check mr-2"></i> Enable Masquerade
@@ -178,6 +192,12 @@
                         <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
                             Enter a valid range (e.g. 20000-50000).
                         </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="hop_interval" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Hop Interval (seconds)</label>
+                        <input type="number" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all placeholder-zinc-400" id="hop_interval"
+                            value="30" min="5" max="300" placeholder="30">
+                        <p class="text-zinc-400 text-xs mt-1">How often clients switch ports (5-300s, default 30s)</p>
                     </div>
                 </form>
                 <div class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
