@@ -179,3 +179,18 @@ class NodeHeartbeatBody(BaseModel):
 
 class RestartNodeBody(BaseModel):
     node_name: str
+
+class AutoInstallNodeBody(BaseModel):
+    ssh_host: str
+    ssh_port: int = 22
+    ssh_user: str = "root"
+    ssh_password: str
+    hysteria_port: int = 443
+    sni: str
+
+class TunnelExecBody(BaseModel):
+    ssh_host: str
+    ssh_port: int = 22
+    ssh_user: str = "root"
+    ssh_password: str
+    script: str

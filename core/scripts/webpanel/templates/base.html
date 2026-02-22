@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="{{ url_for('assets', path='img/logo.png') }}">
     <title>ANY Panel | {% block title %}{% endblock %}</title>
@@ -112,6 +112,9 @@
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
+        button, a { touch-action: manipulation; }
+        body { padding-bottom: env(safe-area-inset-bottom); }
+
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.2); }
@@ -149,11 +152,14 @@
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 transition-transform duration-300 lg:static lg:translate-x-0 flex flex-col justify-between">
             <div>
                 <!-- Brand -->
-                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-zinc-800 px-6">
+                <div class="flex items-center justify-between h-16 border-b border-gray-200 dark:border-zinc-800 px-6">
                     <a href="{{ url_for('index') }}" class="flex items-center gap-3 font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity">
                         <img src="{{ url_for('assets', path='img/logo.png') }}" alt="Logo" class="w-8 h-8 object-contain">
                         <span>ANY Panel</span>
                     </a>
+                    <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
                 </div>
 
                 <!-- Navigation -->
@@ -255,7 +261,7 @@
             </header>
 
             <!-- Main Scrollable Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-black p-4 sm:p-6 lg:p-8">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-black p-4 sm:p-6 lg:p-8" style="padding-bottom:max(2rem,env(safe-area-inset-bottom))">
                 <!-- Update Notification (Reimplemented with Tailwind) -->
                 <div id="updateBar" class="hidden mb-6 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg p-4 relative overflow-hidden">
                     <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

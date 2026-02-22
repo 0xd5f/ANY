@@ -15,7 +15,7 @@ from aiohttp.web_middlewares import middleware
 from urllib.parse import unquote, parse_qs, urlparse, urljoin, quote
 from dotenv import load_dotenv
 import qrcode
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, BaseLoader
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from db.database import db
@@ -142,10 +142,11 @@ class TemplateContext:
     status: str
     sublink_qrcode: str
     sub_link: str
-    happ_sub_link: str # Add this field
+    happ_sub_link: str
     sub_link_encoded: str
     profile_title_encoded: str
     blocked: bool = False
+    usage_percent: int = 0
     local_uris: List[NodeURI] = field(default_factory=list)
     node_uris: List[NodeURI] = field(default_factory=list)
     singbox_qrcode: Optional[str] = None
@@ -244,14 +245,14 @@ class HysteriaCLI:
         output = self._run_command(['show-user-uri', '-u', username, '-a'])
         if not output:
             return []
-        return re.findall(r'hy2://.*', output)
+        return re.findall(r'hysteria2://.*', output)
 
     def get_all_labeled_uris(self, username: str) -> List[Dict[str, str]]:
         output = self._run_command(['show-user-uri', '-u', username, '-a'])
         if not output:
             return []
         
-        matches = re.findall(r"^(.*?):\s*(hy2://.*)$", output, re.MULTILINE)
+        matches = re.findall(r"^(.*?):\s*(hysteria2://.*)$", output, re.MULTILINE)
         return [{'label': label.strip(), 'uri': uri} for label, uri in matches]
 
 
@@ -480,12 +481,23 @@ class SubscriptionManager:
 
 
 class TemplateRenderer:
+    CUSTOM_HTML_PATH = '/etc/hysteria/custom_sub_index.html'
+
     def __init__(self, template_dir: str, config: AppConfig):
-        self.env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
+        self.env = Environment(loader=FileSystemLoader(template_dir), autoescape=False)
         self.html_template = self.env.get_template('index.html')
         self.config = config
 
     def render(self, context: TemplateContext) -> str:
+        if os.path.exists(self.CUSTOM_HTML_PATH):
+            try:
+                with open(self.CUSTOM_HTML_PATH, 'r', encoding='utf-8') as f:
+                    custom_html = f.read()
+                custom_env = Environment(loader=BaseLoader(), autoescape=False)
+                tmpl = custom_env.from_string(custom_html)
+                return tmpl.render(vars(context))
+            except Exception as e:
+                print(f"Error rendering custom HTML template: {e}")
         return self.html_template.render(vars(context))
 
 
@@ -879,6 +891,10 @@ class HysteriaServer:
             if remaining_seconds > 0:
                 days_remaining = int(remaining_seconds / 86400)
 
+        usage_percent = 0
+        if user_info.max_download_bytes > 0:
+            usage_percent = min(100, int(user_info.total_usage * 100 / user_info.max_download_bytes))
+
         return TemplateContext(
             username=username,
             usage=user_info.usage_human_readable,
@@ -892,6 +908,7 @@ class HysteriaServer:
             sub_link_encoded=sub_link_encoded,
             profile_title_encoded=profile_title_encoded,
             blocked=user_info.blocked,
+            usage_percent=usage_percent,
             local_uris=local_uris,
             node_uris=node_uris,
             singbox_qrcode=singbox_qrcode,

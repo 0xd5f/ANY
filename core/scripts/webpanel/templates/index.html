@@ -250,6 +250,24 @@
         </div>
     </div>
 
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><i class="fas fa-microchip text-blue-500 text-xs"></i> CPU & RAM</h3>
+                <span class="text-xs text-zinc-400">last 60s</span>
+            </div>
+            <canvas id="chart-cpu-ram" style="max-height:160px"></canvas>
+        </div>
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2"><i class="fas fa-network-wired text-indigo-500 text-xs"></i> Network Speed</h3>
+                <span class="text-xs text-zinc-400">last 60s</span>
+            </div>
+            <canvas id="chart-network" style="max-height:160px"></canvas>
+        </div>
+    </div>
+
 </section>
 {% endblock %}
 

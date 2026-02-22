@@ -34,3 +34,9 @@ class EditSubPathInputBody(BaseModel):
 
 class GetSubPathResponse(BaseModel):
     subpath: Optional[str] = Field(None, description="The current NormalSub subpath, or null if not set/found.")
+
+class SetPageHtmlInputBody(BaseModel):
+    html: str = Field("", description="Custom HTML for the subscription page. Empty to reset to default.")
+
+class GetPageHtmlResponse(BaseModel):
+    html: str = Field("", description="Current custom HTML, or empty string if using default.")

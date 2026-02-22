@@ -71,6 +71,8 @@
     data-normal-sub-get-show-username-url="{{ url_for('normal_sub_get_show_username_api') }}"
     data-normal-sub-start-url="{{ url_for('normal_sub_start_api') }}"
     data-normal-sub-stop-url="{{ url_for('normal_sub_stop_api') }}"
+    data-normal-sub-get-page-html-url="{{ url_for('normal_sub_get_page_html_api') }}"
+    data-normal-sub-set-page-html-url="{{ url_for('normal_sub_set_page_html_api') }}"
 
     data-ssl-toggle-url="{{ url_for('toggle_ssl_mode') }}"
     data-ssl-upload-url="{{ url_for('upload_ssl_cert') }}"
@@ -86,22 +88,28 @@
         <!-- Sidebar Navigation for Settings -->
         <div class="w-full lg:w-64 flex-shrink-0">
             <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden p-2">
-                <nav class="space-y-1">
+                <!-- Mobile: horizontal scroll tabs -->
+                <nav class="flex flex-row overflow-x-auto gap-1 pb-1 lg:flex-col lg:space-y-0 lg:overflow-x-visible lg:pb-0" style="-webkit-overflow-scrolling:touch;scrollbar-width:none;scrollbar-color:transparent transparent" onscroll="">
+                <style>
+                    nav::-webkit-scrollbar{display:none}
+                    nav .nav-item{flex-shrink:0;white-space:nowrap}
+                    @media(min-width:1024px){nav .nav-item{width:100%;white-space:normal;flex-shrink:1}}
+                </style>
                     <button @click="activeTab = 'subs'" 
                             :class="activeTab === 'subs' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
                         <div :class="activeTab === 'subs' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fas fa-rss text-xs"></i>
                         </div>
                         Subscriptions
                     </button>
 
-                     <button @click="activeTab = 'decoy'" 
+                    <button @click="activeTab = 'decoy'" 
                             :class="activeTab === 'decoy' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'decoy' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
+                        <div :class="activeTab === 'decoy' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fas fa-mask text-xs"></i>
                         </div>
                         Decoy Site
@@ -109,48 +117,46 @@
                     
                     <button @click="activeTab = 'telegram'" 
                             :class="activeTab === 'telegram' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'telegram' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
+                        <div :class="activeTab === 'telegram' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fab fa-telegram-plane text-xs"></i>
                         </div>
                         Telegram Bot
                     </button>
 
-                     <button @click="activeTab = 'ip-limit'" 
+                    <button @click="activeTab = 'ip-limit'" 
                             :class="activeTab === 'ip-limit' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'ip-limit' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
+                        <div :class="activeTab === 'ip-limit' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fas fa-hand-paper text-xs"></i>
                         </div>
                         IP Limit
                     </button>
                     
-                    
                     <button @click="activeTab = 'ssl'" 
                             :class="activeTab === 'ssl' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'ssl' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
+                        <div :class="activeTab === 'ssl' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fas fa-lock text-xs"></i>
                         </div>
-                        SSL Certificates
+                        SSL
                     </button>
 
                     <button @click="activeTab = 'security'" 
                             :class="activeTab === 'security' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'"
-                            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors">
-                         <div :class="activeTab === 'security' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
-                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            class="nav-item flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors lg:w-full">
+                        <div :class="activeTab === 'security' ? 'bg-blue-200 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'" 
+                             class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 transition-colors">
                              <i class="fas fa-shield-alt text-xs"></i>
                         </div>
-                        Security & Config
+                        Security
                     </button>
                     
                 </nav>
             </div>
-             <!-- Shim for hidden tabs logic -->
             <div id="subs-tab" :class="activeTab === 'subs' ? 'active' : ''" style="display:none"></div>
             <div id="decoy-tab" :class="activeTab === 'decoy' ? 'active' : ''" style="display:none"></div>
             <div id="telegram-tab" :class="activeTab === 'telegram' ? 'active' : ''" style="display:none"></div>
@@ -187,6 +193,12 @@
                                 class="px-4 py-2 text-sm font-medium rounded-lg transition-all"
                                 id="normal-sub-config-link-tab"> <!-- ID Kept -->
                             Configure Link
+                        </button>
+                        <button @click="subTab = 'normal-sub-page-html-content'; initCMEditor()"
+                                :class="subTab === 'normal-sub-page-html-content' ? 'bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'"
+                                class="px-4 py-2 text-sm font-medium rounded-lg transition-all"
+                                id="normal-sub-page-html-tab">
+                            Page HTML
                         </button>
                     </div>
 
@@ -246,6 +258,179 @@
                             </button>
                          </form>
                     </div>
+
+                    <div x-show="subTab === 'normal-sub-page-html-content'" id="normal-sub-page-html-content">
+                        <div class="mb-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
+                            <h4 class="text-sm font-semibold text-zinc-900 dark:text-white mb-1">Custom Subscription Page HTML</h4>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">Override the default subscription page with custom HTML. Leave empty to use the built-in template. Jinja2 template variables are supported.</p>
+                        </div>
+
+                        <style>
+                            .var-tag{position:relative;display:inline-block;cursor:default}
+                            .var-tag .var-tip{visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e1e2e;color:#e2e8f0;font-size:11px;font-family:Inter,sans-serif;white-space:nowrap;padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);box-shadow:0 4px 16px rgba(0,0,0,.4);pointer-events:none;transition:opacity .15s,visibility .15s;z-index:99}
+                            .var-tag .var-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e1e2e}
+                            .var-tag:hover .var-tip{visibility:visible;opacity:1}
+                        </style>
+                        <div class="mb-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                            <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Available Variables <span class="text-zinc-400 font-normal">(hover for description)</span></p>
+                            <div class="flex flex-wrap gap-1.5">
+                                {% set var_tips = {
+                                    'username': 'Username of the subscriber',
+                                    'status': 'Account status: Active / Expired / Disabled',
+                                    'usage': 'Human-readable traffic (e.g. 15.2GB / 100GB or Unlimited)',
+                                    'usage_raw': 'Raw usage details string',
+                                    'usage_percent': 'Integer 0-100 for progress bar',
+                                    'days_remaining': 'Days left until expiry (int)',
+                                    'expiration_date': 'Expiry date string or "Unlimited"',
+                                    'sub_link': 'Full subscription URL',
+                                    'happ_sub_link': 'Happ-format subscription link',
+                                    'sub_link_encoded': 'URL-encoded subscription link',
+                                    'profile_title_encoded': 'URL-encoded profile title',
+                                    'blocked': 'True when account is disabled/blocked',
+                                    'sublink_qrcode': 'Base64 PNG QR code for sub_link',
+                                    'hiddify_qrcode': 'Base64 PNG QR code for Hiddify deep link',
+                                    'singbox_qrcode': 'Base64 PNG QR code for Sing-Box',
+                                    'nekobox_qrcode': 'Base64 PNG QR code for Nekobox',
+                                    'streisand_qrcode': 'Base64 PNG QR code for Streisand',
+                                    'local_uris': 'List of dicts {label, uri} for local nodes',
+                                    'node_uris': 'List of dicts {label, uri} for external nodes'
+                                } %}
+                                {% for var, tip in var_tips.items() %}
+                                <span class="var-tag">
+                                    <code class="px-2 py-0.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-mono text-indigo-600 dark:text-indigo-400">{{ '{{' }} {{ var }} {{ '}}' }}</code>
+                                    <span class="var-tip">{{ tip }}</span>
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- CodeMirror CSS (lazy-injected via JS) -->
+                        <style>
+                            #cm-html-wrap .CodeMirror{height:520px;font-size:13px;font-family:'JetBrains Mono','Fira Code',monospace;border-radius:12px;border:1px solid rgba(255,255,255,.08)}
+                            #cm-html-wrap .CodeMirror-scroll{border-radius:12px}
+                            .cm-s-dracula.CodeMirror{background:#1e1e2e!important}
+                            #cm-html-wrap .CodeMirror-gutters{background:#1e1e2e;border-right:1px solid rgba(255,255,255,.06)}
+                            #cm-html-wrap .CodeMirror-linenumber{color:#4a4a6a}
+                        </style>
+
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Custom HTML</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-zinc-500" id="cm-line-count"></span>
+                                    <button type="button" onclick="cmFormatCode()" class="text-xs px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 transition-colors">
+                                        <i class="fas fa-indent mr-1"></i>Format
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="cm-html-wrap" class="rounded-xl overflow-hidden">
+                                <textarea id="custom_sub_html_editor" spellcheck="false"
+                                    class="w-full px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-900 text-white font-mono text-xs resize-none"
+                                    style="height:520px"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button id="save_sub_page_html_btn" type="button" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl shadow-lg shadow-cyan-500/20 transition-all font-medium text-sm flex items-center gap-2">
+                                <span class="spinner-border w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
+                                Save Custom HTML
+                            </button>
+                            <button id="reset_sub_page_html_btn" type="button" class="px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-xl transition-all font-medium text-sm">
+                                Reset to Default
+                            </button>
+                        </div>
+
+                        <script>
+                        window._cmReady = false;
+                        window._cmHtmlEditor = null;
+
+                        function initCMEditor() {
+                            if (window._cmReady || window._cmHtmlEditor) return;
+                            window._cmReady = true;
+                            var base = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/';
+                            function loadCSS(href) {
+                                var l = document.createElement('link');
+                                l.rel = 'stylesheet'; l.href = href;
+                                document.head.appendChild(l);
+                            }
+                            function loadJS(src, cb) {
+                                var s = document.createElement('script');
+                                s.src = src; s.async = false;
+                                s.onload = cb || function(){};
+                                document.head.appendChild(s);
+                            }
+                            loadCSS(base + 'codemirror.min.css');
+                            loadCSS(base + 'theme/dracula.min.css');
+                            loadJS(base + 'codemirror.min.js', function() {
+                                loadJS(base + 'mode/xml/xml.min.js', function() {
+                                    loadJS(base + 'mode/javascript/javascript.min.js', function() {
+                                        loadJS(base + 'mode/css/css.min.js', function() {
+                                            loadJS(base + 'mode/htmlmixed/htmlmixed.min.js', function() {
+                                                mountCM();
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        }
+
+                        function mountCM() {
+                            var ta = document.getElementById('custom_sub_html_editor');
+                            if (!ta || window._cmHtmlEditor) return;
+                            var initVal = ta.value || '';
+                            ta.style.display = 'none';
+                            var cm = CodeMirror(function(el) {
+                                ta.parentNode.insertBefore(el, ta);
+                            }, {
+                                value: initVal,
+                                mode: 'htmlmixed',
+                                theme: 'dracula',
+                                lineNumbers: true,
+                                lineWrapping: false,
+                                tabSize: 4,
+                                indentWithTabs: false,
+                                autofocus: false
+                            });
+                            window._cmHtmlEditor = cm;
+                            cm.on('change', function() {
+                                ta.value = cm.getValue();
+                                var lc = document.getElementById('cm-line-count');
+                                if (lc) lc.textContent = cm.lineCount() + ' lines';
+                            });
+                            Object.defineProperty(ta, 'value', {
+                                get: function() { return cm.getValue(); },
+                                set: function(v) {
+                                    cm.setValue(v || '');
+                                    var lc = document.getElementById('cm-line-count');
+                                    if (lc) lc.textContent = cm.lineCount() + ' lines';
+                                }
+                            });
+                            var lc = document.getElementById('cm-line-count');
+                            if (lc) lc.textContent = cm.lineCount() + ' lines';
+                        }
+
+                        function cmFormatCode() {
+                            if (!window._cmHtmlEditor) return;
+                            var btn = document.querySelector('[onclick="cmFormatCode()"]');
+                            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Formatting...'; }
+                            var val = window._cmHtmlEditor.getValue();
+                            function doFormat() {
+                                if (typeof html_beautify !== 'undefined') {
+                                    var out = html_beautify(val, {indent_size:4, wrap_line_length:0, preserve_newlines:true, max_preserve_newlines:1, end_with_newline:false, unformatted:['script','style']});
+                                    window._cmHtmlEditor.setValue(out);
+                                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-indent mr-1"></i>Format'; }
+                                } else {
+                                    var s = document.createElement('script');
+                                    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js';
+                                    s.onload = function() { setTimeout(doFormat, 10); };
+                                    document.head.appendChild(s);
+                                }
+                            }
+                            setTimeout(doFormat, 10);
+                        }
+                        </script>
+                    </div>
+
                 </div>
             </div>
 
@@ -739,5 +924,5 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block javascripts %}
-<script src="{{ url_for('assets', path='js/settings.js') }}?v=final2"></script>
+<script src="{{ url_for('assets', path='js/settings.js') }}?v=final3"></script>
 {% endblock %}

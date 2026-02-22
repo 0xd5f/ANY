@@ -1,23 +1,21 @@
-## [Update] - 2026-02-11 - v1.4.7
+## [Update] - 2026-02-23 - v1.4.8
 
 ### Added
-- **Masquerade Proxy Mode**: Новый режим маскировки — Proxy. Зеркалирует реальный сайт (например google.com) при зондировании DPI, вместо стандартной страницы "502 Bad Gateway". Выбор режима (String/Proxy) и ввод URL доступны в Hysteria Settings → Masquerade.
-- **Renew API Endpoint**: `POST /api/v1/users/{username}/renew` — продление подписки одним вызовом: сброс даты создания, разблокировка, опциональный сброс трафика и изменение лимитов.
-- **Reset Traffic Flag**: Параметр `--reset-traffic` в `edit_user.py` для обнуления счётчиков download/upload.
-- **Hop Interval**: Настройка интервала переключения портов (5–300 сек) в Port Hopping — UI поле, API параметр, поддержка в URI (`hop_interval` query param).
-- **Auto Installer**: Новый скрипт `install_auto.sh` — полностью автоматическая установка, спрашивает только домен. Генерирует логин/пароль и выводит URL панели.
-- **API Documentation**: Документация для эндпоинтов `/renew` и `/reset` в API Docs.
+- **Subscription Template Editor**: Полностью редактируемые HTML/CSS/JS шаблоны subscription страницы через веб-панель. Настройки → Subscription Settings → Edit Template позволяет кастомизировать `index.html`, `style.css`, `script.js`. Изменения применяются без перезагрузки сервиса.
+- **Tunnel Wizard Redesign**: Полная переработка интерфейса управления туннелями — новый адаптивный дизайн, расширенные фильтры (status, type, provider), поддержка пагинации, интеграция с External Nodes.
+- **Auto Node Installation**: Автоматическая установка Hysteria2 на удалённых серверах через Tunnel Wizard — поддержка SSH (Ubuntu/Debian) и Docker. Генерация install-скриптов с автоконфигурацией порта, SNI, OBFS, pin. Endpoint `POST /api/v1/config/tunnel-exec` для выполнения команд.
+- **External Nodes UI**: Адаптация панели для приложения HAAP — Add Node / Edit Node формы с полями location, IP, port, SNI, OBFS, pinSHA256, insecure. Node Manager (`node.py`) для CRUD операций с `nodes.json`.
+- **Users Table Redesign**: Переработан дизайн таблицы пользователей — компактный вид, улучшенная читаемость, адаптивные колонки, оптимизированная производительность рендеринга.
+- **Modal Redesign**: Обновлены все модальные окна — современный дизайн с плавными анимациями, улучшенная доступность, адаптивная вёрстка для мобильных устройств.
+- **Subscription Page Redesign**: Полностью переработана визуальная часть subscription страницы — адаптивный дизайн, поддержка тёмной темы, копирование URI одним кликом, QR-коды для каждого сервера.
 
 ### Fixed
-- **Block User Toggle**: Исправлен баг, при котором переключатель блокировки пользователя не работал — планировщик (`kick_expired_users`) повторно блокировал пользователя каждые 60 сек. Теперь при разблокировке автоматически обновляется дата создания аккаунта.
-- **Telegram Bot Renew**: Команда `renew_creation` в боте теперь автоматически разблокирует пользователя (`--unblocked`).
-- **Secret Path Error**: Исправлена ошибка "WEBPANEL_SCRIPT" при смене Secret Path — удалена дублирующая функция с несуществующей командой.
-- **Port Hopping URI Format**: URI теперь использует `mport` query параметр вместо диапазона портов в поле port, для корректной работы с клиентами.
+- **External Nodes Pin Format**: Исправлена генерация URI для External Nodes — `pinSHA256` теперь корректно конвертируется из hex-формата (`XX:XX:XX`) в формат `sha256/BASE64URL`, требуемый клиентами (HAAP/Hiddify). Добавлена функция `hex_pin_to_uri()` в `wrapper_uri.py`.
+- **Port Hopping for External Nodes**: Port Hopping параметры (`mport` и `mportHopInt`) теперь корректно передаются для External Nodes в subscription URIs. Ранее эти параметры добавлялись только для основного сервера.
+- **Tunnel Wizard Docker Template**: Исправлен синтаксис Jinja2 в Docker template для Tunnel Wizard — `{{.Names}}` заменён на `{{ "{{.Names}}" }}` для корректного отображения в скрипте автоустановки.
 
 ### Improved
-- **No-AVX Installer**: При отсутствии поддержки AVX на CPU инсталляторы (`install.sh`, `install_auto.sh`) теперь предлагают автоматически переключиться на `nodb` версию вместо аварийного завершения.
-- **README.md**: Полностью переработан — добавлены оглавление, навигация, описания Web Panel, API, Telegram Bot, Anti-Censorship, Port Hopping, WARP, архитектура проекта, секция nodb для CPU без AVX.
-
-### Changed
-- **Masquerade API Response**: `GET /check-masquerade` возвращает JSON `{enabled, type, url}` вместо строки `{status}`.
-- **Port Hopping API**: `POST /port-hopping/enable` принимает параметр `hop_interval`.
+- **Subscription URI Generation**: Улучшена обработка TLS fingerprints — функция `hex_pin_to_uri()` автоматически распознаёт формат (`sha256/...` или hex) и корректно конвертирует для всех серверов.
+- **Nodes Management**: Расширен API endpoint `/api/v1/config/nodes` — добавлена поддержка heartbeat от удалённых нод, версионирование, проверка доступности.
+- **Tunnel Wizard Templates**: Улучшены install-скрипты — автоматическое определение архитектуры (amd64/arm64), retry-логика для загрузок, валидация config.yaml перед запуском.
+- **External Nodes Validation**: Добавлена валидация полей при добавлении/редактировании нод — проверка формата IP, диапазона портов, валидности pinSHA256 (hex формат).

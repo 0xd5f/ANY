@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from ..schema.response import DetailResponse
 import json
 import os
@@ -13,12 +14,15 @@ from ..schema.config.ip import (
     NodeListResponse,
     NodesTrafficPayload,
     NodeHeartbeatBody,
-    RestartNodeBody
+    RestartNodeBody,
+    AutoInstallNodeBody,
+    TunnelExecBody
 )
 import cli_api
 import time
 import socket
 import asyncio
+from config.config import CONFIGS
 
 router = APIRouter()
 
@@ -286,3 +290,162 @@ async def get_nodes_status():
 async def restart_node(body: RestartNodeBody):
     NODE_COMMAND_QUEUE[body.node_name] = "restart"
     return DetailResponse(detail=f"Restart command queued for node '{body.node_name}'.")
+
+@router.post('/nodes/autoinstall', summary='Auto-install any-node via SSH')
+async def autoinstall_node(body: AutoInstallNodeBody, request: Request):
+    _root = CONFIGS.ROOT_PATH.strip('/') if CONFIGS.ROOT_PATH else ''
+    _domain = CONFIGS.DOMAIN.strip('/')
+    _scheme = 'https' if not CONFIGS.SELF_SIGNED else 'https'
+    panel_url = f"{_scheme}://{_domain}" + (f'/{_root}' if _root else '')
+    panel_token = CONFIGS.API_TOKEN
+
+    async def generate():
+        try:
+            import paramiko
+        except ImportError:
+            yield "data: [✗] paramiko is not installed on the server. Run: pip install paramiko\n\n"
+            yield "data: __DONE_ERR__\n\n"
+            return
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            yield f"data: [*] Connecting to {body.ssh_host}:{body.ssh_port}...\n\n"
+
+            def _connect():
+                transport = paramiko.Transport((body.ssh_host, body.ssh_port))
+                transport.connect()
+                transport.auth_password(body.ssh_user, body.ssh_password)
+                client._transport = transport
+
+            await asyncio.get_event_loop().run_in_executor(None, _connect)
+            yield "data: [✓] Connected!\n\n"
+
+            cmd = (
+                "curl -fsSL https://raw.githubusercontent.com/0xd5f/any-node/main/install.sh"
+                f" -o /tmp/_any_install.sh && chmod +x /tmp/_any_install.sh"
+                f" && bash /tmp/_any_install.sh install {body.hysteria_port} {body.sni} 2>&1"
+            )
+
+            channel = client.get_transport().open_session()
+            channel.get_pty(width=200, height=50)
+            channel.exec_command(cmd)
+
+            await asyncio.sleep(2)
+            channel.sendall(f"{panel_url}\n".encode('utf-8'))
+            await asyncio.sleep(0.5)
+            channel.sendall(f"{panel_token}\n".encode('utf-8'))
+
+            buf = b""
+            while True:
+                ready = await asyncio.get_event_loop().run_in_executor(None, channel.recv_ready)
+                if ready:
+                    chunk = await asyncio.get_event_loop().run_in_executor(None, channel.recv, 4096)
+                    if not chunk:
+                        break
+                    buf += chunk
+                    try:
+                        decoded = buf.decode('utf-8', errors='replace')
+                        buf = b""
+                    except Exception:
+                        continue
+                    lines = decoded.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+                    for line in lines:
+                        clean = line.strip()
+                        if clean:
+                            yield f"data: {clean}\n\n"
+                    await asyncio.sleep(0)
+                elif await asyncio.get_event_loop().run_in_executor(None, channel.exit_status_ready):
+                    break
+                else:
+                    await asyncio.sleep(0.2)
+
+            exit_code = await asyncio.get_event_loop().run_in_executor(None, channel.recv_exit_status)
+            yield "data: \n\n"
+            if exit_code == 0:
+                yield "data: [✓] Installation completed successfully!\n\n"
+                yield "data: __DONE_OK__\n\n"
+            else:
+                yield f"data: [✗] Installation failed (exit code {exit_code})\n\n"
+                yield "data: __DONE_ERR__\n\n"
+
+        except Exception as e:
+            yield f"data: [✗] Error: {str(e)}\n\n"
+            yield "data: __DONE_ERR__\n\n"
+        finally:
+            client.close()
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@router.post('/nodes/tunnel-exec', summary='Execute tunnel setup script on node via SSH')
+async def tunnel_exec(body: TunnelExecBody):
+    async def generate():
+        try:
+            import paramiko
+        except ImportError:
+            yield "data: [✗] paramiko not installed\n\n"
+            yield "data: __DONE_ERR__\n\n"
+            return
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            yield f"data: [*] Connecting to {body.ssh_host}:{body.ssh_port}...\n\n"
+
+            def _connect():
+                transport = paramiko.Transport((body.ssh_host, body.ssh_port))
+                transport.connect()
+                transport.auth_password(body.ssh_user, body.ssh_password)
+                client._transport = transport
+
+            await asyncio.get_event_loop().run_in_executor(None, _connect)
+            yield "data: [✓] Connected!\n\n"
+            yield "data: [*] Executing tunnel setup...\n\n"
+
+            def _upload_and_run():
+                sftp = client.open_sftp()
+                with sftp.open('/tmp/_tunnel_setup.sh', 'w') as f:
+                    f.write(body.script)
+                sftp.close()
+
+            await asyncio.get_event_loop().run_in_executor(None, _upload_and_run)
+
+            channel = client.get_transport().open_session()
+            channel.get_pty(width=200, height=50)
+            channel.exec_command('bash /tmp/_tunnel_setup.sh 2>&1')
+
+            buf = b""
+            while True:
+                ready = await asyncio.get_event_loop().run_in_executor(None, channel.recv_ready)
+                if ready:
+                    chunk = await asyncio.get_event_loop().run_in_executor(None, channel.recv, 4096)
+                    if not chunk:
+                        break
+                    buf += chunk
+                    decoded = buf.decode('utf-8', errors='replace')
+                    buf = b""
+                    for line in decoded.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+                        clean = line.strip()
+                        if clean:
+                            yield f"data: {clean}\n\n"
+                    await asyncio.sleep(0)
+                elif await asyncio.get_event_loop().run_in_executor(None, channel.exit_status_ready):
+                    break
+                else:
+                    await asyncio.sleep(0.2)
+
+            exit_code = await asyncio.get_event_loop().run_in_executor(None, channel.recv_exit_status)
+            if exit_code == 0:
+                yield "data: [✓] Tunnel setup completed!\n\n"
+                yield "data: __DONE_OK__\n\n"
+            else:
+                yield f"data: [✗] Failed (exit code {exit_code})\n\n"
+                yield "data: __DONE_ERR__\n\n"
+        except Exception as e:
+            yield f"data: [✗] Error: {str(e)}\n\n"
+            yield "data: __DONE_ERR__\n\n"
+        finally:
+            client.close()
+
+    return StreamingResponse(generate(), media_type="text/event-stream")

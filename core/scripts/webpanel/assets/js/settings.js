@@ -32,6 +32,8 @@ $(document).ready(function () {
         telegramInfo: contentSection.dataset.telegramInfoUrl,
         normalSubStart: contentSection.dataset.normalSubStartUrl,
         normalSubStop: contentSection.dataset.normalSubStopUrl,
+        normalSubGetPageHtml: contentSection.dataset.normalSubGetPageHtmlUrl,
+        normalSubSetPageHtml: contentSection.dataset.normalSubSetPageHtmlUrl,
         editIp: contentSection.dataset.editIpUrl,
         backup: contentSection.dataset.backupUrl,
         restore: contentSection.dataset.restoreUrl,
@@ -659,6 +661,8 @@ $(document).ready(function () {
             },
             error: function (xhr) { console.error("Failed to fetch show username setting:", xhr); }
         });
+
+        fetchNormalSubPageHtml();
     }
 
     function fetchTelegramBackupInterval() {
@@ -976,6 +980,48 @@ $(document).ready(function () {
         });
     }
 
+    function fetchNormalSubPageHtml() {
+        if (!API_URLS.normalSubGetPageHtml) return;
+        $.ajax({
+            url: API_URLS.normalSubGetPageHtml,
+            type: "GET",
+            success: function (data) {
+                $("#custom_sub_html_editor").val(data.html || '');
+            },
+            error: function (xhr) { console.error("Failed to fetch custom sub page HTML:", xhr); }
+        });
+    }
+
+    function saveSubPageHtml() {
+        const html = $("#custom_sub_html_editor").val();
+        const action = html.trim() ? "save custom sub page HTML" : "reset sub page HTML to default (empty will remove custom HTML)";
+        confirmAction(action, function () {
+            sendRequest(
+                API_URLS.normalSubSetPageHtml,
+                "PUT",
+                { html: html },
+                html.trim() ? "Custom sub page HTML saved successfully!" : "Custom HTML removed. Default template will be used.",
+                "#save_sub_page_html_btn",
+                false,
+                null
+            );
+        });
+    }
+
+    function resetSubPageHtml() {
+        confirmAction("reset the sub page to the default template", function () {
+            sendRequest(
+                API_URLS.normalSubSetPageHtml,
+                "PUT",
+                { html: '' },
+                "Custom HTML removed. Default template will be used.",
+                "#reset_sub_page_html_btn",
+                false,
+                function() { $("#custom_sub_html_editor").val(''); }
+            );
+        });
+    }
+
     function startNormal() {
         if (!validateForm('normal_sub_service_form')) return;
         const domain = $("#normal_domain").val();
@@ -1158,6 +1204,8 @@ $(document).ready(function () {
     $("#normal_start").on("click", startNormal);
     $("#normal_stop").on("click", stopNormal);
     $("#normal_subpath_save_btn").on("click", saveNormalSubConfig);
+    $("#save_sub_page_html_btn").on("click", saveSubPageHtml);
+    $("#reset_sub_page_html_btn").on("click", resetSubPageHtml);
     $("#ip_change").on("click", saveIP);
     $("#download_backup").on("click", downloadBackup);
     // Bind to the file input change event, not a non-existent button

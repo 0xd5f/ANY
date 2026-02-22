@@ -150,7 +150,7 @@ def process_add_user_step4(message, username, traffic_limit, expiration_days):
         lines = uri_info_output.strip().split('\n')
         for i, line in enumerate(lines):
             if line.strip() == "IPv4:":
-                if i + 1 < len(lines) and lines[i+1].strip().startswith("hy2://"):
+                if i + 1 < len(lines) and lines[i+1].strip().startswith("hysteria2://"):
                     direct_uri = lines[i+1].strip()
             elif line.strip() == "Normal-SUB Sublink:":
                 if i + 1 < len(lines) and (lines[i+1].strip().startswith("http://") or lines[i+1].strip().startswith("https://")):

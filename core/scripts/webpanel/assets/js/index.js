@@ -48,6 +48,8 @@ function updateServerInfo() {
             document.getElementById('user-uploaded-traffic').textContent = data.user_uploaded_traffic;
             document.getElementById('user-downloaded-traffic').textContent = data.user_downloaded_traffic;
             document.getElementById('user-total-traffic').textContent = data.user_total_traffic;
+
+            pushChartPoint(data);
         })
         .catch(error => console.error('Error fetching server info:', error));
 }
@@ -89,7 +91,113 @@ function updateServiceBox(serviceName, status) {
     }
 }
 
+// ---- Charts ----
+const CHART_MAX = 30;
+const chartLabels = [];
+const cpuData = [], ramData = [], dlData = [], ulData = [];
+let chartCpuRam = null, chartNetwork = null;
+
+function parseSpeedToKbps(str) {
+    if (!str) return 0;
+    const n = parseFloat(str);
+    if (isNaN(n)) return 0;
+    const s = str.toUpperCase();
+    if (s.includes('GB/S') || s.includes('GB/S')) return n * 1024 * 1024;
+    if (s.includes('MB/S')) return n * 1024;
+    if (s.includes('KB/S')) return n;
+    if (s.includes('B/S')) return n / 1024;
+    return n;
+}
+
+function parseRamMb(str) {
+    if (!str) return 0;
+    const n = parseFloat(str);
+    if (isNaN(n)) return 0;
+    const s = str.toUpperCase();
+    if (s.includes('GB')) return n * 1024;
+    if (s.includes('TB')) return n * 1024 * 1024;
+    return n;
+}
+
+function initCharts() {
+    const dark = document.documentElement.classList.contains('dark');
+    const gridColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const tickColor = dark ? '#71717a' : '#9ca3af';
+    const baseOpts = {
+        responsive: true, maintainAspectRatio: true,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: tickColor, font: { size: 11 }, boxWidth: 12 } }, tooltip: { mode: 'index' } },
+        scales: {
+            x: { ticks: { color: tickColor, font: { size: 10 }, maxTicksLimit: 6 }, grid: { color: gridColor } },
+            y: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor }, beginAtZero: true }
+        }
+    };
+
+    const ctxCR = document.getElementById('chart-cpu-ram');
+    const ctxNet = document.getElementById('chart-network');
+    if (!ctxCR || !ctxNet) return;
+
+    chartCpuRam = new Chart(ctxCR, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                { label: 'CPU %', data: cpuData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+                { label: 'RAM %', data: ramData, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 }
+            ]
+        },
+        options: JSON.parse(JSON.stringify(baseOpts))
+    });
+    chartCpuRam.options.scales.y.max = 100;
+    chartCpuRam.options.scales.y.ticks.callback = v => v + '%';
+    chartCpuRam.update();
+
+    chartNetwork = new Chart(ctxNet, {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                { label: '↓ Download', data: dlData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 },
+                { label: '↑ Upload', data: ulData, borderColor: '#ec4899', backgroundColor: 'rgba(236,72,153,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4 }
+            ]
+        },
+        options: JSON.parse(JSON.stringify(baseOpts))
+    });
+    chartNetwork.options.scales.y.ticks.callback = v => v >= 1024 ? (v/1024).toFixed(1)+'MB/s' : v.toFixed(1)+'KB/s';
+    chartNetwork.update();
+}
+
+function pushChartPoint(data) {
+    const now = new Date();
+    const label = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+    const cpu = parseFloat(data.cpu_usage) || 0;
+    const ramUsedMb = parseRamMb(data.ram_usage);
+    const ramTotalMb = parseRamMb(data.total_ram);
+    const ramPct = ramTotalMb > 0 ? (ramUsedMb / ramTotalMb) * 100 : 0;
+    const dl = parseSpeedToKbps(data.download_speed);
+    const ul = parseSpeedToKbps(data.upload_speed);
+
+    chartLabels.push(label);
+    cpuData.push(parseFloat(cpu.toFixed(1)));
+    ramData.push(parseFloat(ramPct.toFixed(1)));
+    dlData.push(parseFloat(dl.toFixed(2)));
+    ulData.push(parseFloat(ul.toFixed(2)));
+
+    if (chartLabels.length > CHART_MAX) {
+        chartLabels.shift(); cpuData.shift(); ramData.shift(); dlData.shift(); ulData.shift();
+    }
+    if (chartCpuRam) chartCpuRam.update();
+    if (chartNetwork) chartNetwork.update();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Load Chart.js then init
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.onload = function() { initCharts(); };
+    document.head.appendChild(s);
+
     updateServerInfo();
     updateServiceStatuses();
     setInterval(updateServerInfo, 2000);

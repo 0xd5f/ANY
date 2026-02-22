@@ -304,8 +304,8 @@ $(function () {
         }
         
         $("#editNote").val(note || '');
-        // Fix: Check for text-green-500 instead of text-success
-        $("#editBlocked").prop("checked", !dataRow.find("td.enable-cell i").hasClass("text-green-500"));
+        // Fix: Check for text-success class (used in redesigned rows)
+        $("#editBlocked").prop("checked", !dataRow.find("td.enable-cell i").hasClass("text-success"));
         $("#editUnlimitedIp").prop("checked", dataRow.find(".unlimited-ip-cell i").hasClass("text-primary"));
     
         const passwordInput = $("#editPassword");
@@ -403,42 +403,135 @@ $(function () {
         });
     });
 
-    /* HANDLER RESTORED AND UPDATED FOR NEW UI VISIBILITY */
-    $("#qrcodeModal").on("show.bs.modal", function (event) {
+    // QR Code Modal
+    $("#qrcodeModal").on("show.bs.modal", function(event) {
         const username = $(event.relatedTarget).data("username");
-        
-        // Setup UI State for Loading
-        const qrcodesContainer = $("#qrcodesContainer");
-        const loading = $("#qrcodesLoading");
-        
-        qrcodesContainer.empty().addClass('hidden').removeClass('flex');
-        loading.removeClass('hidden');
+
+        const $tabBar = $("#qrTabBar").empty();
+        const $container = $("#qrcodesContainer").empty().addClass('hidden');
+        const $loading = $("#qrcodesLoading").removeClass("hidden");
+        $("#qrcodeModalUsername").text(username);
 
         const url = USER_URI_URL_TEMPLATE.replace("U", encodeURIComponent(username));
-        
-        $.getJSON(url, response => {
-            // Hide Loading, Show Container
-            loading.addClass("hidden");
-            qrcodesContainer.removeClass('hidden').addClass('flex');
-            
-            [
-                { type: "IPv4", link: response.ipv4 },
-                { type: "IPv6", link: response.ipv6 },
-                { type: "Normal-SUB", link: response.normal_sub }
-            ].forEach(config => {
-                if (!config.link) return;
-                const qrId = `qrcode-${config.type.replace(/[^a-zA-Z0-9]/g, '')}`;
-                const card = $(`<div class="card d-inline-block m-2"><div class="card-body"><div id="${qrId}" class="mx-auto" style="cursor: pointer;"></div><div class="mt-2 text-center small text-muted font-weight-bold">${config.type}</div></div></div>`);
-                qrcodesContainer.append(card);
-                new QRCodeStyling({ width: 200, height: 200, data: config.link, margin: 2 }).append(document.getElementById(qrId));
-                card.on("click", () => navigator.clipboard.writeText(config.link).then(() => Swal.fire({ icon: "success", title: `${config.type} link copied!`, showConfirmButton: false, timer: 1200 })));
-            });
-        }).fail(() => {
-             loading.addClass("hidden");
-             Swal.fire("Error!", "Failed to fetch user configuration.", "error");
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                $loading.addClass("hidden");
+
+                const configs = [
+                    { type: "IPv4",       link: response.ipv4 },
+                    { type: "IPv6",       link: response.ipv6 },
+                    { type: "Normal-SUB", link: response.normal_sub }
+                ].filter(c => !!c.link);
+
+                if (!configs.length) {
+                    $container.removeClass('hidden').html(`
+                        <div class="flex flex-col items-center gap-2 py-8 text-center">
+                            <div class="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-link-slash text-xl text-zinc-400"></i>
+                            </div>
+                            <p class="text-sm font-medium text-zinc-500">No links available</p>
+                        </div>`);
+                    return;
+                }
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const qrBg   = isDark ? "#18181b" : "#ffffff";
+                const qrDots = isDark ? "#ffffff" : "#000000";
+
+                configs.forEach((config, idx) => {
+                    const safeId   = `qr-${config.type.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    const panelId  = `qrp-${safeId}`;
+                    const isActive = idx === 0;
+
+                    $tabBar.append(`
+                        <button data-panel="${panelId}"
+                                class="qr-tab flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all
+                                       ${isActive
+                                           ? 'bg-primary-600 text-white shadow-sm'
+                                           : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'}">
+                            ${config.type}
+                        </button>`);
+
+                    const $panel = $(`<div id="${panelId}" class="qr-panel ${isActive ? '' : 'hidden'}"></div>`);
+
+                    $panel.html(`
+                        <div class="flex flex-col items-center gap-3 pb-2">
+                            <div class="p-3 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-inner"
+                                 style="background:${qrBg}">
+                                <div id="${safeId}" class="w-[200px] h-[200px] flex items-center justify-center">
+                                    <div class="w-6 h-6 border-2 border-primary-400 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </div>
+                            <button class="copy-qr-btn w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+                                           bg-primary-600 hover:bg-primary-500 active:scale-95 text-white text-sm font-semibold
+                                           transition-all shadow-md shadow-primary-600/25">
+                                <i class="far fa-copy"></i> Copy Link
+                            </button>
+                        </div>`);
+
+                    $panel.find('.copy-qr-btn').on('click', () => {
+                        navigator.clipboard.writeText(config.link).then(() => {
+                            Swal.fire({
+                                icon: "success", title: "Copied!",
+                                toast: true, position: 'top-end',
+                                showConfirmButton: false, timer: 1800,
+                                background: '#18181b', color: '#fff'
+                            });
+                        });
+                    });
+
+                    $container.append($panel);
+
+                    setTimeout(() => {
+                        try {
+                            if (typeof QRCodeStyling !== 'undefined') {
+                                const el = document.getElementById(safeId);
+                                el.innerHTML = '';
+                                new QRCodeStyling({
+                                    width: 200, height: 200,
+                                    data: config.link,
+                                    margin: 4,
+                                    dotsOptions:          { color: qrDots, type: "rounded" },
+                                    cornersSquareOptions: { type: "extra-rounded" },
+                                    backgroundOptions:    { color: qrBg }
+                                }).append(el);
+                            }
+                        } catch(err) { console.error("QR error", err); }
+                    }, 60 * idx);
+                });
+
+                $container.removeClass('hidden');
+
+                $tabBar.find('.qr-tab').on('click', function() {
+                    $tabBar.find('.qr-tab')
+                        .removeClass('bg-primary-600 text-white shadow-sm')
+                        .addClass('text-zinc-500 dark:text-zinc-400');
+                    $(this)
+                        .removeClass('text-zinc-500 dark:text-zinc-400')
+                        .addClass('bg-primary-600 text-white shadow-sm');
+                    $container.find('.qr-panel').addClass('hidden');
+                    $('#' + $(this).data('panel')).removeClass('hidden');
+                });
+            },
+            error: function(jqXHR) {
+                $loading.addClass("hidden");
+                const msg = jqXHR.responseJSON?.detail || 'Unexpected error';
+                $container.removeClass('hidden').html(`
+                    <div class="flex flex-col items-center gap-2 py-8 text-center">
+                        <div class="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-xl text-red-500"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-red-500">Error</p>
+                        <p class="text-xs text-zinc-400 max-w-[220px] break-words">${msg}</p>
+                    </div>`);
+            }
         });
     });
-    
+
     $("#showSelectedLinks").on("click", function () {
         const selectedUsers = $(".user-checkbox:checked").map((_, el) => $(el).val()).get();
         if (selectedUsers.length === 0) {
@@ -648,135 +741,7 @@ $(function () {
         ['addUserModal', 'editUserModal', 'qrcodeModal'].forEach(id => closeModal(id));
     });
 
-    // QR Code Modal
-    $(document).on('click', '.config-link', function(e) {
-        e.preventDefault();
-        const username = $(this).data("username");
-        const qrcodesContainer = $("#qrcodesContainer").empty().addClass('hidden').removeClass('flex');
-        const loading = $("#qrcodesLoading").removeClass("hidden");
-        
-        openModal('qrcodeModal');
-        
-        const url = USER_URI_URL_TEMPLATE.replace("U", encodeURIComponent(username));
-        
-        $.ajax({
-            url: url,
-            method: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                 loading.addClass("hidden");
-                 qrcodesContainer.empty().removeClass('hidden').addClass('flex');
-                 
-                 const configs = [
-                    { type: "IPv4", link: response.ipv4 },
-                    { type: "IPv6", link: response.ipv6 },
-                    { type: "Normal-SUB", link: response.normal_sub }
-                ];
-                
-                let hasLinks = false;
-                
-                configs.forEach(config => {
-                    if (!config.link) return;
-                    hasLinks = true;
-                    const qrId = `qrcode-${config.type.replace(/[^a-zA-Z0-9]/g, '')}`;
-                    
-                    const card = $(`
-                        <div class="p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-gray-100 dark:border-zinc-700/50 w-full shadow-sm">
-                            <div class="flex flex-col items-center">
-                                <div class="mb-4 font-semibold text-gray-700 dark:text-gray-300 w-full text-center text-sm tracking-wide bg-gray-100 dark:bg-zinc-700/50 py-1 rounded-lg">
-                                    ${config.type}
-                                </div>
-                                <!-- White Square Background for QR -->
-                                <div class="p-4 bg-white rounded-xl shadow-inner border border-gray-100">
-                                    <div id="${qrId}"></div>
-                                </div>
-                                <div class="mt-4 flex gap-2 w-full">
-                                    <button class="copy-link-btn w-full py-2.5 px-4 bg-white dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 rounded-xl text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-200 dark:hover:border-primary-800 transition-all shadow-sm flex items-center justify-center gap-2">
-                                        <i class="far fa-copy"></i> Copy Link
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                    
-                    qrcodesContainer.append(card);
-                    
-                    // Delay QR generation slightly
-                    setTimeout(() => {
-                        try {
-                            if (typeof QRCodeStyling !== 'undefined') {
-                                const qr = new QRCodeStyling({
-                                    width: 180,
-                                    height: 180,
-                                    data: config.link,
-                                    margin: 0,
-                                    dotsOptions: {
-                                        color: "#000000",
-                                        type: "rounded"
-                                    },
-                                    backgroundOptions: {
-                                        color: "#ffffff",
-                                    }
-                                });
-                                qr.append(document.getElementById(qrId));
-                            } else {
-                                $(`#${qrId}`).html('<div class="text-red-500 text-xs">Lib Missing</div>');
-                            }
-                        } catch (e) {
-                            console.error("QR Error", e);
-                            $(`#${qrId}`).html('<div class="text-red-500 text-xs">QR Error</div>');
-                        }
-                    }, 50);
-
-                    const copyAction = () => {
-                        navigator.clipboard.writeText(config.link).then(() => {
-                             Swal.fire({ 
-                                 icon: "success", 
-                                 title: "Copied!", 
-                                 toast: true,
-                                 position: 'top-end',
-                                 showConfirmButton: false, 
-                                 timer: 2000,
-                                 background: '#18181b', // dark theme toast
-                                 color: '#fff'
-                             });
-                        });
-                    };
-
-                    card.find('.copy-link-btn').on('click', copyAction);
-                });
-                
-                if (!hasLinks) {
-                     qrcodesContainer.html(`
-                        <div class="flex flex-col items-center justify-center py-8 text-center w-full">
-                            <div class="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                                <i class="fas fa-link-slash text-2xl text-gray-400"></i>
-                            </div>
-                            <h4 class="text-lg font-medium text-gray-900 dark:text-white">No Links Available</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 max-w-[200px]">Could not generate connection links for this user.</p>
-                        </div>
-                     `);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                loading.addClass("hidden");
-                let errorMsg = 'An unexpected error occurred.';
-                if (jqXHR.responseJSON && jqXHR.responseJSON.detail) {
-                    errorMsg = jqXHR.responseJSON.detail;
-                }
-                
-                qrcodesContainer.empty().removeClass('hidden').addClass('flex').html(`
-                    <div class="flex flex-col items-center justify-center py-8 text-center w-full">
-                        <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
-                        </div>
-                        <h4 class="text-lg font-medium text-red-600 dark:text-red-400">Error</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 max-w-[250px] break-words">${errorMsg}</p>
-                    </div>
-                `);
-            }
-        });
-    });
+    // (QR Code Modal handled by show.bs.modal handler above)
 
     // Handle Edit User Modal Opening
     $(document).on('click', '.edit-user', function(e) {
@@ -797,7 +762,7 @@ $(function () {
         let statusText = dataRow.data('status'); 
         let quotaRaw = dataRow.data('quota-raw'); 
         let expiryDaysRaw = dataRow.data('expiry-days'); 
-        let isEnabled = dataRow.data('enable') === true; 
+        let isEnabled = dataRow.data('enable') === 'true'; 
         
         // 2. Fallback to Text Parsing (Old Method - for cached HTML)
         if (quotaRaw === undefined) {

@@ -4,17 +4,12 @@
 
 {% block stylesheets %}
 <style>
-    /* Custom Scrollbar for tables if needed */
-    .table-responsive::-webkit-scrollbar {
-        height: 8px;
-    }
-    .table-responsive::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .table-responsive::-webkit-scrollbar-thumb {
-        background-color: rgba(156, 163, 175, 0.5);
-        border-radius: 4px;
-    }
+    .stat-card { transition: transform .15s ease, box-shadow .15s ease; }
+    .stat-card:hover { transform: translateY(-2px); }
+    @keyframes row-in { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+    #userTableBody tr.user-main-row { animation: row-in .18s ease both; }
+    .filter-button { transition: all .15s ease; }
+    .active-filter { font-weight: 600 !important; }
 </style>
 {% endblock %}
 
@@ -34,32 +29,66 @@
     data-search-url="{{ url_for('search_users') }}"
 ></div>
 
-<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div class="mb-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
     <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            Users 
+            Users
             {% if total_users is defined %}
-            <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-white" id="user-total-count">
+            <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-200 text-zinc-700 dark:bg-zinc-700/80 dark:text-zinc-300" id="user-total-count">
                 {{ total_users }}
             </span>
             {% endif %}
         </h1>
-        <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Manage user access and subscriptions</p>
+        <p class="text-sm text-gray-500 dark:text-zinc-500 mt-0.5">Manage user access and subscriptions</p>
     </div>
-    
+
     <div class="flex flex-wrap gap-2">
-         <button type="button" class="btn-icon bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2" data-toggle="modal" data-target="#addUserModal">
-             <i class="fas fa-plus"></i> Add User
-         </button>
-         
-         <div class="flex gap-2">
-             <button type="button" class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors" id="showSelectedLinks" title="Show Links">
-                <i class="fas fa-link"></i>
-             </button>
-             <button type="button" class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" id="deleteSelected" title="Delete Selected">
-                <i class="fas fa-trash"></i>
-             </button>
-         </div>
+        <button type="button"
+                class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-500 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md shadow-primary-600/25"
+                data-toggle="modal" data-target="#addUserModal">
+            <i class="fas fa-plus text-xs"></i> Add User
+        </button>
+        <button type="button"
+                class="inline-flex items-center justify-center w-9 h-9 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-gray-400 rounded-xl hover:border-primary-400 hover:text-primary-600 transition-colors"
+                id="showSelectedLinks" title="Show Links">
+            <i class="fas fa-link text-sm"></i>
+        </button>
+        <button type="button"
+                class="inline-flex items-center justify-center w-9 h-9 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-red-400 rounded-xl hover:border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                id="deleteSelected" title="Delete Selected">
+            <i class="fas fa-trash text-sm"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Stats row -->
+<div class="grid grid-cols-3 gap-3 mb-5">
+    <div class="stat-card bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-users text-indigo-500 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-500 font-medium">Total</p>
+            <p class="text-lg font-bold text-gray-900 dark:text-white leading-none" id="stat-total">{{ total_users if total_users is defined else '—' }}</p>
+        </div>
+    </div>
+    <div class="stat-card bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+            <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>
+        </div>
+        <div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-500 font-medium">Online</p>
+            <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 leading-none" id="stat-online">0</p>
+        </div>
+    </div>
+    <div class="stat-card bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-ban text-red-400 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-xs text-zinc-500 dark:text-zinc-500 font-medium">Disabled</p>
+            <p class="text-lg font-bold text-red-500 dark:text-red-400 leading-none" id="stat-disabled">0</p>
+        </div>
     </div>
 </div>
 
@@ -68,27 +97,30 @@
 
     
     <!-- Filters & Search -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 p-4">
-        <div class="flex flex-col md:flex-row justify-between gap-4">
-            
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 px-4 py-3">
+        <div class="flex flex-col md:flex-row justify-between gap-3">
+
             <!-- Filters -->
-            <div class="flex flex-wrap gap-2 text-sm">
-                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-gray-300 transition-colors font-medium active-filter bg-gray-100 dark:bg-zinc-800" data-filter="all">All</button>
-                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 transition-colors font-medium" data-filter="enable">Enabled</button>
-                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors font-medium" data-filter="disable">Disabled</button>
-                <button type="button" class="filter-button px-3 py-1.5 rounded-lg border border-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 transition-colors font-medium" data-filter="online">Online</button>
+            <div class="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl w-fit">
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 transition-all active-filter bg-white dark:bg-zinc-700 shadow-sm" data-filter="all">All</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all" data-filter="enable">Enabled</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all" data-filter="disable">Disabled</button>
+                <button type="button" class="filter-button px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all" data-filter="online">Online</button>
             </div>
 
             <!-- Search -->
-            <div class="flex items-center gap-2 max-w-md w-full md:w-auto">
-                <div class="relative w-full">
-                    <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-zinc-700 rounded-xl leading-5 bg-gray-50 dark:bg-zinc-950 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out dark:text-white" placeholder="Search users...">
+            <div class="flex items-center gap-2 w-full md:max-w-xs">
+                <div class="relative flex-1">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-gray-400"></i>
+                        <i class="fas fa-search text-zinc-400 text-xs"></i>
                     </div>
+                    <input type="text" id="searchInput"
+                           class="block w-full pl-8 pr-3 py-2 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm bg-zinc-50 dark:bg-zinc-950 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 dark:text-white transition"
+                           placeholder="Search users...">
                 </div>
-                <button type="button" class="bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 px-3 py-2 rounded-xl transition-colors" id="searchButton">
-                    <i class="fas fa-arrow-right"></i>
+                <button type="button" id="searchButton"
+                        class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white rounded-xl transition-colors shadow-sm">
+                    <i class="fas fa-arrow-right text-xs"></i>
                 </button>
             </div>
         </div>
@@ -97,29 +129,29 @@
     <!-- Users Table -->
     <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse" id="userTable">
+            <table class="w-full text-left" id="userTable">
                 <thead>
-                    <tr class="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50">
-                        <th class="px-4 py-3 w-4">
+                    <tr class="border-b border-gray-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900">
+                        <th class="px-4 py-2.5 w-10">
                             <label class="inline-flex items-center cursor-pointer relative">
                                 <input type="checkbox" id="selectAll" class="peer sr-only">
-                                <div class="w-5 h-5 bg-gray-100 dark:bg-zinc-800 border-2 border-gray-300 dark:border-zinc-700 rounded peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all flex items-center justify-center">
-                                    <i class="fas fa-check text-white text-[10px] opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+                                <div class="w-4 h-4 bg-gray-100 dark:bg-zinc-800 border-2 border-gray-300 dark:border-zinc-700 rounded-[4px] peer-checked:bg-primary-600 peer-checked:border-primary-600 transition-all flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-[8px] opacity-0 peer-checked:opacity-100 transition-opacity"></i>
                                 </div>
                             </label>
                         </th>
-                        <th class="px-4 py-3">#</th>
-                        <th class="px-4 py-3">Username</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Status</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Traffic</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Usage Days</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Expiry</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Enable</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Note</th>
-                        <th class="px-4 py-3 hidden md:table-cell requires-iplimit-service hidden">Unl. IP</th>
-                        <th class="px-4 py-3 hidden md:table-cell">Configs</th>
-                        <th class="px-4 py-3 hidden md:table-cell text-right">Actions</th>
-                        <th class="px-4 py-3 md:hidden text-center">Details</th>
+                        <th class="px-4 py-2.5 text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase w-8">#</th>
+                        <th class="px-4 py-2.5 text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">User</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Status</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Traffic</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Days</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Expiry</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Active</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Note</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase requires-iplimit-service hidden">Unl. IP</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">QR</th>
+                        <th class="px-4 py-2.5 hidden md:table-cell text-right text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Actions</th>
+                        <th class="px-4 py-2.5 md:hidden text-center text-[10px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-600 uppercase">Details</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800 text-sm">
@@ -179,8 +211,8 @@
 <div id="modalBackdrop" class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm z-[100] hidden transition-opacity opacity-0"></div>
 
 <!-- Add User Modal -->
-<div id="addUserModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 modal-content-wrapper">
+<div id="addUserModal" class="hidden fixed inset-0 z-[101] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 modal-content-wrapper" style="max-height:90vh;overflow-y:auto">
         <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Add User</h3>
             <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="addUserModal">
@@ -306,8 +338,8 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="editUserModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-lg transform transition-all scale-95 opacity-0 modal-content-wrapper">
+<div id="editUserModal" class="hidden fixed inset-0 z-[101] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg transform transition-all scale-95 opacity-0 modal-content-wrapper" style="max-height:90vh;overflow-y:auto">
          <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Edit User</h3>
             <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="editUserModal">
@@ -400,39 +432,51 @@
 </div>
 
 <!-- QR Code Modal -->
-<div id="qrcodeModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-     <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 modal-content-wrapper flex flex-col items-center">
-        <div class="w-full flex justify-end p-4 absolute top-0 right-0 z-10">
-             <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn p-2 bg-gray-100/50 dark:bg-zinc-800/50 rounded-full" data-modal="qrcodeModal">
-                <i class="fas fa-times"></i>
+<div id="qrcodeModal" class="hidden fixed inset-0 z-[101] flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+    <div class="pointer-events-auto bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-sm transform transition-all scale-95 opacity-0 modal-content-wrapper overflow-hidden">
+
+        <!-- Header -->
+        <div class="relative bg-gradient-to-br from-primary-600 to-violet-600 px-5 pt-5 pb-10">
+            <button class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors closeModalBtn" data-modal="qrcodeModal">
+                <i class="fas fa-times text-sm"></i>
             </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-qrcode text-white text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold text-base leading-tight">Connection Links</h3>
+                    <p class="text-white/60 text-xs" id="qrcodeModalUsername">—</p>
+                </div>
+            </div>
         </div>
-        
-        <div class="pt-8 pb-4 text-center">
-             <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-violet-600 dark:from-primary-400 dark:to-violet-400">Scan QR Code</h3>
-             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Scan this with your client app</p>
+
+        <!-- Tab Bar (floats over header) -->
+        <div class="mx-4 -mt-5 relative z-10">
+            <div class="flex gap-1 p-1 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg border border-gray-100 dark:border-zinc-700" id="qrTabBar"></div>
         </div>
-        
-        <!-- Loading Spinner -->
-        <div id="qrcodesLoading" class="hidden w-full">
-             <div class="flex flex-col items-center justify-center py-12">
-                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-                 <p class="text-zinc-500 dark:text-zinc-400 mt-4 text-sm font-medium animate-pulse">Generating code...</p>
-             </div>
+
+        <!-- Loading -->
+        <div id="qrcodesLoading" class="hidden px-5 py-10">
+            <div class="flex flex-col items-center gap-3">
+                <div class="w-10 h-10 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin"></div>
+                <p class="text-xs text-zinc-400 font-medium animate-pulse">Generating…</p>
+            </div>
         </div>
-        
-        <!-- QR Container -->
-        <div id="qrcodesContainer" class="w-full flex-col items-center gap-4 hidden"></div>
-        
-        <div class="p-6 w-full">
-            <button class="w-full py-3 px-4 rounded-xl border border-gray-200 dark:border-zinc-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all closeModalBtn" data-modal="qrcodeModal">Close</button>
+
+        <!-- QR Panels -->
+        <div id="qrcodesContainer" class="hidden px-5 pt-4 pb-2"></div>
+
+        <!-- Footer -->
+        <div class="px-5 pb-5 pt-1">
+            <button class="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-sm font-semibold text-gray-600 dark:text-gray-300 transition-colors closeModalBtn" data-modal="qrcodeModal">Close</button>
         </div>
-     </div>
+    </div>
 </div>
 
 <!-- Show Links Modal -->
-<div id="showLinksModal" class="hidden fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 modal-content-wrapper">
+<div id="showLinksModal" class="hidden fixed inset-0 z-[101] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto pointer-events-none">
+    <div class="pointer-events-auto bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 modal-content-wrapper" style="max-height:90vh;overflow-y:auto">
          <div class="flex justify-between items-center p-6 border-b border-gray-100/50 dark:border-zinc-800/50">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white">Extract Links</h3>
             <button class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-200 transition-colors closeModalBtn" data-modal="showLinksModal">
@@ -582,5 +626,73 @@
 </script>
 
 <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-<script src="{{ url_for('assets', path='js/users.js') }}?v=final6"></script>
+<script src="{{ url_for('assets', path='js/users.js') }}?v=final9"></script>
+
+<script>
+function initTrafficBars() {
+    document.querySelectorAll('#userTableBody tr.user-main-row').forEach(function(row) {
+        const cell = row.querySelector('.traffic-cell');
+        if (!cell) return;
+        const text = cell.textContent || '';
+        const match = text.match(/\((\d+(?:\.\d+)?)%\)/);
+        const pct = match ? Math.min(parseFloat(match[1]), 100) : 0;
+        const bar = cell.querySelector('.traffic-bar');
+        if (!bar) return;
+        bar.style.width = pct + '%';
+        bar.style.background = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f59e0b' : '#10b981';
+    });
+}
+
+function updateStatCards() {
+    const rows = document.querySelectorAll('#userTableBody tr.user-main-row');
+    let online = 0, disabled = 0;
+    rows.forEach(function(row) {
+        const statusCell = row.querySelector('.status-cell');
+        if (statusCell && statusCell.querySelector('i.text-success') !== null) {
+            online++;
+        }
+        const enableCell = row.querySelector('.enable-cell');
+        if (enableCell && enableCell.querySelector('i.text-danger') !== null) {
+            disabled++;
+        }
+    });
+    const onlineEl = document.getElementById('stat-online');
+    const disabledEl = document.getElementById('stat-disabled');
+    const statTotalEl = document.getElementById('stat-total');
+    const userTotalCountEl = document.getElementById('user-total-count');
+    if (onlineEl) onlineEl.textContent = online;
+    if (disabledEl) disabledEl.textContent = disabled;
+    if (statTotalEl && userTotalCountEl) {
+        statTotalEl.textContent = userTotalCountEl.textContent.trim();
+    }
+}
+
+function initUserEnhancements() {
+    initTrafficBars();
+    updateStatCards();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initUserEnhancements();
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.filter-button');
+        if (!btn) return;
+        document.querySelectorAll('.filter-button').forEach(function(b) {
+            b.classList.remove('active-filter', 'bg-white', 'shadow-sm');
+            b.style.color = '';
+        });
+        btn.classList.add('active-filter', 'bg-white', 'shadow-sm');
+    });
+
+    var observer = new MutationObserver(function(mutations) {
+        var hasNodes = mutations.some(function(m) { return m.addedNodes.length > 0; });
+        if (hasNodes) {
+            setTimeout(initUserEnhancements, 50);
+        }
+    });
+    var tbody = document.getElementById('userTableBody');
+    if (tbody) observer.observe(tbody, { childList: true, subtree: false });
+});
+</script>
 {% endblock %}

@@ -4,11 +4,24 @@ import init_paths
 import os
 import sys
 import json
+import base64
 import argparse
 from functools import lru_cache
 from typing import Dict, List, Any
 from db.database import db
 from paths import *
+
+def hex_pin_to_uri(pin: str) -> str:
+    if not pin:
+        return pin
+    if pin.startswith('sha256/'):
+        return pin
+    hex_str = pin.replace(':', '').strip()
+    try:
+        raw = bytes.fromhex(hex_str)
+        return f"sha256/{base64.urlsafe_b64encode(raw).decode('ascii')}"
+    except (ValueError, Exception):
+        return pin.replace(':', '')
 
 @lru_cache(maxsize=None)
 def load_json_file(file_path: str) -> Any:
@@ -36,7 +49,7 @@ def load_env_file(env_file: str) -> Dict[str, str]:
 def generate_uri(username: str, auth_password: str, ip: str, port: str, 
                  uri_params: Dict[str, str], ip_version: int, fragment_tag: str) -> str:
     ip_part = f"[{ip}]" if ip_version == 6 and ':' in ip else ip
-    uri_base = f"hy2://{username}:{auth_password}@{ip_part}:{port}"
+    uri_base = f"hysteria2://{username}:{auth_password}@{ip_part}:{port}"
     
     query_params = [f"{k}={v}" for k, v in uri_params.items() if v is not None and v != '']
     query_string = "&".join(query_params)
@@ -62,6 +75,7 @@ def process_users(target_usernames: List[str]) -> List[Dict[str, Any]]:
 
     port_hopping_enabled = hy2_env.get('PORT_HOPPING', 'false').lower() == 'true'
     port_hopping_range = hy2_env.get('PORT_HOPPING_RANGE', '')
+    hop_interval = hy2_env.get('HOP_INTERVAL', '') if port_hopping_enabled else ''
 
     default_sni = hy2_env.get('SNI', '')
     default_obfs = config.get("obfs", {}).get("salamander", {}).get("password")
@@ -74,10 +88,12 @@ def process_users(target_usernames: List[str]) -> List[Dict[str, Any]]:
     if default_obfs:
         base_uri_params["obfs"] = "salamander"
         base_uri_params["obfs-password"] = default_obfs
-    if default_pin: base_uri_params["pinSHA256"] = default_pin
+    if default_pin: base_uri_params["pinSHA256"] = hex_pin_to_uri(default_pin)
     if port_hopping_enabled and port_hopping_range:
         base_uri_params["mport"] = port_hopping_range
-    
+        if hop_interval:
+            base_uri_params["mportHopInt"] = hop_interval
+
     ip4 = hy2_env.get('IP4')
     ip6 = hy2_env.get('IP6')
     ns_domain, ns_port, ns_subpath = ns_env.get('HYSTERIA_DOMAIN'), ns_env.get('HYSTERIA_PORT'), ns_env.get('SUBPATH')
@@ -124,7 +140,11 @@ def process_users(target_usernames: List[str]) -> List[Dict[str, Any]]:
             if node_obfs:
                 node_params["obfs"] = "salamander"
                 node_params["obfs-password"] = node_obfs
-            if node_pin: node_params["pinSHA256"] = node_pin
+            if node_pin: node_params["pinSHA256"] = hex_pin_to_uri(node_pin)
+            if port_hopping_enabled and port_hopping_range:
+                node_params["mport"] = port_hopping_range
+                if hop_interval:
+                    node_params["mportHopInt"] = hop_interval
             
             uri = generate_uri(username, auth_password, node_ip, node_port, node_params, ip_v, tag)
             user_output["nodes"].append({"name": node_name, "uri": uri})

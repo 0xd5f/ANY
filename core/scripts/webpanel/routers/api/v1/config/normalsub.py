@@ -5,11 +5,15 @@ from ..schema.config.normalsub import (
     EditProfileTitleInputBody, GetProfileTitleResponse,
     EditShowUsernameInputBody, GetShowUsernameResponse,
     EditSupportUrlInputBody, GetSupportUrlResponse,
-    EditAnnounceInputBody, GetAnnounceResponse
+    EditAnnounceInputBody, GetAnnounceResponse,
+    SetPageHtmlInputBody, GetPageHtmlResponse
 )
 import cli_api
+import os
 
 router = APIRouter()
+
+CUSTOM_HTML_PATH = '/etc/hysteria/custom_sub_index.html'
 
 
 @router.post('/start', response_model=DetailResponse, summary='Start NormalSub')
@@ -116,3 +120,32 @@ async def normal_sub_get_show_username_api():
         return GetShowUsernameResponse(enabled=enabled)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Error retrieving setting: {str(e)}')
+
+DEFAULT_TEMPLATE_PATH = '/etc/hysteria/core/scripts/normalsub/template/index.html'
+
+@router.get('/page_html', response_model=GetPageHtmlResponse, summary='Get Custom Sub Page HTML')
+async def normal_sub_get_page_html_api():
+    try:
+        if os.path.exists(CUSTOM_HTML_PATH):
+            with open(CUSTOM_HTML_PATH, 'r', encoding='utf-8') as f:
+                return GetPageHtmlResponse(html=f.read())
+        if os.path.exists(DEFAULT_TEMPLATE_PATH):
+            with open(DEFAULT_TEMPLATE_PATH, 'r', encoding='utf-8') as f:
+                return GetPageHtmlResponse(html=f.read())
+        return GetPageHtmlResponse(html='')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error reading custom HTML: {str(e)}')
+
+@router.put('/page_html', response_model=DetailResponse, summary='Set Custom Sub Page HTML')
+async def normal_sub_set_page_html_api(body: SetPageHtmlInputBody):
+    try:
+        if body.html.strip():
+            with open(CUSTOM_HTML_PATH, 'w', encoding='utf-8') as f:
+                f.write(body.html)
+            return DetailResponse(detail='Custom sub page HTML saved successfully.')
+        else:
+            if os.path.exists(CUSTOM_HTML_PATH):
+                os.remove(CUSTOM_HTML_PATH)
+            return DetailResponse(detail='Custom sub page HTML removed. Default template will be used.')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Error saving custom HTML: {str(e)}')

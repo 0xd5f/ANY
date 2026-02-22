@@ -4,7 +4,6 @@ import sys
 import json
 import subprocess
 import argparse
-import re
 import qrcode
 from io import StringIO
 from typing import Tuple, Optional, Dict, List, Any
@@ -68,23 +67,27 @@ def is_service_active(service_name: str) -> bool:
     except Exception:
         return False
 
-def generate_uri(username: str, auth_password: str, ip: str, port: str, 
-                 obfs_password: str, sha256: str, sni: str, ip_version: int, 
-                 insecure: bool, fragment_tag: str, mport: str = '') -> str:
+def generate_uri(username: str, auth_password: str, ip: str, port: str,
+                 obfs_password: str, sha256: str, sni: str, ip_version: int,
+                 insecure: bool, fragment_tag: str, mport: str = '',
+                 up_mbps: str = '', down_mbps: str = '',
+                 hop_interval: str = '') -> str:
     ip_part = f"[{ip}]" if ip_version == 6 and ':' in ip else ip
-    uri_base = f"hy2://{username}:{auth_password}@{ip_part}:{port}"
-    
+    uri_base = f"hysteria2://{username}:{auth_password}@{ip_part}:{port}"
+
     params = []
     if obfs_password:
         params.append(f"obfs=salamander&obfs-password={obfs_password}")
     if sha256:
-        params.append(f"pinSHA256={sha256}")
+        params.append(f"pinSHA256={sha256.replace(':', '')}")
     if sni:
         params.append(f"sni={sni}")
-    
+
     params.append(f"insecure={'1' if insecure else '0'}")
     if mport:
         params.append(f"mport={mport}")
+    if mport and hop_interval:
+        params.append(f"mportHopInt={hop_interval}")
     
     query_string = "&".join(params)
     return f"{uri_base}?{query_string}#{fragment_tag}"
@@ -152,6 +155,10 @@ def show_uri(args: argparse.Namespace) -> None:
     local_obfs_password = config.get("obfs", {}).get("salamander", {}).get("password", "")
     local_insecure = config.get("tls", {}).get("insecure", True)
     
+    bw = config.get("bandwidth", {})
+    up_mbps = bw.get("up", "").replace(" ", "") if bw else ""
+    down_mbps = bw.get("down", "").replace(" ", "") if bw else ""
+    
     ip4, ip6, local_sni, server_name = load_hysteria2_ips()
     nodes = load_nodes()
     terminal_width = get_terminal_width()
@@ -159,6 +166,7 @@ def show_uri(args: argparse.Namespace) -> None:
     hy2_env = load_hysteria2_env()
     port_hopping_enabled = hy2_env.get('PORT_HOPPING', 'false').lower() == 'true'
     port_hopping_range = hy2_env.get('PORT_HOPPING_RANGE', '')
+    hop_interval = hy2_env.get('HOP_INTERVAL', '') if port_hopping_enabled else ''
 
     if args.all or args.ip_version == 4:
         if ip4 and ip4 != "None":
@@ -168,7 +176,8 @@ def show_uri(args: argparse.Namespace) -> None:
             
             mport_val = port_hopping_range if port_hopping_enabled and port_hopping_range else ''
             uri = generate_uri(args.username, auth_password, ip4, local_port, 
-                                 local_obfs_password, local_sha256, local_sni, 4, local_insecure, tag, mport_val)
+                                 local_obfs_password, local_sha256, local_sni, 4, local_insecure, tag, mport_val,
+                                 up_mbps, down_mbps, hop_interval)
             display_uri_and_qr(uri, tag, args, terminal_width)
             
     if args.all or args.ip_version == 6:
@@ -179,7 +188,8 @@ def show_uri(args: argparse.Namespace) -> None:
 
             mport_val = port_hopping_range if port_hopping_enabled and port_hopping_range else ''
             uri = generate_uri(args.username, auth_password, ip6, local_port, 
-                                 local_obfs_password, local_sha256, local_sni, 6, local_insecure, tag, mport_val)
+                                 local_obfs_password, local_sha256, local_sni, 6, local_insecure, tag, mport_val,
+                                 up_mbps, down_mbps, hop_interval)
             display_uri_and_qr(uri, tag, args, terminal_width)
 
     for node in nodes:
@@ -207,7 +217,10 @@ def show_uri(args: argparse.Namespace) -> None:
                 sni=node_sni,
                 ip_version=ip_v,
                 insecure=node_insecure,
-                fragment_tag=node_name
+                fragment_tag=node_name,
+                up_mbps=up_mbps,
+                down_mbps=down_mbps,
+                hop_interval=hop_interval
             )
             display_uri_and_qr(uri, f"Node: {node_name} (IPv{ip_v})", args, terminal_width)
 

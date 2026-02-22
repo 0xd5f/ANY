@@ -83,16 +83,16 @@
                     <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold font-mono">GET</span>
                     <code class="text-sm font-mono text-gray-800 dark:text-zinc-300">/api/v1/users/{username}/uri</code>
                 </div>
-                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Get connection URIs (hy2://...) and subscription link for a user.</p>
+                <p class="text-gray-600 dark:text-zinc-400 text-sm mb-3">Get connection URIs (hysteria2://...) and subscription link for a user.</p>
                 <div class="bg-gray-50 dark:bg-zinc-950 rounded-lg p-3 overflow-x-auto">
 <pre class="text-xs font-mono text-gray-700 dark:text-zinc-400">
 {
   "username": "user1",
-  "ipv4": "hy2://password@1.2.3.4:443?...",
-  "ipv6": "hy2://password@[2001:...]:443?...",
+  "ipv4": "hysteria2://password@1.2.3.4:443?...",
+  "ipv6": "hysteria2://password@[2001:...]:443?...",
   "normal_sub": "https://domain.com/sub/password#Hysteria2",
   "nodes": [
-     { "name": "Node1", "uri": "hy2://..." }
+     { "name": "Node1", "uri": "hysteria2://..." }
   ]
 }
 </pre>
