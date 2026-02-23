@@ -1,3 +1,14 @@
+## [Update] - 2026-02-23 - v1.4.9
+
+### Fixed
+- **Upgrade Script Download Path**: Исправлено имя файла релиза в `upgrade2.sh` — `ANY-${arch}.zip` → `any-${arch}.zip` для соответствия GitHub Actions workflow.
+
+### Changed
+- **Node API Response Format**: Endpoint `/api/v1/config/nodes` теперь возвращает расширенную структуру с полями `location`, `pinSHA256`, `insecure` для совместимости с HAAP клиентом.
+- **Subscription Template Location**: Шаблоны subscription страницы перенесены в `core/scripts/normalsub/template/` с возможностью редактирования через веб-интерфейс.
+
+---
+
 ## [Update] - 2026-02-23 - v1.4.8
 
 ### Added
@@ -13,9 +24,12 @@
 - **External Nodes Pin Format**: Исправлена генерация URI для External Nodes — `pinSHA256` теперь корректно конвертируется из hex-формата (`XX:XX:XX`) в формат `sha256/BASE64URL`, требуемый клиентами (HAAP/Hiddify). Добавлена функция `hex_pin_to_uri()` в `wrapper_uri.py`.
 - **Port Hopping for External Nodes**: Port Hopping параметры (`mport` и `mportHopInt`) теперь корректно передаются для External Nodes в subscription URIs. Ранее эти параметры добавлялись только для основного сервера.
 - **Tunnel Wizard Docker Template**: Исправлен синтаксис Jinja2 в Docker template для Tunnel Wizard — `{{.Names}}` заменён на `{{ "{{.Names}}" }}` для корректного отображения в скрипте автоустановки.
+- **Upgrade Script Download Path**: Исправлено имя файла релиза в `upgrade2.sh` — `ANY-${arch}.zip` → `any-${arch}.zip` для соответствия GitHub Actions workflow.
 
 ### Improved
 - **Subscription URI Generation**: Улучшена обработка TLS fingerprints — функция `hex_pin_to_uri()` автоматически распознаёт формат (`sha256/...` или hex) и корректно конвертирует для всех серверов.
 - **Nodes Management**: Расширен API endpoint `/api/v1/config/nodes` — добавлена поддержка heartbeat от удалённых нод, версионирование, проверка доступности.
 - **Tunnel Wizard Templates**: Улучшены install-скрипты — автоматическое определение архитектуры (amd64/arm64), retry-логика для загрузок, валидация config.yaml перед запуском.
 - **External Nodes Validation**: Добавлена валидация полей при добавлении/редактировании нод — проверка формата IP, диапазона портов, валидности pinSHA256 (hex формат).
+
+---

@@ -27,7 +27,7 @@ update_core() {
     esac
     info "Detected architecture: $arch"
 
-    local zip_name="ANY-${arch}.zip"
+    local zip_name="any-${arch}.zip"
     local download_url="https://github.com/0xd5f/ANY/releases/latest/download/${zip_name}"
     local temp_zip="$TEMP_DIR/${zip_name}"
 
