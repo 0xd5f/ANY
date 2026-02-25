@@ -114,17 +114,40 @@ async def get_all_nodes():
 @router.post('/nodes/add', response_model=DetailResponse, summary='Add External Node')
 async def add_node(body: AddNodeBody):
     try:
-        cli_api.add_node(
-            name=body.name, 
-            ip=body.ip, 
-            port=body.port, 
-            sni=body.sni, 
-            pinSHA256=body.pinSHA256, 
-            obfs=body.obfs,
-            insecure=body.insecure,
-            location=body.location
-        )
-        return DetailResponse(detail=f"Node '{body.name}' added successfully.")
+        nodes_list = []
+        if os.path.exists(cli_api.NODES_JSON_PATH):
+            with open(cli_api.NODES_JSON_PATH, 'r') as f:
+                content = f.read()
+                if content:
+                    nodes_list = json.loads(content)
+                    
+        existing_node = next((n for n in nodes_list if n.get('name') == body.name or n.get('ip') == body.ip), None)
+        
+        if existing_node:
+            cli_api.edit_node(
+                name=existing_node['name'],
+                new_name=body.name,
+                ip=body.ip,
+                port=body.port,
+                sni=body.sni,
+                pinSHA256=body.pinSHA256,
+                obfs=body.obfs,
+                insecure=body.insecure,
+                location=body.location
+            )
+            return DetailResponse(detail=f"Node '{body.name}' updated successfully.")
+        else:
+            cli_api.add_node(
+                name=body.name, 
+                ip=body.ip, 
+                port=body.port, 
+                sni=body.sni, 
+                pinSHA256=body.pinSHA256, 
+                obfs=body.obfs,
+                insecure=body.insecure,
+                location=body.location
+            )
+            return DetailResponse(detail=f"Node '{body.name}' added successfully.")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -295,8 +318,9 @@ async def restart_node(body: RestartNodeBody):
 async def autoinstall_node(body: AutoInstallNodeBody, request: Request):
     _root = CONFIGS.ROOT_PATH.strip('/') if CONFIGS.ROOT_PATH else ''
     _domain = CONFIGS.DOMAIN.strip('/')
-    _scheme = 'https' if not CONFIGS.SELF_SIGNED else 'https'
-    panel_url = f"{_scheme}://{_domain}" + (f'/{_root}' if _root else '')
+    _scheme = 'https'
+    _port_str = f":{CONFIGS.PORT}" if CONFIGS.PORT not in (80, 443) else ""
+    panel_url = f"{_scheme}://{_domain}{_port_str}" + (f'/{_root}' if _root else '')
     panel_token = CONFIGS.API_TOKEN
 
     async def generate():
@@ -322,19 +346,19 @@ async def autoinstall_node(body: AutoInstallNodeBody, request: Request):
             yield "data: [✓] Connected!\n\n"
 
             cmd = (
-                "curl -fsSL https://raw.githubusercontent.com/0xd5f/any-node/main/install.sh"
-                f" -o /tmp/_any_install.sh && chmod +x /tmp/_any_install.sh"
-                f" && bash /tmp/_any_install.sh install {body.hysteria_port} {body.sni} 2>&1"
+                "export DEBIAN_FRONTEND=noninteractive && apt-get update -y && "
+                "apt-get install -qq -y git curl wget jq python3 python3-venv python3-pip openssl iproute2 systemd && "
+                "curl -fsSL https://raw.githubusercontent.com/0xd5f/any-node/main/install.sh -o /tmp/_any_install.sh && "
+                "sed -i 's/curl -s -X POST/curl -k -s -X POST/g' /tmp/_any_install.sh && "
+                "sed -i 's/aiohttp.ClientSession()/aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))/g' /tmp/_any_install.sh && "
+                "chmod +x /tmp/_any_install.sh && "
+                "if systemctl is-active --quiet hysteria-server.service; then echo \"[*] Node exists, uninstalling first...\\n\"; bash /tmp/_any_install.sh uninstall >/dev/null 2>&1; fi && "
+                f"echo -e \"{panel_url}\\n{panel_token}\" | bash /tmp/_any_install.sh install {body.hysteria_port} {body.sni} 2>&1"
             )
 
             channel = client.get_transport().open_session()
             channel.get_pty(width=200, height=50)
             channel.exec_command(cmd)
-
-            await asyncio.sleep(2)
-            channel.sendall(f"{panel_url}\n".encode('utf-8'))
-            await asyncio.sleep(0.5)
-            channel.sendall(f"{panel_token}\n".encode('utf-8'))
 
             buf = b""
             while True:

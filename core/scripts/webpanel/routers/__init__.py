@@ -4,4 +4,5 @@ from . import user
 from . import login
 from . import settings
 from . import reseller
-
+from . import wireguard
+from . import proxy

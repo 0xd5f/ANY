@@ -73,7 +73,8 @@ class Command(Enum):
     LIMIT_SCRIPT = os.path.join(SCRIPT_DIR, 'hysteria2', 'limit.sh')
     KICK_USER_SCRIPT = os.path.join(SCRIPT_DIR, 'hysteria2', 'kickuser.py')
     PORT_HOPPING = os.path.join(SCRIPT_DIR, 'hysteria2', 'port_hopping.py')
-
+    WIREGUARD_SCRIPT = os.path.join(SCRIPT_DIR, 'wireguard', 'wireguard.py')
+    PROXY_SCRIPT = os.path.join(SCRIPT_DIR, '3proxy', 'setup.py')
 
 
 
@@ -601,6 +602,44 @@ def warp_status() -> str | None:
     return run_cmd(['python3', Command.STATUS_WARP.value])
 
 
+# WireGuard Commands
+
+def install_wireguard():
+    run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'install'])
+
+def uninstall_wireguard():
+    run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'uninstall'])
+
+def wireguard_add_client(client_name: str) -> str | None:
+    return run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'add', client_name])
+
+def wireguard_remove_client(client_name: str) -> str | None:
+    return run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'remove', client_name])
+
+def wireguard_list_clients() -> dict | None:
+    res = run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'list'])
+    if res:
+        import json
+        try:
+            return json.loads(res)
+        except:
+            return None
+    return None
+
+def wireguard_get_client_config(client_name: str) -> str | None:
+    return run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'get_config', client_name])
+
+def wireguard_status() -> dict | None:
+    res = run_cmd(['python3', Command.WIREGUARD_SCRIPT.value, 'status'])
+    if res:
+        import json
+        try:
+            return json.loads(res)
+        except:
+            return None
+    return None
+
+
 def start_telegram_bot(token: str, adminid: str, backup_interval: Optional[int] = None):
     if not token or not adminid:
         raise InvalidInputError('Error: Both --token and --adminid are required for the start action.')
@@ -953,4 +992,19 @@ def update_panel_beta():
      if os.name != 'nt':
         kwargs['preexec_fn'] = os.setsid
      subprocess.Popen(full_cmd, shell=True, executable='/bin/bash', **kwargs)
+
+
+# 3Proxy Commands
+
+def execute_proxy_command(*args):
+    cmd = ['python3', Command.PROXY_SCRIPT.value]
+    cmd.extend(str(a) for a in args)
+    res = run_cmd(cmd)
+    if res:
+        import json
+        try:
+            return json.loads(res)
+        except json.JSONDecodeError:
+            return res
+    return None
 

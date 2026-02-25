@@ -1,428 +1,718 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>{{ username }} | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] } } }
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
     <style>
-        *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-        body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-        .tab-btn.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.4)}
-        .progress-fill{transition:width 1.2s cubic-bezier(.4,0,.2,1)}
-        .copy-hint{opacity:0;transition:opacity .2s}
-        .node-row:hover .copy-hint{opacity:1}
-        @media (hover:none){.copy-hint{opacity:1}}
-        .btn-grad{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
-        .btn-grad:hover{background:linear-gradient(135deg,#4338ca,#6d28d9)}
-        .dark-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
-        .pulse-dot{animation:pulseDot 2s ease-in-out infinite}
-        @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
-        .slide-up{animation:slideUp .4s ease both}
-        @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-        .fade-in{animation:fadeIn .35s ease both}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .qr-wrap{background:#fff;border-radius:16px;padding:12px;display:inline-block}
-        button,a{touch-action:manipulation}
-        .tab-bar-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-        .tab-bar-scroll::-webkit-scrollbar{display:none}
-        .tab-bar-inner{min-width:max-content}
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right)
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, .4)
+        }
+
+        .progress-fill {
+            transition: width 1.2s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .copy-hint {
+            opacity: 0;
+            transition: opacity .2s
+        }
+
+        .node-row:hover .copy-hint {
+            opacity: 1
+        }
+
+        @media (hover:none) {
+            .copy-hint {
+                opacity: 1
+            }
+        }
+
+        .btn-grad {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed)
+        }
+
+        .btn-grad:hover {
+            background: linear-gradient(135deg, #4338ca, #6d28d9)
+        }
+
+        .dark-card {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, .3)
+        }
+
+        .pulse-dot {
+            animation: pulseDot 2s ease-in-out infinite
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        .slide-up {
+            animation: slideUp .4s ease both
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn .35s ease both
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .qr-wrap {
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px;
+            display: inline-block
+        }
+
+        button,
+        a {
+            touch-action: manipulation
+        }
+
+        .tab-bar-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none
+        }
+
+        .tab-bar-scroll::-webkit-scrollbar {
+            display: none
+        }
+
+        .tab-bar-inner {
+            min-width: max-content
+        }
+
         /* Light theme overrides */
-        html:not(.dark) body{background:#f0f2f5!important;color:#111827!important}
-        html:not(.dark) .dark-card{background:#fff!important;border-color:#e5e7eb!important;box-shadow:0 1px 4px rgba(0,0,0,.08)!important}
-        html:not(.dark) .text-white{color:#111827!important}
-        html:not(.dark) .text-zinc-300{color:#374151!important}
-        html:not(.dark) .text-zinc-400{color:#4b5563!important}
-        html:not(.dark) .text-zinc-500{color:#6b7280!important}
-        html:not(.dark) .text-zinc-700{color:#374151!important}
-        html:not(.dark) .tab-btn:not(.active){color:#4b5563!important;background:transparent!important}
-        html:not(.dark) #tabBar{background:rgba(0,0,0,.06)!important}
-        html:not(.dark) .node-row{background:rgba(0,0,0,.04)!important}
-        html:not(.dark) .node-row:hover{background:rgba(0,0,0,.08)!important}
-        html:not(.dark) .text-indigo-400{color:#4338ca!important}
-        html:not(.dark) .text-violet-400{color:#6d28d9!important}
-        html:not(.dark) .text-amber-400{color:#b45309!important}
-        html:not(.dark) .text-blue-400{color:#1d4ed8!important}
-        html:not(.dark) .text-emerald-400{color:#047857!important}
-        html:not(.dark) .text-sky-400{color:#0369a1!important}
-        html:not(.dark) .text-pink-400{color:#be185d!important}
-        html:not(.dark) .text-orange-400{color:#c2410c!important}
-        html:not(.dark) .text-red-400{color:#b91c1c!important}
-        html:not(.dark) .bg-blue-900\/40,.bg-blue-900\/40{--tw-bg-opacity:1}
-        html:not(.dark) [class*="bg-blue-900"]{background:rgba(29,78,216,.12)!important}
-        html:not(.dark) [class*="bg-amber-900"]{background:rgba(146,64,14,.12)!important}
-        html:not(.dark) [class*="bg-violet-900"]{background:rgba(109,40,217,.12)!important}
-        html:not(.dark) [class*="bg-indigo-900"]{background:rgba(67,56,202,.1)!important}
-        html:not(.dark) [class*="bg-red-900"]{background:rgba(153,27,27,.1)!important}
-        html:not(.dark) [class*="bg-emerald-900"]{background:rgba(4,120,87,.12)!important}
-        html:not(.dark) [class*="bg-orange-900"]{background:rgba(154,52,18,.07)!important}
-        html:not(.dark) [class*="border-orange-900"]{border-color:rgba(154,52,18,.2)!important}
-        html:not(.dark) [class*="bg-white/"]{background:rgba(0,0,0,.05)!important}
-        html:not(.dark) [class*="border-white/"]{border-color:rgba(0,0,0,.1)!important}
-        html:not(.dark) .qr-wrap{background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1)}
-        html:not(.dark) .bg-red-900\/10{background:rgba(153,27,27,.07)!important}
-        html:not(.dark) .border-red-900\/40{border-color:rgba(153,27,27,.25)!important}
-        html:not(.dark) .text-red-400{color:#b91c1c!important}
-        html:not(.dark) footer p{color:#9ca3af!important}
+        html:not(.dark) body {
+            background: #f8fafc !important;
+            color: #111827 !important
+        }
+
+        html:not(.dark) .dark-card {
+            background: rgba(255, 255, 255, .7) !important;
+            border-color: rgba(255, 255, 255, .5) !important;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, .07) !important;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px)
+        }
+
+        html:not(.dark) .text-white {
+            color: #111827 !important
+        }
+
+        html:not(.dark) .text-zinc-300 {
+            color: #374151 !important
+        }
+
+        html:not(.dark) .text-zinc-400 {
+            color: #4b5563 !important
+        }
+
+        html:not(.dark) .text-zinc-500 {
+            color: #6b7280 !important
+        }
+
+        html:not(.dark) .text-zinc-700 {
+            color: #374151 !important
+        }
+
+        html:not(.dark) .tab-btn:not(.active) {
+            color: #4b5563 !important;
+            background: transparent !important
+        }
+
+        html:not(.dark) #tabBar {
+            background: rgba(0, 0, 0, .06) !important
+        }
+
+        html:not(.dark) .node-row {
+            background: rgba(0, 0, 0, .04) !important
+        }
+
+        html:not(.dark) .node-row:hover {
+            background: rgba(0, 0, 0, .08) !important
+        }
+
+        html:not(.dark) .text-indigo-400 {
+            color: #4338ca !important
+        }
+
+        html:not(.dark) .text-violet-400 {
+            color: #6d28d9 !important
+        }
+
+        html:not(.dark) .text-amber-400 {
+            color: #b45309 !important
+        }
+
+        html:not(.dark) .text-blue-400 {
+            color: #1d4ed8 !important
+        }
+
+        html:not(.dark) .text-emerald-400 {
+            color: #047857 !important
+        }
+
+        html:not(.dark) .text-sky-400 {
+            color: #0369a1 !important
+        }
+
+        html:not(.dark) .text-pink-400 {
+            color: #be185d !important
+        }
+
+        html:not(.dark) .text-orange-400 {
+            color: #c2410c !important
+        }
+
+        html:not(.dark) .text-red-400 {
+            color: #b91c1c !important
+        }
+
+        html:not(.dark) .bg-blue-900\/40,
+        .bg-blue-900\/40 {
+            --tw-bg-opacity: 1
+        }
+
+        html:not(.dark) [class*="bg-blue-900"] {
+            background: rgba(29, 78, 216, .12) !important
+        }
+
+        html:not(.dark) [class*="bg-amber-900"] {
+            background: rgba(146, 64, 14, .12) !important
+        }
+
+        html:not(.dark) [class*="bg-violet-900"] {
+            background: rgba(109, 40, 217, .12) !important
+        }
+
+        html:not(.dark) [class*="bg-indigo-900"] {
+            background: rgba(67, 56, 202, .1) !important
+        }
+
+        html:not(.dark) [class*="bg-red-900"] {
+            background: rgba(153, 27, 27, .1) !important
+        }
+
+        html:not(.dark) [class*="bg-emerald-900"] {
+            background: rgba(4, 120, 87, .12) !important
+        }
+
+        html:not(.dark) [class*="bg-orange-900"] {
+            background: rgba(154, 52, 18, .07) !important
+        }
+
+        html:not(.dark) [class*="border-orange-900"] {
+            border-color: rgba(154, 52, 18, .2) !important
+        }
+
+        html:not(.dark) [class*="bg-white/"] {
+            background: rgba(0, 0, 0, .05) !important
+        }
+
+        html:not(.dark) [class*="border-white/"] {
+            border-color: rgba(0, 0, 0, .1) !important
+        }
+
+        html:not(.dark) .qr-wrap {
+            background: #fff;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, .1)
+        }
+
+        html:not(.dark) .bg-red-900\/10 {
+            background: rgba(153, 27, 27, .07) !important
+        }
+
+        html:not(.dark) .border-red-900\/40 {
+            border-color: rgba(153, 27, 27, .25) !important
+        }
+
+        html:not(.dark) .text-red-400 {
+            color: #b91c1c !important
+        }
+
+        html:not(.dark) footer p {
+            color: #9ca3af !important
+        }
     </style>
 </head>
-<body class="min-h-screen bg-[#0d0d18] text-white">
 
-<div class="max-w-md mx-auto px-4 pt-4 pb-safe" style="padding-bottom:max(3.5rem,env(safe-area-inset-bottom))">
+<body class="min-h-screen bg-[#0d0d18] text-white relative">
 
-    <!-- Header -->
-    <header class="flex items-center justify-between mb-5 fade-in">
-        <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 12px rgba(99,102,241,.35)">
-                <i class="fas fa-shield-alt text-white text-sm"></i>
-            </div>
-            <span class="font-bold text-sm text-zinc-200 tracking-tight">ANY Panel</span>
-        </div>
-        <button id="theme-toggle" onclick="toggleTheme()" class="w-9 h-9 rounded-xl border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 transition-all flex items-center justify-center active:scale-90">
-            <i id="icon-sun" class="fas fa-sun text-sm" style="display:none"></i>
-            <i id="icon-moon" class="fas fa-moon text-sm"></i>
-        </button>
-    </header>
-
-    {% if blocked %}
-    <div class="slide-up rounded-2xl border border-red-900/40 bg-red-900/10 p-8 text-center">
-        <div class="w-14 h-14 rounded-2xl bg-red-900/30 flex items-center justify-center mx-auto mb-4 text-red-400">
-            <i class="fas fa-ban text-2xl"></i>
-        </div>
-        <h2 class="text-lg font-bold text-white mb-2">Account Suspended</h2>
-        <p class="text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">Your account is currently inactive. Please contact support.</p>
+    <!-- Decorative Background Blurs -->
+    <div
+        class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen">
+    </div>
+    <div
+        class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen">
     </div>
 
-    {% else %}
+    <div class="max-w-md mx-auto px-4 pt-4 pb-safe relative z-10"
+        style="padding-bottom:max(3.5rem,env(safe-area-inset-bottom))">
 
-    <!-- Profile -->
-    <div class="slide-up dark-card rounded-2xl p-4 mb-3 overflow-hidden relative" style="animation-delay:.02s">
-        <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(135deg,rgba(99,102,241,.08),transparent 60%)"></div>
-        <div class="flex items-center gap-3 relative z-10">
-            <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0" style="background:linear-gradient(135deg,#4f46e5,#a855f7);box-shadow:0 4px 12px rgba(99,102,241,.3)">
-                {{ username[0]|upper }}
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-5 fade-in">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 12px rgba(99,102,241,.35)">
+                    <i class="fas fa-shield-alt text-white text-sm"></i>
+                </div>
+                <span class="font-bold text-sm text-zinc-200 tracking-tight">ANY Panel</span>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-xs text-zinc-500 mb-0.5">Welcome back</p>
-                <h2 class="text-base font-bold text-white truncate leading-tight">{{ username }}</h2>
+            <button id="theme-toggle" onclick="toggleTheme()"
+                class="w-9 h-9 rounded-xl border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 transition-all flex items-center justify-center active:scale-90">
+                <i id="icon-sun" class="fas fa-sun text-sm" style="display:none"></i>
+                <i id="icon-moon" class="fas fa-moon text-sm"></i>
+            </button>
+        </header>
+
+        {% if blocked %}
+        <div class="slide-up rounded-2xl border border-red-900/40 bg-red-900/10 p-8 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-red-900/30 flex items-center justify-center mx-auto mb-4 text-red-400">
+                <i class="fas fa-ban text-2xl"></i>
             </div>
-            <div class="flex-shrink-0">
-                {% if status == "Active" %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-900/30 text-emerald-400 border border-emerald-800/40">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>{{ status }}
-                </span>
-                {% elif status == "Expired" %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-900/30 text-amber-400 border border-amber-800/40">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{{ status }}
-                </span>
-                {% else %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-900/30 text-red-400 border border-red-800/40">
-                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>{{ status }}
-                </span>
-                {% endif %}
+            <h2 class="text-lg font-bold text-white mb-2">Account Suspended</h2>
+            <p class="text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">Your account is currently inactive. Please
+                contact support.</p>
+        </div>
+
+        {% else %}
+
+        <!-- Profile -->
+        <div class="slide-up dark-card rounded-2xl p-4 mb-3 overflow-hidden relative" style="animation-delay:.02s">
+            <div class="absolute inset-0 pointer-events-none"
+                style="background:linear-gradient(135deg,rgba(99,102,241,.08),transparent 60%)"></div>
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0"
+                    style="background:linear-gradient(135deg,#4f46e5,#a855f7);box-shadow:0 4px 12px rgba(99,102,241,.3)">
+                    {{ username[0]|upper }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-zinc-500 mb-0.5">Welcome back</p>
+                    <h2 class="text-base font-bold text-white truncate leading-tight">{{ username }}</h2>
+                </div>
+                <div class="flex-shrink-0">
+                    {% if status == "Active" %}
+                    <span
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-900/30 text-emerald-400 border border-emerald-800/40">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>{{ status }}
+                    </span>
+                    {% elif status == "Expired" %}
+                    <span
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-900/30 text-amber-400 border border-amber-800/40">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>{{ status }}
+                    </span>
+                    {% else %}
+                    <span
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-900/30 text-red-400 border border-red-800/40">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>{{ status }}
+                    </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-2 gap-3 mb-3 slide-up" style="animation-delay:.05s">
-        <!-- Traffic -->
-        <div class="col-span-2 dark-card rounded-2xl p-4">
-            <div class="flex items-center justify-between mb-2.5">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-lg bg-blue-900/40 flex items-center justify-center text-blue-400 text-xs">
-                        <i class="fas fa-chart-bar"></i>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-3 mb-3 slide-up" style="animation-delay:.05s">
+            <!-- Traffic -->
+            <div class="col-span-2 dark-card rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-2.5">
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="w-6 h-6 rounded-lg bg-blue-900/40 flex items-center justify-center text-blue-400 text-xs">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Traffic</span>
                     </div>
-                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Traffic</span>
+                    {% if 'Unlimited' in usage %}
+                    <span class="text-lg font-bold text-zinc-300">&#x221E;</span>
+                    {% else %}
+                    <span class="text-xs font-bold text-zinc-300">{{ usage_percent }}%</span>
+                    {% endif %}
                 </div>
                 {% if 'Unlimited' in usage %}
-                <span class="text-lg font-bold text-zinc-300">&#x221E;</span>
+                <div class="h-1.5 rounded-full bg-white/8 overflow-hidden mb-2">
+                    <div class="progress-fill h-full rounded-full"
+                        style="width:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
+                </div>
                 {% else %}
-                <span class="text-xs font-bold text-zinc-300">{{ usage_percent }}%</span>
+                <div class="h-1.5 rounded-full bg-white/8 overflow-hidden mb-2">
+                    <div class="progress-fill h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-600"
+                        style="width: {{ usage_percent }}%;"></div>
+                </div>
+                {% endif %}
+                <p class="text-xs text-zinc-500 font-mono">{{ usage }}</p>
+            </div>
+
+            <!-- Expiry -->
+            <div class="dark-card rounded-2xl p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div
+                        class="w-6 h-6 rounded-lg bg-amber-900/40 flex items-center justify-center text-amber-400 text-xs">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Expiry</span>
+                </div>
+                {% if expiration_date == "Unlimited" %}
+                <p class="text-2xl font-bold text-white leading-none mb-1">&#x221E;</p>
+                <p class="text-xs text-zinc-500 truncate">Unlimited</p>
+                {% else %}
+                <p class="text-2xl font-bold text-white leading-none mb-1">{{ days_remaining }}<span
+                        class="text-sm font-medium text-zinc-500 ml-1">d</span></p>
+                <p class="text-xs text-zinc-500 truncate">{{ expiration_date }}</p>
                 {% endif %}
             </div>
-            {% if 'Unlimited' in usage %}
-            <div class="h-1.5 rounded-full bg-white/8 overflow-hidden mb-2">
-                <div class="progress-fill h-full rounded-full" style="width:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
+
+            <!-- Detail -->
+            <div class="dark-card rounded-2xl p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div
+                        class="w-6 h-6 rounded-lg bg-violet-900/40 flex items-center justify-center text-violet-400 text-xs">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Detail</span>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed break-words">{{ usage_raw }}</p>
             </div>
-            {% else %}
-            <div class="h-1.5 rounded-full bg-white/8 overflow-hidden mb-2">
-                <div class="progress-fill h-full rounded-full" style="width:{{ usage_percent }}%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div>
-            </div>
-            {% endif %}
-            <p class="text-xs text-zinc-500 font-mono">{{ usage }}</p>
         </div>
 
-        <!-- Expiry -->
-        <div class="dark-card rounded-2xl p-4">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="w-6 h-6 rounded-lg bg-amber-900/40 flex items-center justify-center text-amber-400 text-xs">
-                    <i class="fas fa-hourglass-half"></i>
+        <!-- Connection Panel -->
+        <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.08s">
+            <div class="p-3 pb-0">
+                <div class="tab-bar-scroll">
+                    <div class="tab-bar-inner flex gap-1 bg-white/5 rounded-xl p-1" id="tabBar">
+                        <button onclick="switchTab('general',this)"
+                            class="tab-btn active flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">General</button>
+                        <button onclick="switchTab('happ',this)"
+                            class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[44px]">Happ</button>
+                        <button onclick="switchTab('hiddify',this)"
+                            class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">Hiddify</button>
+                        <button onclick="switchTab('singbox',this)"
+                            class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">SingBox</button>
+                        <button onclick="switchTab('nekobox',this)"
+                            class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[44px]">Neko</button>
+                    </div>
                 </div>
-                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Expiry</span>
             </div>
-            {% if expiration_date == "Unlimited" %}
-            <p class="text-2xl font-bold text-white leading-none mb-1">&#x221E;</p>
-            <p class="text-xs text-zinc-500 truncate">Unlimited</p>
-            {% else %}
-            <p class="text-2xl font-bold text-white leading-none mb-1">{{ days_remaining }}<span class="text-sm font-medium text-zinc-500 ml-1">d</span></p>
-            <p class="text-xs text-zinc-500 truncate">{{ expiration_date }}</p>
-            {% endif %}
+            <div class="p-5">
+
+                <!-- General -->
+                <div id="tab-general" class="tab-content flex flex-col items-center">
+                    <div class="cursor-pointer mb-5 w-full flex flex-col items-center"
+                        onclick="copyText('{{ sub_link }}','Link copied!')">
+                        <div class="qr-wrap" style="box-shadow:0 0 30px rgba(99,102,241,.25)">
+                            <img src="{{ sublink_qrcode }}" alt="QR" class="block"
+                                style="width:min(176px,55vw);height:min(176px,55vw)">
+                        </div>
+                        <p class="text-center text-xs text-indigo-400 font-semibold mt-2">Tap QR to copy</p>
+                    </div>
+                    <button onclick="copyText('{{ sub_link }}','Subscription link copied!')"
+                        class="btn-grad w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform"
+                        style="min-height:52px">
+                        <i class="far fa-copy"></i> Copy Subscription Link
+                    </button>
+                    <p class="mt-3 text-center text-xs text-zinc-500 leading-relaxed max-w-xs">Use in v2rayNG, NekoBox,
+                        Sing-Box or any Hysteria2 client.</p>
+                </div>
+
+                <!-- Happ -->
+                <div id="tab-happ" class="tab-content hidden flex flex-col items-center">
+                    <div
+                        class="w-full rounded-xl bg-orange-900/15 border border-orange-900/30 p-4 mb-4 flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-orange-900/30 flex items-center justify-center text-orange-400 flex-shrink-0">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">Happ Client</h3>
+                            <p class="text-xs text-zinc-500 mt-0.5">Optimized for performance</p>
+                        </div>
+                    </div>
+                    <a href="happ://add/{{ happ_sub_link }}#{{ profile_title_encoded }}"
+                        class="w-full py-3.5 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline"
+                        style="background:linear-gradient(135deg,#ea580c,#d97706)">
+                        <i class="fas fa-file-import"></i> Import to Happ
+                    </a>
+                    <button onclick="copyText('{{ happ_sub_link }}','Happ link copied!')"
+                        class="w-full mt-2 py-3 px-5 rounded-xl border border-orange-900/40 text-orange-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-orange-900/15 active:scale-[.98] transition-all">
+                        <i class="far fa-copy"></i> Copy Link
+                    </button>
+                </div>
+
+                <!-- Hiddify -->
+                <div id="tab-hiddify" class="tab-content hidden flex flex-col items-center">
+                    <div class="cursor-pointer mb-5 w-full flex flex-col items-center"
+                        onclick="copyText('hiddify://import/{{ sub_link }}#{{ profile_title_encoded }}','Hiddify link copied!')">
+                        <div class="qr-wrap" style="box-shadow:0 0 30px rgba(139,92,246,.25)">
+                            <img src="{{ hiddify_qrcode }}" alt="QR" class="block"
+                                style="width:min(176px,55vw);height:min(176px,55vw)">
+                        </div>
+                        <p class="text-center text-xs text-violet-400 font-semibold mt-2">Tap QR to copy</p>
+                    </div>
+                    <a href="hiddify://import/{{ sub_link }}#{{ profile_title_encoded }}"
+                        class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline"
+                        style="background:linear-gradient(135deg,#7c3aed,#db2777);min-height:52px">
+                        <i class="fas fa-bolt"></i> Import to Hiddify
+                    </a>
+                </div>
+
+                <!-- SingBox -->
+                <div id="tab-singbox" class="tab-content hidden flex flex-col items-center">
+                    <div class="cursor-pointer mb-5 w-full flex flex-col items-center"
+                        onclick="copyText('sing-box://import-remote-profile?url={{ sub_link_encoded }}#{{ profile_title_encoded }}','SingBox link copied!')">
+                        <div class="qr-wrap" style="box-shadow:0 0 30px rgba(14,165,233,.25)">
+                            <img src="{{ singbox_qrcode }}" alt="QR" class="block"
+                                style="width:min(176px,55vw);height:min(176px,55vw)">
+                        </div>
+                        <p class="text-center text-xs text-sky-400 font-semibold mt-2">Tap QR to copy</p>
+                    </div>
+                    <a href="sing-box://import-remote-profile?url={{ sub_link_encoded }}#{{ profile_title_encoded }}"
+                        class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline"
+                        style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);min-height:52px">
+                        <i class="fas fa-cube"></i> Import to Sing-Box
+                    </a>
+                </div>
+
+                <!-- Nekobox -->
+                <div id="tab-nekobox" class="tab-content hidden flex flex-col items-center">
+                    <div class="cursor-pointer mb-5 w-full flex flex-col items-center"
+                        onclick="copyText('nekobox://import?url={{ sub_link_encoded }}#{{ profile_title_encoded }}','Nekobox link copied!')">
+                        <div class="qr-wrap" style="box-shadow:0 0 30px rgba(236,72,153,.25)">
+                            <img src="{{ nekobox_qrcode }}" alt="QR" class="block"
+                                style="width:min(176px,55vw);height:min(176px,55vw)">
+                        </div>
+                        <p class="text-center text-xs text-pink-400 font-semibold mt-2">Tap QR to copy</p>
+                    </div>
+                    <a href="nekobox://import?url={{ sub_link_encoded }}#{{ profile_title_encoded }}"
+                        class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline"
+                        style="background:linear-gradient(135deg,#ec4899,#e11d48);min-height:52px">
+                        <i class="fas fa-paw"></i> Import to Nekobox
+                    </a>
+                </div>
+
+            </div>
         </div>
 
-        <!-- Detail -->
-        <div class="dark-card rounded-2xl p-4">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="w-6 h-6 rounded-lg bg-violet-900/40 flex items-center justify-center text-violet-400 text-xs">
-                    <i class="fas fa-database"></i>
+        {% if local_uris %}
+        <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.11s">
+            <button onclick="toggleSection('local-nodes','local-chevron')"
+                class="w-full flex items-center justify-between px-4 py-3.5 text-left">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-7 h-7 rounded-lg bg-indigo-900/40 flex items-center justify-center text-indigo-400 text-xs">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <span class="text-sm font-bold text-white">Local Nodes</span>
+                    <span class="px-1.5 py-0.5 bg-indigo-900/40 text-indigo-400 text-xs font-bold rounded-md">{{
+                        local_uris|length }}</span>
                 </div>
-                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Detail</span>
+                <i id="local-chevron"
+                    class="fas fa-chevron-down text-zinc-500 text-xs transition-transform duration-300"></i>
+            </button>
+            <div id="local-nodes" class="hidden px-3 pb-3 space-y-1.5">
+                {% for node in local_uris %}
+                <div class="node-row flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 cursor-pointer transition-colors"
+                    onclick="copyText('{{ node.uri }}','Copied!')">
+                    <div
+                        class="w-7 h-7 rounded-lg bg-indigo-900/30 flex items-center justify-center text-indigo-400 text-xs flex-shrink-0">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold text-white truncate">{{ node.label }}</p>
+                    </div>
+                    <div class="copy-hint text-zinc-500 text-xs flex-shrink-0">
+                        <i class="far fa-copy"></i>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-            <p class="text-xs text-zinc-400 leading-relaxed break-words">{{ usage_raw }}</p>
         </div>
+        {% endif %}
+
+        {% if node_uris %}
+        <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.14s">
+            <button onclick="toggleSection('ext-nodes','ext-chevron')"
+                class="w-full flex items-center justify-between px-4 py-3.5 text-left">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-7 h-7 rounded-lg bg-violet-900/40 flex items-center justify-center text-violet-400 text-xs">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <span class="text-sm font-bold text-white">External Nodes</span>
+                    <span class="px-1.5 py-0.5 bg-violet-900/40 text-violet-400 text-xs font-bold rounded-md">{{
+                        node_uris|length }}</span>
+                </div>
+                <i id="ext-chevron"
+                    class="fas fa-chevron-down text-zinc-500 text-xs transition-transform duration-300"></i>
+            </button>
+            <div id="ext-nodes" class="hidden px-3 pb-3 space-y-1.5">
+                {% for node in node_uris %}
+                <div class="node-row flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 cursor-pointer transition-colors"
+                    onclick="copyText('{{ node.uri }}','Copied!')">
+                    <div
+                        class="w-7 h-7 rounded-lg bg-violet-900/30 flex items-center justify-center text-violet-400 text-xs flex-shrink-0">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold text-white truncate">{{ node.label }}</p>
+                    </div>
+                    <div class="copy-hint text-zinc-500 text-xs flex-shrink-0">
+                        <i class="far fa-copy"></i>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        <footer class="text-center mt-8 fade-in" style="animation-delay:.2s">
+            <p class="text-xs text-zinc-700 font-medium">Secured by ANY</p>
+        </footer>
     </div>
 
-    <!-- Connection Panel -->
-    <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.08s">
-        <div class="p-3 pb-0">
-            <div class="tab-bar-scroll">
-            <div class="tab-bar-inner flex gap-1 bg-white/5 rounded-xl p-1" id="tabBar">
-                <button onclick="switchTab('general',this)" class="tab-btn active flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">General</button>
-                <button onclick="switchTab('happ',this)" class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[44px]">Happ</button>
-                <button onclick="switchTab('hiddify',this)" class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">Hiddify</button>
-                <button onclick="switchTab('singbox',this)" class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[60px]">SingBox</button>
-                <button onclick="switchTab('nekobox',this)" class="tab-btn flex-1 py-2.5 px-3 rounded-[9px] text-xs font-semibold text-zinc-400 whitespace-nowrap transition-all min-w-[44px]">Neko</button>
-            </div>
-            </div>
-        </div>
-        <div class="p-5">
-
-            <!-- General -->
-            <div id="tab-general" class="tab-content flex flex-col items-center">
-                <div class="cursor-pointer mb-5 w-full flex flex-col items-center" onclick="copyText('{{ sub_link }}','Link copied!')">
-                    <div class="qr-wrap" style="box-shadow:0 0 30px rgba(99,102,241,.25)">
-                        <img src="{{ sublink_qrcode }}" alt="QR" class="block" style="width:min(176px,55vw);height:min(176px,55vw)">
-                    </div>
-                    <p class="text-center text-xs text-indigo-400 font-semibold mt-2">Tap QR to copy</p>
-                </div>
-                <button onclick="copyText('{{ sub_link }}','Subscription link copied!')" class="btn-grad w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform" style="min-height:52px">
-                    <i class="far fa-copy"></i> Copy Subscription Link
-                </button>
-                <p class="mt-3 text-center text-xs text-zinc-500 leading-relaxed max-w-xs">Use in v2rayNG, NekoBox, Sing-Box or any Hysteria2 client.</p>
-            </div>
-
-            <!-- Happ -->
-            <div id="tab-happ" class="tab-content hidden flex flex-col items-center">
-                <div class="w-full rounded-xl bg-orange-900/15 border border-orange-900/30 p-4 mb-4 flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-orange-900/30 flex items-center justify-center text-orange-400 flex-shrink-0">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm">Happ Client</h3>
-                        <p class="text-xs text-zinc-500 mt-0.5">Optimized for performance</p>
-                    </div>
-                </div>
-                <a href="happ://add/{{ happ_sub_link }}#{{ profile_title_encoded }}" class="w-full py-3.5 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline" style="background:linear-gradient(135deg,#ea580c,#d97706)">
-                    <i class="fas fa-file-import"></i> Import to Happ
-                </a>
-                <button onclick="copyText('{{ happ_sub_link }}','Happ link copied!')" class="w-full mt-2 py-3 px-5 rounded-xl border border-orange-900/40 text-orange-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-orange-900/15 active:scale-[.98] transition-all">
-                    <i class="far fa-copy"></i> Copy Link
-                </button>
-            </div>
-
-            <!-- Hiddify -->
-            <div id="tab-hiddify" class="tab-content hidden flex flex-col items-center">
-                <div class="cursor-pointer mb-5 w-full flex flex-col items-center" onclick="copyText('hiddify://import/{{ sub_link }}#{{ profile_title_encoded }}','Hiddify link copied!')">
-                    <div class="qr-wrap" style="box-shadow:0 0 30px rgba(139,92,246,.25)">
-                        <img src="{{ hiddify_qrcode }}" alt="QR" class="block" style="width:min(176px,55vw);height:min(176px,55vw)">
-                    </div>
-                    <p class="text-center text-xs text-violet-400 font-semibold mt-2">Tap QR to copy</p>
-                </div>
-                <a href="hiddify://import/{{ sub_link }}#{{ profile_title_encoded }}" class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline" style="background:linear-gradient(135deg,#7c3aed,#db2777);min-height:52px">
-                    <i class="fas fa-bolt"></i> Import to Hiddify
-                </a>
-            </div>
-
-            <!-- SingBox -->
-            <div id="tab-singbox" class="tab-content hidden flex flex-col items-center">
-                <div class="cursor-pointer mb-5 w-full flex flex-col items-center" onclick="copyText('sing-box://import-remote-profile?url={{ sub_link_encoded }}#{{ profile_title_encoded }}','SingBox link copied!')">
-                    <div class="qr-wrap" style="box-shadow:0 0 30px rgba(14,165,233,.25)">
-                        <img src="{{ singbox_qrcode }}" alt="QR" class="block" style="width:min(176px,55vw);height:min(176px,55vw)">
-                    </div>
-                    <p class="text-center text-xs text-sky-400 font-semibold mt-2">Tap QR to copy</p>
-                </div>
-                <a href="sing-box://import-remote-profile?url={{ sub_link_encoded }}#{{ profile_title_encoded }}" class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);min-height:52px">
-                    <i class="fas fa-cube"></i> Import to Sing-Box
-                </a>
-            </div>
-
-            <!-- Nekobox -->
-            <div id="tab-nekobox" class="tab-content hidden flex flex-col items-center">
-                <div class="cursor-pointer mb-5 w-full flex flex-col items-center" onclick="copyText('nekobox://import?url={{ sub_link_encoded }}#{{ profile_title_encoded }}','Nekobox link copied!')">
-                    <div class="qr-wrap" style="box-shadow:0 0 30px rgba(236,72,153,.25)">
-                        <img src="{{ nekobox_qrcode }}" alt="QR" class="block" style="width:min(176px,55vw);height:min(176px,55vw)">
-                    </div>
-                    <p class="text-center text-xs text-pink-400 font-semibold mt-2">Tap QR to copy</p>
-                </div>
-                <a href="nekobox://import?url={{ sub_link_encoded }}#{{ profile_title_encoded }}" class="w-full py-4 px-5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[.98] transition-transform no-underline" style="background:linear-gradient(135deg,#ec4899,#e11d48);min-height:52px">
-                    <i class="fas fa-paw"></i> Import to Nekobox
-                </a>
-            </div>
-
-        </div>
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-white text-sm font-semibold shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 scale-90"
+        style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+        <i class="fas fa-check-circle text-sm"></i>
+        <span id="toast-msg">Copied!</span>
     </div>
 
-    {% if local_uris %}
-    <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.11s">
-        <button onclick="toggleSection('local-nodes','local-chevron')" class="w-full flex items-center justify-between px-4 py-3.5 text-left">
-            <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-lg bg-indigo-900/40 flex items-center justify-center text-indigo-400 text-xs">
-                    <i class="fas fa-server"></i>
-                </div>
-                <span class="text-sm font-bold text-white">Local Nodes</span>
-                <span class="px-1.5 py-0.5 bg-indigo-900/40 text-indigo-400 text-xs font-bold rounded-md">{{ local_uris|length }}</span>
-            </div>
-            <i id="local-chevron" class="fas fa-chevron-down text-zinc-500 text-xs transition-transform duration-300"></i>
-        </button>
-        <div id="local-nodes" class="hidden px-3 pb-3 space-y-1.5">
-            {% for node in local_uris %}
-            <div class="node-row flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 cursor-pointer transition-colors" onclick="copyText('{{ node.uri }}','Copied!')">
-                <div class="w-7 h-7 rounded-lg bg-indigo-900/30 flex items-center justify-center text-indigo-400 text-xs flex-shrink-0">
-                    <i class="fas fa-server"></i>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-semibold text-white truncate">{{ node.label }}</p>
-                </div>
-                <div class="copy-hint text-zinc-500 text-xs flex-shrink-0">
-                    <i class="far fa-copy"></i>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+    <script>
+            (function () {
+                const saved = localStorage.getItem('theme');
+                const isDark = saved !== 'light';
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.body.style.background = '#f4f4f8';
+                    document.body.style.color = '#111';
+                }
+                document.addEventListener('DOMContentLoaded', function () {
+                    const sun = document.getElementById('icon-sun');
+                    const moon = document.getElementById('icon-moon');
+                    if (sun && moon) {
+                        sun.style.display = isDark ? 'inline' : 'none';
+                        moon.style.display = isDark ? 'none' : 'inline';
+                    }
+                });
+            })();
 
-    {% if node_uris %}
-    <div class="dark-card rounded-2xl overflow-hidden mb-3 slide-up" style="animation-delay:.14s">
-        <button onclick="toggleSection('ext-nodes','ext-chevron')" class="w-full flex items-center justify-between px-4 py-3.5 text-left">
-            <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-lg bg-violet-900/40 flex items-center justify-center text-violet-400 text-xs">
-                    <i class="fas fa-globe"></i>
-                </div>
-                <span class="text-sm font-bold text-white">External Nodes</span>
-                <span class="px-1.5 py-0.5 bg-violet-900/40 text-violet-400 text-xs font-bold rounded-md">{{ node_uris|length }}</span>
-            </div>
-            <i id="ext-chevron" class="fas fa-chevron-down text-zinc-500 text-xs transition-transform duration-300"></i>
-        </button>
-        <div id="ext-nodes" class="hidden px-3 pb-3 space-y-1.5">
-            {% for node in node_uris %}
-            <div class="node-row flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 hover:bg-white/8 cursor-pointer transition-colors" onclick="copyText('{{ node.uri }}','Copied!')">
-                <div class="w-7 h-7 rounded-lg bg-violet-900/30 flex items-center justify-center text-violet-400 text-xs flex-shrink-0">
-                    <i class="fas fa-satellite-dish"></i>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-semibold text-white truncate">{{ node.label }}</p>
-                </div>
-                <div class="copy-hint text-zinc-500 text-xs flex-shrink-0">
-                    <i class="far fa-copy"></i>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% endif %}
-
-    <footer class="text-center mt-8 fade-in" style="animation-delay:.2s">
-        <p class="text-xs text-zinc-700 font-medium">Secured by ANY</p>
-    </footer>
-</div>
-
-<!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-white text-sm font-semibold shadow-2xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 scale-90"
-     style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
-    <i class="fas fa-check-circle text-sm"></i>
-    <span id="toast-msg">Copied!</span>
-</div>
-
-<script>
-    (function(){
-        const saved=localStorage.getItem('theme');
-        const isDark = saved !== 'light';
-        if(isDark){
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.body.style.background='#f4f4f8';
-            document.body.style.color='#111';
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('icon-sun').style.display = isDark ? 'inline' : 'none';
+            document.getElementById('icon-moon').style.display = isDark ? 'none' : 'inline';
+            document.body.style.background = isDark ? '' : '#f4f4f8';
+            document.body.style.color = isDark ? '' : '#111';
         }
-        document.addEventListener('DOMContentLoaded', function(){
-            const sun = document.getElementById('icon-sun');
-            const moon = document.getElementById('icon-moon');
-            if(sun && moon){
-                sun.style.display = isDark ? 'inline' : 'none';
-                moon.style.display = isDark ? 'none' : 'inline';
-            }
-        });
-    })();
 
-    function toggleTheme(){
-        const html = document.documentElement;
-        const isDark = html.classList.toggle('dark');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        document.getElementById('icon-sun').style.display = isDark ? 'inline' : 'none';
-        document.getElementById('icon-moon').style.display = isDark ? 'none' : 'inline';
-        document.body.style.background = isDark ? '' : '#f4f4f8';
-        document.body.style.color = isDark ? '' : '#111';
-    }
+        function switchTab(name, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.remove('hidden');
+            btn.classList.add('active');
+        }
 
-    function switchTab(name, btn){
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-'+name).classList.remove('hidden');
-        btn.classList.add('active');
-    }
+        function toggleSection(id, chevId) {
+            const el = document.getElementById(id);
+            const ch = document.getElementById(chevId);
+            el.classList.toggle('hidden');
+            ch.style.transform = el.classList.contains('hidden') ? '' : 'rotate(180deg)';
+        }
 
-    function toggleSection(id, chevId){
-        const el = document.getElementById(id);
-        const ch = document.getElementById(chevId);
-        el.classList.toggle('hidden');
-        ch.style.transform = el.classList.contains('hidden') ? '' : 'rotate(180deg)';
-    }
-
-    let toastT;
-    function copyText(text, msg){
-        if(!text || text === '#blocked') return;
-        const done = () => showToast(msg || 'Copied!');
-        if(navigator.clipboard && navigator.clipboard.writeText){
-            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
-        } else { fallbackCopy(text, done); }
-    }
-    function fallbackCopy(text, cb){
-        const ta = document.createElement('textarea');
-        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-        document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); }catch(e){}
-        document.body.removeChild(ta); cb();
-    }
-    function showToast(msg){
-        const t = document.getElementById('toast');
-        document.getElementById('toast-msg').textContent = msg;
-        t.style.opacity = '1'; t.style.transform = 'translateX(-50%) scale(1)'; t.style.pointerEvents = 'auto';
-        clearTimeout(toastT);
-        toastT = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) scale(0.9)'; t.style.pointerEvents = 'none'; }, 2200);
-    }
-</script>
+        let toastT;
+        function copyText(text, msg) {
+            if (!text || text === '#blocked') return;
+            const done = () => showToast(msg || 'Copied!');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+            } else { fallbackCopy(text, done); }
+        }
+        function fallbackCopy(text, cb) {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) { }
+            document.body.removeChild(ta); cb();
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.style.opacity = '1'; t.style.transform = 'translateX(-50%) scale(1)'; t.style.pointerEvents = 'auto';
+            clearTimeout(toastT);
+            toastT = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) scale(0.9)'; t.style.pointerEvents = 'none'; }, 2200);
+        }
+    </script>
 </body>
+
 </html>

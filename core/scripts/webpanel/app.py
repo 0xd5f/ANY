@@ -41,6 +41,8 @@ def create_app() -> FastAPI:
     app.include_router(routers.settings.router, prefix='/settings', tags=['Web - Settings'])
     app.include_router(routers.user.router, prefix='/users', tags=['Web - User Management'])
     app.include_router(routers.reseller.router, prefix='/reseller-bot', tags=['Web - Reseller Bot'])
+    app.include_router(routers.wireguard.router, prefix='/wireguard', tags=['Web - Wireguard'])
+    app.include_router(routers.proxy.router, prefix='/proxy', tags=['Web - Proxy'])
     app.include_router(routers.api.v1.api_v1_router, prefix='/api/v1')
 
     setup_openapi_schema(app)

@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto" x-data="wireguardData()">
+
+    <!-- Header -->
+    <div
+        class="mb-8 p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800 transition-all duration-300 relative overflow-hidden group">
+        <div
+            class="absolute -right-16 -top-16 w-64 h-64 bg-primary-500/5 dark:bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/10 transition-colors duration-500">
+        </div>
+        <div
+            class="absolute -left-16 -bottom-16 w-48 h-48 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+        </div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                    <span
+                        class="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-xl">
+                        <i class="fas fa-network-wired text-xl"></i>
+                    </span>
+                    Wireguard Management
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium">Manage your Wireguard VPN server
+                    and clients.</p>
+            </div>
+
+            <div class="flex space-x-3">
+                {% if is_installed %}
+                <button @click="uninstallWireguard()" :disabled="loading"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50">
+                    <i class="fas fa-trash-alt mr-2" x-show="!loading"></i>
+                    <i class="fas fa-spinner fa-spin mr-2" x-show="loading" style="display: none;"></i>
+                    Uninstall
+                </button>
+                <button @click="openAddModal()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-lg shadow-primary-500/20 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    <i class="fas fa-plus mr-2"></i> Add Client
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div
+        class="bg-white dark:bg-zinc-900 shadow-sm border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden min-h-[400px] relative group hover:border-primary-500/30 transition-colors">
+        <div
+            class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary-500/5 dark:bg-primary-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+        </div>
+        <div class="relative z-10 w-full h-full">
+            {% if not is_installed %}
+            <!-- Install State -->
+            <div class="flex flex-col items-center justify-center p-12 text-center h-[400px]">
+                <div
+                    class="w-20 h-20 bg-primary-50 dark:bg-primary-900/30 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-download text-3xl text-primary-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Wireguard is not installed</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md">Install Wireguard to start managing VPN
+                    clients
+                    directly from this panel.</p>
+                <button @click="installWireguard" :disabled="loading"
+                    class="inline-flex items-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 transition-colors">
+                    <i class="fas fa-spinner fa-spin mr-2" x-show="loading" style="display: none;"></i>
+                    <i class="fas fa-hammer mr-2" x-show="!loading"></i>
+                    <span x-text="loading ? 'Installing...' : 'Install Wireguard'">Install Wireguard</span>
+                </button>
+            </div>
+            {% else %}
+            <!-- Clients List -->
+            <div class="overflow-x-auto min-h-[400px]">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-zinc-800">
+                    <thead class="bg-gray-50 dark:bg-zinc-900/50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Client Name</th>
+                            <th scope="col"
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                IP Address</th>
+                            <th scope="col"
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Endpoint</th>
+                            <th scope="col"
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Traffic (RX/TX)</th>
+                            <th scope="col"
+                                class="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-800">
+                        {% if clients|length == 0 %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                No clients found. Add a client to get started.
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% for client in clients %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold mr-3">
+                                        {{ client.name[:1]|upper }}
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ client.name }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {{ client.ip }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {{ client.endpoint if client.endpoint else 'Not Connected' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {% if client.rx is defined and client.tx is defined %}
+                                <span class="text-green-500"><i class="fas fa-arrow-down text-xs mr-1"></i>{{ (client.rx
+                                    /
+                                    1024 / 1024)|round(2) }} MB</span> /
+                                <span class="text-blue-500"><i class="fas fa-arrow-up text-xs mr-1"></i>{{ (client.tx /
+                                    1024
+                                    / 1024)|round(2) }} MB</span>
+                                {% else %}
+                                0 MB / 0 MB
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button @click="viewConfig('{{ client.name }}')"
+                                    class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
+                                    title="View Config">
+                                    <i class="fas fa-qrcode text-lg"></i>
+                                </button>
+                                <button @click="downloadConfig('{{ client.name }}')"
+                                    class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 mr-4"
+                                    title="Download Config">
+                                    <i class="fas fa-download text-lg"></i>
+                                </button>
+                                <button @click="deleteClient('{{ client.name }}')"
+                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                    title="Delete Client">
+                                    <i class="fas fa-trash text-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modals -->
+
+<!-- Add Client Modal -->
+<div x-show="showAddModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div x-show="showAddModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity pointer-events-none" aria-hidden="true"
+            @click="showAddModal = false">
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div x-show="showAddModal" x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            class="pointer-events-auto inline-block align-bottom bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl rounded-t-3xl sm:rounded-3xl text-left shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-zinc-700">
+            <div
+                class="bg-gray-50/50 dark:bg-black/20 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-200 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-user-plus text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                            Add New Client
+                        </h3>
+                        <div class="mt-4">
+                            <label for="clientName"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client
+                                Name</label>
+                            <input type="text" x-model="newClientName" id="clientName"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded-xl py-2 px-3"
+                                placeholder="e.g. phone, laptop">
+                            <p class="mt-2 text-xs text-gray-500">Alphanumeric characters only.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="bg-gray-50/50 dark:bg-black/20 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-zinc-800">
+                <button type="button" @click="addClient" :disabled="loading"
+                    class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors disabled:opacity-50">
+                    <i class="fas fa-spinner fa-spin mr-2" x-show="loading" style="display: none;"></i>
+                    Add config
+                </button>
+                <button type="button" @click="showAddModal = false"
+                    class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 dark:border-zinc-700 shadow-sm px-4 py-2 bg-white dark:bg-zinc-900 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Config Modal -->
+<div x-show="showConfigModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div x-show="showConfigModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity pointer-events-none" aria-hidden="true"
+            @click="showConfigModal = false">
+        </div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div x-show="showConfigModal" x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            class="pointer-events-auto inline-block align-bottom bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl rounded-t-3xl sm:rounded-3xl text-left shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-zinc-700">
+            <div
+                class="bg-gray-50/50 dark:bg-black/20 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-200 dark:border-zinc-800 rounded-t-3xl sm:rounded-3xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                        x-text="`Config: ${activeConfigName}`">Config Data</h3>
+                    <button @click="showConfigModal = false"
+                        class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div id="qrcode" class="mb-4 bg-white p-2 rounded-xl"></div>
+                    <textarea x-model="activeConfigData" readonly rows="8"
+                        class="shadow-sm block w-full sm:text-sm border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-300 rounded-xl py-2 px-3 font-mono text-xs cursor-text"></textarea>
+                </div>
+            </div>
+            <div
+                class="bg-gray-50/50 dark:bg-black/20 px-4 py-3 sm:px-6 flex justify-end border-t border-gray-200 dark:border-zinc-800">
+                <button type="button" @click="copyConfigToClipboard()"
+                    class="inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm transition-colors mr-3">
+                    Copy text
+                </button>
+                <button type="button" @click="showConfigModal = false"
+                    class="inline-flex justify-center rounded-xl border border-gray-300 dark:border-zinc-700 shadow-sm px-4 py-2 bg-white dark:bg-zinc-900 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<!-- QRCode.js for client code generation -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('wireguardData', () => ({
+            loading: false,
+            showAddModal: false,
+            showConfigModal: false,
+            newClientName: '',
+            activeConfigName: '',
+            activeConfigData: '',
+            qrCodeObj: null,
+
+            async installWireguard() {
+                this.loading = true;
+                try {
+                    const response = await fetch("{{ url_for('install_wireguard') }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Installed!',
+                            text: 'Wireguard installed successfully.',
+                            confirmButtonColor: '#3085d6',
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.detail || 'Install failed');
+                    }
+                } catch (error) {
+                    Swal.fire('Error', error.message, 'error');
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async uninstallWireguard() {
+                Swal.fire({
+                    title: 'Uninstall Wireguard?',
+                    text: "This will remove all clients and configurations!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, uninstall it!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        this.loading = true;
+                        try {
+                            const response = await fetch("{{ url_for('uninstall_wireguard') }}", {
+                                method: 'DELETE'
+                            });
+
+                            if (response.ok) {
+                                Swal.fire('Uninstalled!', 'Wireguard has been removed.', 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                const data = await response.json();
+                                throw new Error(data.detail || "Uninstall failed");
+                            }
+                        } catch (error) {
+                            Swal.fire('Error', error.message, 'error');
+                        } finally {
+                            this.loading = false;
+                        }
+                    }
+                });
+            },
+
+            openAddModal() {
+                this.newClientName = '';
+                this.showAddModal = true;
+            },
+
+            async addClient() {
+                if (!this.newClientName) {
+                    Swal.fire('Warning', 'Please enter a client name', 'warning');
+                    return;
+                }
+
+                this.loading = true;
+                try {
+                    const response = await fetch("{{ url_for('add_client') }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: this.newClientName })
+                    });
+
+                    if (response.ok) {
+                        this.showAddModal = false;
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Client added successfully',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.detail || 'Failed to add client');
+                    }
+                } catch (error) {
+                    Swal.fire('Error', error.message, 'error');
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async deleteClient(name) {
+                Swal.fire({
+                    title: `Delete ${name}?`,
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const baseUrl = "{{ url_for('remove_client', client_name='PLACEHOLDER') }}";
+                            const response = await fetch(baseUrl.replace('PLACEHOLDER', name), {
+                                method: 'DELETE'
+                            });
+
+                            if (response.ok) {
+                                Swal.fire('Deleted!', 'Client configuration has been deleted.', 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                const data = await response.json();
+                                throw new Error(data.detail || "Delete failed");
+                            }
+                        } catch (error) {
+                            Swal.fire('Error', error.message, 'error');
+                        }
+                    }
+                });
+            },
+
+            async fetchConfigData(name) {
+                const baseUrl = "{{ url_for('get_client_config', client_name='PLACEHOLDER') }}";
+                const response = await fetch(baseUrl.replace('PLACEHOLDER', name));
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || "Failed to fetch config");
+                }
+                const data = await response.json();
+                return data.config;
+            },
+
+            async viewConfig(name) {
+                try {
+                    this.activeConfigName = name;
+                    this.activeConfigData = 'Loading...';
+                    this.showConfigModal = true;
+
+                    const configText = await this.fetchConfigData(name);
+                    this.activeConfigData = configText;
+
+                    this.$nextTick(() => {
+                        const qrContainer = document.getElementById('qrcode');
+                        qrContainer.innerHTML = '';
+                        if (this.qrCodeObj) {
+                            this.qrCodeObj.clear();
+                        }
+                        this.qrCodeObj = new QRCode(qrContainer, {
+                            text: configText,
+                            width: 200,
+                            height: 200,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    });
+                } catch (error) {
+                    this.showConfigModal = false;
+                    Swal.fire('Error', error.message, 'error');
+                }
+            },
+
+            async downloadConfig(name) {
+                try {
+                    const configText = await this.fetchConfigData(name);
+                    const blob = new Blob([configText], { type: "text/plain;charset=utf-8" });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${name}.conf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } catch (error) {
+                    Swal.fire('Error', error.message, 'error');
+                }
+            },
+
+            async copyConfigToClipboard() {
+                try {
+                    await navigator.clipboard.writeText(this.activeConfigData);
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Copied to clipboard',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            }
+        }));
+    });
+</script>
+{% endblock %}

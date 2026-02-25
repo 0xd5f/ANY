@@ -1,35 +1,19 @@
-## [Update] - 2026-02-23 - v1.4.9
-
-### Fixed
-- **Upgrade Script Download Path**: Исправлено имя файла релиза в `upgrade2.sh` — `ANY-${arch}.zip` → `any-${arch}.zip` для соответствия GitHub Actions workflow.
-
-### Changed
-- **Node API Response Format**: Endpoint `/api/v1/config/nodes` теперь возвращает расширенную структуру с полями `location`, `pinSHA256`, `insecure` для совместимости с HAAP клиентом.
-- **Subscription Template Location**: Шаблоны subscription страницы перенесены в `core/scripts/normalsub/template/` с возможностью редактирования через веб-интерфейс.
-
----
-
-## [Update] - 2026-02-23 - v1.4.8
+## [Update] - 2026-02-25 - v1.5.0
 
 ### Added
-- **Subscription Template Editor**: Полностью редактируемые HTML/CSS/JS шаблоны subscription страницы через веб-панель. Настройки → Subscription Settings → Edit Template позволяет кастомизировать `index.html`, `style.css`, `script.js`. Изменения применяются без перезагрузки сервиса.
-- **Tunnel Wizard Redesign**: Полная переработка интерфейса управления туннелями — новый адаптивный дизайн, расширенные фильтры (status, type, provider), поддержка пагинации, интеграция с External Nodes.
-- **Auto Node Installation**: Автоматическая установка Hysteria2 на удалённых серверах через Tunnel Wizard — поддержка SSH (Ubuntu/Debian) и Docker. Генерация install-скриптов с автоконфигурацией порта, SNI, OBFS, pin. Endpoint `POST /api/v1/config/tunnel-exec` для выполнения команд.
-- **External Nodes UI**: Адаптация панели для приложения HAAP — Add Node / Edit Node формы с полями location, IP, port, SNI, OBFS, pinSHA256, insecure. Node Manager (`node.py`) для CRUD операций с `nodes.json`.
-- **Users Table Redesign**: Переработан дизайн таблицы пользователей — компактный вид, улучшенная читаемость, адаптивные колонки, оптимизированная производительность рендеринга.
-- **Modal Redesign**: Обновлены все модальные окна — современный дизайн с плавными анимациями, улучшенная доступность, адаптивная вёрстка для мобильных устройств.
-- **Subscription Page Redesign**: Полностью переработана визуальная часть subscription страницы — адаптивный дизайн, поддержка тёмной темы, копирование URI одним кликом, QR-коды для каждого сервера.
+- **3Proxy Integration**: Полноценная поддержка SOCKS5 и HTTP прокси. Добавлена страница управления (`/proxy`) для создания пользователей и управления настройками прокси (порты, лимиты подключений) прямо из интерфейса. 
+- **Wireguard Integration**: Реализован встроенный менеджер Wireguard (`/wireguard`). Позволяет устанавливать ядро Wireguard, создавать клиентов, скачивать конфиги и подключаться по QR-коду непосредственно из панели.
+- **Proxy Settings UI**: Динамическое управление конфигурацией 3Proxy (порты SOCKS/HTTP, Max Connections) с автоматической перезагрузкой сервиса и пробросом портов в iptables.
+- **Glassmorphism UI Redesign**: Глобальный редизайн веб-панели. Все страницы (Dashboard, Users, Nodes, Settings, Reseller, Proxy, Wireguard) получили современный, "стеклянный" (Glassmorphism) дизайн с использованием градиентов, эффектов размытия фона (`backdrop-blur`) и плавных анимаций.
+- **Global Modal & Toast Redesign**: Полностью переработан внешний вид всплывающих уведомлений и модальных окон (SweetAlert2) под новый стиль интерфейса (включая темную тему, закругленные края и кастомные Tailwind-кнопки).
+- **Username Generator**: Добавлена кнопка быстрой генерации случайных логинов (`user_XXXXXX`) при создании пользователей Proxy.
+
+### Changed
+- **Traffic Progress Bars**: Изменен дизайн прогресс-баров трафика на странице подписки (`normalsub` / UID) — теперь используются градиентные заливки на основе Tailwind CSS вместо встроенных inline-стилей.
 
 ### Fixed
-- **External Nodes Pin Format**: Исправлена генерация URI для External Nodes — `pinSHA256` теперь корректно конвертируется из hex-формата (`XX:XX:XX`) в формат `sha256/BASE64URL`, требуемый клиентами (HAAP/Hiddify). Добавлена функция `hex_pin_to_uri()` в `wrapper_uri.py`.
-- **Port Hopping for External Nodes**: Port Hopping параметры (`mport` и `mportHopInt`) теперь корректно передаются для External Nodes в subscription URIs. Ранее эти параметры добавлялись только для основного сервера.
-- **Tunnel Wizard Docker Template**: Исправлен синтаксис Jinja2 в Docker template для Tunnel Wizard — `{{.Names}}` заменён на `{{ "{{.Names}}" }}` для корректного отображения в скрипте автоустановки.
-- **Upgrade Script Download Path**: Исправлено имя файла релиза в `upgrade2.sh` — `ANY-${arch}.zip` → `any-${arch}.zip` для соответствия GitHub Actions workflow.
-
-### Improved
-- **Subscription URI Generation**: Улучшена обработка TLS fingerprints — функция `hex_pin_to_uri()` автоматически распознаёт формат (`sha256/...` или hex) и корректно конвертирует для всех серверов.
-- **Nodes Management**: Расширен API endpoint `/api/v1/config/nodes` — добавлена поддержка heartbeat от удалённых нод, версионирование, проверка доступности.
-- **Tunnel Wizard Templates**: Улучшены install-скрипты — автоматическое определение архитектуры (amd64/arm64), retry-логика для загрузок, валидация config.yaml перед запуском.
-- **External Nodes Validation**: Добавлена валидация полей при добавлении/редактировании нод — проверка формата IP, диапазона портов, валидности pinSHA256 (hex формат).
-
----
+- **Add User Modal Tabs**: Исправлен баг в модальном окне добавления пользователей (Users), при котором не работало визуальное переключение вкладок "Single User" и "Bulk Add" из-за изменения названий CSS-классов при редизайне.
+- **Node Auto-Install Script URL**: Исправлен баг в генерации URL-адреса панели при Auto Install, из-за которого удаленные ноды не могли зарегистрироваться в панели (URL теперь работает через публичный `DOMAIN` и `PORT` из конфигов, игнорируя локальные порты реверс-прокси).
+- **Node Auto-Install Dependencies**: Добавлена принудительная автоматическая пре-установка `git`, `curl` и других необходимых пакетов (через `apt-get`) до запуска скрипта установки, чтобы избежать сбоев на "чистых" минимальных OC.
+- **Node Re-installation**: Исправлена ошибка ("Нода уже существует"), из-за которой повторная авто-установка ноды на сервер отклонялась панелью. Теперь панель корректно обновляет/перезаписывает данные ноды, а скрипт корректно удаляет старый инстанс `hysteria-server`.
+- **Auto-Install Interactive Hangs**: Скрипт автоматизирован и больше не зависает на вопросах ввода (`read -p`). Пароли и URL теперь передаются напрямую в процесс `install.sh` через программный пайплайн.

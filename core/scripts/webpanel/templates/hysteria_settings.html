@@ -3,18 +3,34 @@
 {% block title %}Hysteria Settings{% endblock %}
 
 {% block content %}
-<div class='mb-8'>
-    <h1 class='text-2xl font-bold text-zinc-900 dark:text-white'>Hysteria Settings</h1>
-    <p class="text-zinc-500 dark:text-zinc-400 mt-1">Configure core Hysteria protocol parameters.</p>
+<!-- Header Section -->
+<div
+    class="mb-8 p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800 transition-all duration-300 relative overflow-hidden group">
+    <div
+        class="absolute -right-16 -top-16 w-64 h-64 bg-primary-500/5 dark:bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/10 transition-colors duration-500">
+    </div>
+    <div
+        class="absolute -left-16 -bottom-16 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+    </div>
+
+    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                <span
+                    class="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-xl">
+                    <i class="fas fa-bolt text-xl"></i>
+                </span>
+                Hysteria Settings
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-2xl font-medium">Configure core Hysteria protocol
+                parameters.</p>
+        </div>
+    </div>
 </div>
 
-<div class='content'
-    data-get-port-url="{{ url_for('get_port_api') }}"
-    data-get-sni-url="{{ url_for('get_sni_api') }}"
-    data-check-obfs-url="{{ url_for('check_obfs') }}"
-    data-enable-obfs-url="{{ url_for('enable_obfs') }}"
-    data-disable-obfs-url="{{ url_for('disable_obfs') }}"
-    data-check-masquerade-url="{{ url_for('check_masquerade') }}"
+<div class='content' data-get-port-url="{{ url_for('get_port_api') }}" data-get-sni-url="{{ url_for('get_sni_api') }}"
+    data-check-obfs-url="{{ url_for('check_obfs') }}" data-enable-obfs-url="{{ url_for('enable_obfs') }}"
+    data-disable-obfs-url="{{ url_for('disable_obfs') }}" data-check-masquerade-url="{{ url_for('check_masquerade') }}"
     data-enable-masquerade-url="{{ url_for('enable_masquerade') }}"
     data-disable-masquerade-url="{{ url_for('disable_masquerade') }}"
     data-set-port-url-template="{{ url_for('set_port_api', port='PORT_PLACEHOLDER') }}"
@@ -22,223 +38,307 @@
     data-update-geo-url-template="{{ url_for('update_geo', country='COUNTRY_PLACEHOLDER') }}"
     data-port-hopping-status-url="{{ url_for('get_port_hopping_status') }}"
     data-port-hopping-enable-url="{{ url_for('enable_port_hopping') }}"
-    data-port-hopping-disable-url="{{ url_for('disable_port_hopping') }}"
->
+    data-port-hopping-disable-url="{{ url_for('disable_port_hopping') }}">
     <!-- Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Port Card -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
-            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3 text-blue-600 dark:text-blue-400">
-                    <i class="fas fa-server text-sm"></i>
-                </div>
-                Change Port
-            </h3>
-            <div class="flex-1">
-                <form id="port_form">
-                    <div class='mb-4'>
-                        <label for='hysteria_port' class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port</label>
-                        <input type='text' class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400' id='hysteria_port'
-                            placeholder='Enter Port'>
-                        <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
-                            Please enter a valid port number.
-                        </div>
-                    </div>
-                </form>
+        <div
+            class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full relative overflow-hidden group hover:border-blue-500/30 transition-colors">
+            <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
             </div>
-             <button id="port_change" type='button' class='w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
-                Save Changes
-            </button>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3 text-blue-600 dark:text-blue-400">
+                        <i class="fas fa-server text-sm"></i>
+                    </div>
+                    Change Port
+                </h3>
+                <div class="flex-1">
+                    <form id="port_form">
+                        <div class='mb-4'>
+                            <label for='hysteria_port'
+                                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port</label>
+                            <input type='text'
+                                class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder-zinc-400'
+                                id='hysteria_port' placeholder='Enter Port'>
+                            <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                                Please enter a valid port number.
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <button id="port_change" type='button'
+                    class='w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all font-medium text-sm'>
+                    Save Changes
+                </button>
+            </div>
         </div>
 
         <!-- SNI Card -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
-            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                 <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mr-3 text-purple-600 dark:text-purple-400">
-                    <i class="fas fa-shield-alt text-sm"></i>
-                </div>
-                Change SNI
-            </h3>
-            <div class="flex-1">
-                 <form id="sni_form">
-                    <div class='mb-4'>
-                        <label for='sni_domain' class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Domain</label>
-                        <input type='text' class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder-zinc-400' id='sni_domain'
-                            placeholder='Enter Domain'>
-                        <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
-                            Please enter a valid domain (without http:// or https://).
-                        </div>
-                    </div>
-                </form>
+        <div
+            class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full relative overflow-hidden group hover:border-purple-500/30 transition-colors">
+            <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
             </div>
-            <button id="sni_change" type='button' class='w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all font-medium text-sm'>
-                Save Changes
-            </button>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mr-3 text-purple-600 dark:text-purple-400">
+                        <i class="fas fa-shield-alt text-sm"></i>
+                    </div>
+                    Change SNI
+                </h3>
+                <div class="flex-1">
+                    <form id="sni_form">
+                        <div class='mb-4'>
+                            <label for='sni_domain'
+                                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Domain</label>
+                            <input type='text'
+                                class='w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all placeholder-zinc-400'
+                                id='sni_domain' placeholder='Enter Domain'>
+                            <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                                Please enter a valid domain (without http:// or https://).
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <button id="sni_change" type='button'
+                    class='w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all font-medium text-sm'>
+                    Save Changes
+                </button>
+            </div>
         </div>
 
         <!-- OBFS/Masquerade (Tabs) -->
         <div class="md:col-span-2"> <!-- Spans full width on medium+ screens if you want, or keep it 50% -->
-             <!-- We'll keep it as md:col-span-1 based on original layout, wait, original was col-md-6. So keeping it in grid flow. -->
+            <!-- We'll keep it as md:col-span-1 based on original layout, wait, original was col-md-6. So keeping it in grid flow. -->
         </div>
 
         <!-- Actually original was 2x2 grid. Let's stick to the grid flow -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full"
-             x-data="{ activeTab: 'obfs-content' }">
-            
-            <!-- Custom Tabs Header -->
-            <div class="flex border-b border-zinc-200 dark:border-zinc-800">
-                <button @click="activeTab = 'obfs-content'" 
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col h-full relative group hover:border-emerald-500/30 transition-colors"
+            x-data="{ activeTab: 'obfs-content' }">
+            <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+            </div>
+
+            <div class="relative z-10 flex flex-col h-full">
+
+                <!-- Custom Tabs Header -->
+                <div class="flex border-b border-zinc-200 dark:border-zinc-800">
+                    <button @click="activeTab = 'obfs-content'"
                         :class="activeTab === 'obfs-content' ? 'bg-zinc-50 dark:bg-zinc-800/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
                         class="flex-1 py-4 text-sm font-medium transition-colors text-center focus:outline-none"
                         id="obfs-tab" role="tab"> <!-- ID kept for JS compatibility if needed -->
-                    <i class="fas fa-user-secret mr-2"></i> OBFS
-                </button>
-                <button @click="activeTab = 'masquerade-content'" 
+                        <i class="fas fa-user-secret mr-2"></i> OBFS
+                    </button>
+                    <button @click="activeTab = 'masquerade-content'"
                         :class="activeTab === 'masquerade-content' ? 'bg-zinc-50 dark:bg-zinc-800/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'"
                         class="flex-1 py-4 text-sm font-medium transition-colors text-center focus:outline-none"
                         id="masquerade-tab" role="tab"> <!-- ID kept -->
-                    <i class="fas fa-theater-masks mr-2"></i> Masquerade
-                </button>
-            </div>
-
-            <div class="p-6 flex-1 tab-content"> <!-- tab-content class kept for potential JS selectors -->
-                
-                <!-- OBFS Content -->
-                <div x-show="activeTab === 'obfs-content'" id="obfs-content" role="tabpanel" class="tab-pane active"> <!-- Classes kept -->
-                    <div class="mb-4">
-                        <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">OBFS Status</h5>
-                        <div id="obfs_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                            <span id="obfs_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading OBFS status...</span>
-                        </div>
-                    </div>
-                    <div class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
-                        <div class="flex items-start">
-                             <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
-                             <div>
-                                <strong>Warning:</strong> Changing this setting requires users to update their client configurations.
-                             </div>
-                        </div>
-                    </div>
-                    <button id="obfs_enable_btn" type='button' class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm' style="display: none;">
-                        <i class="fas fa-check mr-2"></i> Enable OBFS
-                    </button>
-                    <button id="obfs_disable_btn" type='button' class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
-                         <i class="fas fa-times mr-2"></i> Disable OBFS
+                        <i class="fas fa-theater-masks mr-2"></i> Masquerade
                     </button>
                 </div>
 
-                <!-- Masquerade Content -->
-                <div x-show="activeTab === 'masquerade-content'" id="masquerade-content" role="tabpanel" class="tab-pane" style="display: none;" :style="activeTab === 'masquerade-content' ? 'display: block' : 'display: none'">
-                    <div class="mb-4">
-                        <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Masquerade Status</h5>
-                        <div id="masquerade_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                            <span id="masquerade_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading Masquerade status...</span>
-                        </div>
-                    </div>
-                     <div class="p-4 mb-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 text-blue-700 dark:text-blue-500 text-sm">
-                       <div class="flex items-start">
-                           <i class="fas fa-info-circle mt-0.5 mr-2"></i>
-                           <div>
-                               <strong>Note:</strong> Masquerade cannot be active at the same time as OBFS.
-                           </div>
-                       </div>
-                    </div>
-                    <div id="masquerade_form" class="space-y-3 mb-4" style="display: none;">
-                        <div>
-                            <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Mode</label>
-                            <select id="masquerade_mode" class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                                <option value="string">String (502 Bad Gateway)</option>
-                                <option value="proxy">Proxy (Mirror a real website)</option>
-                            </select>
-                        </div>
-                        <div id="proxy_url_group" style="display: none;">
-                            <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Website URL</label>
-                            <input type="url" id="masquerade_proxy_url" placeholder="https://www.google.com" class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                            <p class="text-xs text-zinc-400 mt-1">DPI will see this website when probing your server.</p>
-                        </div>
-                    </div>
-                    <button id="masquerade_enable_btn" type='button' class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm' style="display: none;">
-                        <i class="fas fa-check mr-2"></i> Enable Masquerade
-                    </button>
-                    <button id="masquerade_disable_btn" type='button' class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm' style="display: none;">
-                         <i class="fas fa-times mr-2"></i> Disable Masquerade
-                    </button>
-                </div>
+                <div class="p-6 flex-1 tab-content"> <!-- tab-content class kept for potential JS selectors -->
 
+                    <!-- OBFS Content -->
+                    <div x-show="activeTab === 'obfs-content'" id="obfs-content" role="tabpanel"
+                        class="tab-pane active"> <!-- Classes kept -->
+                        <div class="mb-4">
+                            <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">OBFS Status</h5>
+                            <div id="obfs_status_container"
+                                class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                                <span id="obfs_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading
+                                    OBFS status...</span>
+                            </div>
+                        </div>
+                        <div
+                            class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                                <div>
+                                    <strong>Warning:</strong> Changing this setting requires users to update their
+                                    client configurations.
+                                </div>
+                            </div>
+                        </div>
+                        <button id="obfs_enable_btn" type='button'
+                            class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'
+                            style="display: none;">
+                            <i class="fas fa-check mr-2"></i> Enable OBFS
+                        </button>
+                        <button id="obfs_disable_btn" type='button'
+                            class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm'
+                            style="display: none;">
+                            <i class="fas fa-times mr-2"></i> Disable OBFS
+                        </button>
+                    </div>
+
+                    <!-- Masquerade Content -->
+                    <div x-show="activeTab === 'masquerade-content'" id="masquerade-content" role="tabpanel"
+                        class="tab-pane" style="display: none;"
+                        :style="activeTab === 'masquerade-content' ? 'display: block' : 'display: none'">
+                        <div class="mb-4">
+                            <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Masquerade Status</h5>
+                            <div id="masquerade_status_container"
+                                class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                                <span id="masquerade_status_message"
+                                    class="text-zinc-600 dark:text-zinc-400 text-sm">Loading Masquerade status...</span>
+                            </div>
+                        </div>
+                        <div
+                            class="p-4 mb-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 text-blue-700 dark:text-blue-500 text-sm">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                                <div>
+                                    <strong>Note:</strong> Masquerade cannot be active at the same time as OBFS.
+                                </div>
+                            </div>
+                        </div>
+                        <div id="masquerade_form" class="space-y-3 mb-4" style="display: none;">
+                            <div>
+                                <label
+                                    class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Mode</label>
+                                <select id="masquerade_mode"
+                                    class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                    <option value="string">String (502 Bad Gateway)</option>
+                                    <option value="proxy">Proxy (Mirror a real website)</option>
+                                </select>
+                            </div>
+                            <div id="proxy_url_group" style="display: none;">
+                                <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Website
+                                    URL</label>
+                                <input type="url" id="masquerade_proxy_url" placeholder="https://www.google.com"
+                                    class="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                <p class="text-xs text-zinc-400 mt-1">DPI will see this website when probing your
+                                    server.</p>
+                            </div>
+                        </div>
+                        <button id="masquerade_enable_btn" type='button'
+                            class='w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/20 transition-all font-medium text-sm'
+                            style="display: none;">
+                            <i class="fas fa-check mr-2"></i> Enable Masquerade
+                        </button>
+                        <button id="masquerade_disable_btn" type='button'
+                            class='w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm'
+                            style="display: none;">
+                            <i class="fas fa-times mr-2"></i> Disable Masquerade
+                        </button>
+                    </div>
+
+                </div>
             </div>
         </div>
 
         <!-- Port Hopping Card -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
-            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                <div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mr-3 text-orange-600 dark:text-orange-400">
-                    <i class="fas fa-random text-sm"></i>
-                </div>
-                Port Hopping
-            </h3>
-            <div class="flex-1">
-                <div class="mb-4">
-                    <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Status</h5>
-                    <div id="port_hopping_status_container" class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                        <span id="port_hopping_status_message" class="text-zinc-600 dark:text-zinc-400 text-sm">Loading...</span>
-                    </div>
-                </div>
-                <form id="port_hopping_form">
-                    <div class="mb-4">
-                        <label for="port_hopping_range" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port Range</label>
-                        <input type="text" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all placeholder-zinc-400" id="port_hopping_range"
-                            placeholder="e.g. 20000-50000">
-                        <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
-                            Enter a valid range (e.g. 20000-50000).
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label for="hop_interval" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Hop Interval (seconds)</label>
-                        <input type="number" class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all placeholder-zinc-400" id="hop_interval"
-                            value="30" min="5" max="300" placeholder="30">
-                        <p class="text-zinc-400 text-xs mt-1">How often clients switch ports (5-300s, default 30s)</p>
-                    </div>
-                </form>
-                <div class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle mt-0.5 mr-2"></i>
-                        <div>
-                            Redirects a UDP port range to the server port via iptables. Clients will hop between ports to bypass throttling.
-                        </div>
-                    </div>
-                </div>
+        <div
+            class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full relative overflow-hidden group hover:border-orange-500/30 transition-colors">
+            <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
             </div>
-            <div class="flex gap-2">
-                <button id="port_hopping_enable_btn" type="button" class="flex-1 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-lg shadow-orange-500/20 transition-all font-medium text-sm">
-                    Enable
-                </button>
-                <button id="port_hopping_disable_btn" type="button" class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm" style="display: none;">
-                    Disable
-                </button>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mr-3 text-orange-600 dark:text-orange-400">
+                        <i class="fas fa-random text-sm"></i>
+                    </div>
+                    Port Hopping
+                </h3>
+                <div class="flex-1">
+                    <div class="mb-4">
+                        <h5 class="text-sm font-bold text-zinc-900 dark:text-white mb-2">Status</h5>
+                        <div id="port_hopping_status_container"
+                            class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                            <span id="port_hopping_status_message"
+                                class="text-zinc-600 dark:text-zinc-400 text-sm">Loading...</span>
+                        </div>
+                    </div>
+                    <form id="port_hopping_form">
+                        <div class="mb-4">
+                            <label for="port_hopping_range"
+                                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Port
+                                Range</label>
+                            <input type="text"
+                                class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all placeholder-zinc-400"
+                                id="port_hopping_range" placeholder="e.g. 20000-50000">
+                            <div class="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                                Enter a valid range (e.g. 20000-50000).
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="hop_interval"
+                                class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Hop Interval
+                                (seconds)</label>
+                            <input type="number"
+                                class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all placeholder-zinc-400"
+                                id="hop_interval" value="30" min="5" max="300" placeholder="30">
+                            <p class="text-zinc-400 text-xs mt-1">How often clients switch ports (5-300s, default 30s)
+                            </p>
+                        </div>
+                    </form>
+                    <div
+                        class="p-4 mb-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 text-yellow-700 dark:text-yellow-500 text-sm">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                            <div>
+                                Redirects a UDP port range to the server port via iptables. Clients will hop between
+                                ports to bypass throttling.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="port_hopping_enable_btn" type="button"
+                        class="flex-1 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-lg shadow-orange-500/20 transition-all font-medium text-sm">
+                        Enable
+                    </button>
+                    <button id="port_hopping_disable_btn" type="button"
+                        class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 transition-all font-medium text-sm"
+                        style="display: none;">
+                        Disable
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- GeoIP Update Card -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full">
-            <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
-                 <div class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mr-3 text-teal-600 dark:text-teal-400">
-                    <i class="fas fa-globe-americas text-sm"></i>
-                </div>
-                Update GeoIP & GeoSite
-            </h3>
-            <div class="flex-1">
-                 <p class="text-zinc-500 dark:text-zinc-400 text-sm mb-4">Update database files for specific countries manually if needed for routing rules.</p>
-                <div class="space-y-3">
-                    <button id="geo_update_iran" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
-                         Update for Iran
-                    </button>
-                     <button id="geo_update_china" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
-                        Update for China
-                    </button>
-                    <button id="geo_update_russia" type='button' class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
-                        Update for Russia
-                    </button>
+        <div
+            class="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm p-6 flex flex-col h-full relative overflow-hidden group hover:border-teal-500/30 transition-colors">
+            <div
+                class="absolute -right-6 -bottom-6 w-24 h-24 bg-teal-500/5 dark:bg-teal-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+            </div>
+
+            <div class="relative z-10 flex flex-col h-full">
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mr-3 text-teal-600 dark:text-teal-400">
+                        <i class="fas fa-globe-americas text-sm"></i>
+                    </div>
+                    Update GeoIP & GeoSite
+                </h3>
+                <div class="flex-1">
+                    <p class="text-zinc-500 dark:text-zinc-400 text-sm mb-4">Update database files for specific
+                        countries manually if needed for routing rules.</p>
+                    <div class="space-y-3">
+                        <button id="geo_update_iran" type='button'
+                            class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                            Update for Iran
+                        </button>
+                        <button id="geo_update_china" type='button'
+                            class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                            Update for China
+                        </button>
+                        <button id="geo_update_russia" type='button'
+                            class='w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-200 rounded-xl transition-all font-medium text-sm border border-transparent dark:border-zinc-700 flex items-center justify-center'>
+                            Update for Russia
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

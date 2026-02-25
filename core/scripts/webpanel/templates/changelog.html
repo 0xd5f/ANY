@@ -8,242 +8,267 @@
 
 {% block content %}
 <div class="p-6 space-y-6" x-data="changelogData()">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Changelog</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">История изменений ANY Panel</p>
+
+    <!-- Header Section -->
+    <div
+        class="mb-8 p-6 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800 transition-all duration-300 relative overflow-hidden group">
+        <div
+            class="absolute -right-16 -top-16 w-64 h-64 bg-primary-500/5 dark:bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/10 transition-colors duration-500">
         </div>
-        <button @click="loadChangelog()" :disabled="loading" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 flex items-center gap-2">
-            <i class="fas fa-sync-alt" :class="{'animate-spin': loading}"></i>
-            <span>Обновить</span>
-        </button>
+        <div
+            class="absolute -left-16 -bottom-16 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
+        </div>
+
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+                    <span
+                        class="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-xl">
+                        <i class="fas fa-history text-xl"></i>
+                    </span>
+                    Changelog
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">История изменений ANY Panel</p>
+            </div>
+
+            <button @click="loadChangelog()" :disabled="loading"
+                class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all font-medium text-sm flex items-center gap-2">
+                <i class="fas fa-sync-alt" :class="{'animate-spin': loading}"></i>
+                <span>Обновить</span>
+            </button>
+        </div>
     </div>
 
     <!-- Changelog Content -->
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
-        
-        <!-- Loading State -->
-        <div x-show="loading" class="p-12 text-center">
-            <div class="inline-flex items-center gap-3 text-gray-500 dark:text-gray-400">
-                <i class="fas fa-spinner fa-spin text-2xl"></i>
-                <span class="text-lg">Загрузка changelog...</span>
-            </div>
+    <div
+        class="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-zinc-800 relative overflow-hidden group hover:border-primary-500/30 transition-colors">
+        <div
+            class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary-500/5 dark:bg-primary-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700">
         </div>
+        <div class="relative z-10 w-full h-full">
 
-        <!-- Error State -->
-        <div x-show="error && !loading" class="p-12 text-center">
-            <div class="inline-flex flex-col items-center gap-3">
-                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
-                <p class="text-lg font-medium text-gray-900 dark:text-white">Ошибка загрузки</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400" x-text="error"></p>
-                <button @click="loadChangelog()" class="mt-4 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors">
-                    Попробовать снова
-                </button>
+            <!-- Loading State -->
+            <div x-show="loading" class="p-12 text-center">
+                <div class="inline-flex items-center gap-3 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                    <span class="text-lg">Загрузка changelog...</span>
+                </div>
             </div>
-        </div>
 
-        <!-- Content -->
-        <div x-show="!loading && !error" class="p-8">
-            <div x-html="changelogContent" class="changelog-content"></div>
+            <!-- Error State -->
+            <div x-show="error && !loading" class="p-12 text-center">
+                <div class="inline-flex flex-col items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                    <p class="text-lg font-medium text-gray-900 dark:text-white">Ошибка загрузки</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" x-text="error"></p>
+                    <button @click="loadChangelog()"
+                        class="mt-4 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors">
+                        Попробовать снова
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div x-show="!loading && !error" class="p-8">
+                <div x-html="changelogContent" class="changelog-content"></div>
+            </div>
         </div>
     </div>
 
 </div>
 
 <script>
-function changelogData() {
-    return {
-        changelogContent: '',
-        loading: false,
-        error: null,
-        
-        async loadChangelog() {
-            this.loading = true;
-            this.error = null;
-            
-            try {
-                if (typeof marked === 'undefined') {
-                    throw new Error('Marked library not loaded');
-                }
-                
-                const timestamp = new Date().getTime();
-                const url = `https://raw.githubusercontent.com/0xd5f/ANY/main/changelog.md?t=${timestamp}`;
-                
-                const response = await fetch(url, {
-                    method: 'GET',
-                    mode: 'cors',
-                    cache: 'no-cache',
-                    headers: {
-                        'Accept': 'text/plain, text/markdown, */*'
+    function changelogData() {
+        return {
+            changelogContent: '',
+            loading: false,
+            error: null,
+
+            async loadChangelog() {
+                this.loading = true;
+                this.error = null;
+
+                try {
+                    if (typeof marked === 'undefined') {
+                        throw new Error('Marked library not loaded');
                     }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to load changelog (${response.status})`);
+
+                    const timestamp = new Date().getTime();
+                    const url = `https://raw.githubusercontent.com/0xd5f/ANY/main/changelog.md?t=${timestamp}`;
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: {
+                            'Accept': 'text/plain, text/markdown, */*'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to load changelog (${response.status})`);
+                    }
+
+                    const text = await response.text();
+
+                    if (!text || text.trim() === '') {
+                        throw new Error('Changelog file is empty');
+                    }
+
+                    this.changelogContent = marked.parse ? marked.parse(text) : marked(text);
+                } catch (err) {
+                    this.error = err.message || 'Failed to fetch';
+                    console.error('Error loading changelog:', err);
+                } finally {
+                    this.loading = false;
                 }
-                
-                const text = await response.text();
-                
-                if (!text || text.trim() === '') {
-                    throw new Error('Changelog file is empty');
-                }
-                
-                this.changelogContent = marked.parse ? marked.parse(text) : marked(text);
-            } catch (err) {
-                this.error = err.message || 'Failed to fetch';
-                console.error('Error loading changelog:', err);
-            } finally {
-                this.loading = false;
+            },
+
+            init() {
+                this.loadChangelog();
             }
-        },
-        
-        init() {
-            this.loadChangelog();
         }
     }
-}
 </script>
 
 <style>
-.changelog-content {
-    font-size: 1rem;
-    line-height: 1.75;
-}
+    .changelog-content {
+        font-size: 1rem;
+        line-height: 1.75;
+    }
 
-.changelog-content h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    color: #111827;
-}
+    .changelog-content h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #111827;
+    }
 
-.dark .changelog-content h1 {
-    color: #f9fafb;
-}
+    .dark .changelog-content h1 {
+        color: #f9fafb;
+    }
 
-.changelog-content h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    color: #111827;
-}
+    .changelog-content h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #111827;
+    }
 
-.dark .changelog-content h2 {
-    border-bottom-color: #3f3f46;
-    color: #f9fafb;
-}
+    .dark .changelog-content h2 {
+        border-bottom-color: #3f3f46;
+        color: #f9fafb;
+    }
 
-.changelog-content h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: #059669;
-}
+    .changelog-content h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #059669;
+    }
 
-.dark .changelog-content h3 {
-    color: #10b981;
-}
+    .dark .changelog-content h3 {
+        color: #10b981;
+    }
 
-.changelog-content ul {
-    list-style-type: disc;
-    padding-left: 2rem;
-    margin: 1rem 0;
-}
+    .changelog-content ul {
+        list-style-type: disc;
+        padding-left: 2rem;
+        margin: 1rem 0;
+    }
 
-.changelog-content li {
-    margin-bottom: 0.5rem;
-    line-height: 1.75;
-    color: #374151;
-}
+    .changelog-content li {
+        margin-bottom: 0.5rem;
+        line-height: 1.75;
+        color: #374151;
+    }
 
-.dark .changelog-content li {
-    color: #d1d5db;
-}
+    .dark .changelog-content li {
+        color: #d1d5db;
+    }
 
-.changelog-content p {
-    margin: 1rem 0;
-    line-height: 1.75;
-    color: #374151;
-}
+    .changelog-content p {
+        margin: 1rem 0;
+        line-height: 1.75;
+        color: #374151;
+    }
 
-.dark .changelog-content p {
-    color: #d1d5db;
-}
+    .dark .changelog-content p {
+        color: #d1d5db;
+    }
 
-.changelog-content strong {
-    font-weight: 600;
-    color: #111827;
-}
+    .changelog-content strong {
+        font-weight: 600;
+        color: #111827;
+    }
 
-.dark .changelog-content strong {
-    color: #f9fafb;
-}
+    .dark .changelog-content strong {
+        color: #f9fafb;
+    }
 
-.changelog-content code {
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
-    font-size: 0.875em;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    background-color: #f3f4f6;
-    color: #dc2626;
-}
+    .changelog-content code {
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        background-color: #f3f4f6;
+        color: #dc2626;
+    }
 
-.dark .changelog-content code {
-    background-color: #27272a;
-    color: #60a5fa;
-}
+    .dark .changelog-content code {
+        background-color: #27272a;
+        color: #60a5fa;
+    }
 
-.changelog-content pre {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin: 1rem 0;
-    background-color: #f3f4f6;
-}
+    .changelog-content pre {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin: 1rem 0;
+        background-color: #f3f4f6;
+    }
 
-.dark .changelog-content pre {
-    background-color: #27272a;
-}
+    .dark .changelog-content pre {
+        background-color: #27272a;
+    }
 
-.changelog-content pre code {
-    background: transparent;
-    padding: 0;
-    color: #111827;
-}
+    .changelog-content pre code {
+        background: transparent;
+        padding: 0;
+        color: #111827;
+    }
 
-.dark .changelog-content pre code {
-    color: #f9fafb;
-}
+    .dark .changelog-content pre code {
+        color: #f9fafb;
+    }
 
-.changelog-content a {
-    color: #3b82f6;
-    text-decoration: none;
-}
+    .changelog-content a {
+        color: #3b82f6;
+        text-decoration: none;
+    }
 
-.changelog-content a:hover {
-    text-decoration: underline;
-}
+    .changelog-content a:hover {
+        text-decoration: underline;
+    }
 
-.dark .changelog-content a {
-    color: #60a5fa;
-}
+    .dark .changelog-content a {
+        color: #60a5fa;
+    }
 
-.changelog-content blockquote {
-    border-left: 4px solid #d1d5db;
-    padding-left: 1rem;
-    margin: 1rem 0;
-    color: #6b7280;
-}
+    .changelog-content blockquote {
+        border-left: 4px solid #d1d5db;
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: #6b7280;
+    }
 
-.dark .changelog-content blockquote {
-    border-left-color: #52525b;
-    color: #9ca3af;
-}
+    .dark .changelog-content blockquote {
+        border-left-color: #52525b;
+        color: #9ca3af;
+    }
 </style>
 {% endblock %}
