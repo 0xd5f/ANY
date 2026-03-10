@@ -24,7 +24,7 @@ def update_port(port):
             json.dump(config, f, indent=2)
         
         subprocess.run(["python3", CLI_PATH, "restart-hysteria2"],)
-        
+        subprocess.run(["systemctl", "restart", "hysteria-normal-sub.service"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"Port changed successfully to {port}.")
         return True
     

@@ -8,8 +8,11 @@ from paths import *
 
 def restart_hysteria():
     try:
-        subprocess.run(["python3", CLI_PATH, "restart-hysteria2"], 
-                       stdout=subprocess.DEVNULL, 
+        subprocess.run(["python3", CLI_PATH, "restart-hysteria2"],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL)
+        subprocess.run(["systemctl", "restart", "hysteria-normal-sub.service"],
+                       stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL)
     except Exception as e:
         print(f"Failed to restart Hysteria2: {e}")

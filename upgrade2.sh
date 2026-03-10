@@ -69,8 +69,21 @@ info "Starting lightweight upgrade (Core only)..."
 update_core
 
 info "Restarting services..."
-systemctl restart hysteria-webpanel
-systemctl restart hysteria-normal-sub.service
+
+if systemctl is-active --quiet hysteria-webpanel 2>/dev/null || systemctl is-active --quiet hysteria-webpanel.service 2>/dev/null; then
+    systemctl restart hysteria-webpanel 2>/dev/null || systemctl restart hysteria-webpanel.service 2>/dev/null
+    success "Restarted hysteria-webpanel"
+fi
+
+if systemctl is-active --quiet hysteria-normal-sub 2>/dev/null || systemctl is-active --quiet hysteria-normal-sub.service 2>/dev/null; then
+    systemctl restart hysteria-normal-sub 2>/dev/null || systemctl restart hysteria-normal-sub.service 2>/dev/null
+    success "Restarted hysteria-normal-sub"
+fi
+
+if systemctl is-active --quiet hysteria-caddy-normalsub 2>/dev/null || systemctl is-active --quiet hysteria-caddy-normalsub.service 2>/dev/null; then
+    systemctl restart hysteria-caddy-normalsub 2>/dev/null || systemctl restart hysteria-caddy-normalsub.service 2>/dev/null
+    success "Restarted hysteria-caddy-normalsub"
+fi
 
 rm -rf "$TEMP_DIR"
 

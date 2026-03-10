@@ -316,7 +316,10 @@ class SingboxConfigGenerator:
             query_params = parse_qs(parsed_url.query)
             obfs_password = query_params.get('obfs-password', [''])[0]
             mport = query_params.get('mport', [''])[0]
-            
+            uri_sni = query_params.get('sni', [''])[0]
+            uri_insecure = query_params.get('insecure', ['1'])[0] == '1'
+            uri_pin = query_params.get('pinSHA256', [''])[0]
+
             if auth_password:
                 if auth_user:
                     final_password = f"{auth_user}:{auth_password}"
@@ -329,17 +332,21 @@ class SingboxConfigGenerator:
             print(f"Error during Singbox config generation from URI: {e}, URI: {uri}")
             return None
 
+        tls_config = {
+            "enabled": True,
+            "server_name": uri_sni if uri_sni else (fragment if fragment else self.default_sni),
+            "insecure": uri_insecure
+        }
+        if uri_pin and not uri_insecure:
+            tls_config["certificate"] = {"raw_sha256": uri_pin.removeprefix("sha256/")}
+
         outbound_config = {
             "type": "hysteria2",
             "tag": unquote(parsed_url.fragment), 
             "server": server,
             "server_port": server_port,
             "password": final_password,
-            "tls": {
-                "enabled": True,
-                "server_name": fragment if fragment else self.default_sni,
-                "insecure": True
-            }
+            "tls": tls_config
         }
 
         if obfs_password:
@@ -460,7 +467,7 @@ class SubscriptionManager:
         else:
             title_str = self.config.profile_title
             
-        profile_lines = f"//profile-title: {title_str}\n//profile-update-interval: 1\n"
+        profile_lines = f"//profile-title: {title_str}\n//profile-update-interval: 0.1\n"
         
         if self.config.announce:
             try:
@@ -789,7 +796,7 @@ class HysteriaServer:
             "profile-title": f"base64:{base64.b64encode(self.config.profile_title.encode('utf-8')).decode('utf-8')}",
             "content-disposition": f'attachment; filename="{self.config.profile_title}.json"',
             "subscription-userinfo": "; ".join(user_info_parts),
-            "profile-update-interval": "1",
+            "profile-update-interval": "0.1",
             "profile-web-page-url": web_page_url
         }
 
@@ -824,7 +831,7 @@ class HysteriaServer:
         headers = {
             'Subscription-Userinfo': f"upload={user_info.upload_bytes}; download={user_info.download_bytes}; total={user_info.max_download_bytes}; expire={user_info.expiration_timestamp}",
             'Profile-Title': self.config.profile_title,
-            'Profile-Update-Interval': '1',
+            'Profile-Update-Interval': '0.1',
             'Profile-Web-Page-Url': web_page_url,
             'Content-Disposition': f'attachment; filename="{self.config.profile_title}.txt"'
         }

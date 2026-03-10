@@ -185,6 +185,7 @@ def update_sni(sni):
         print(f"Created {CONFIG_ENV} with new SNI.")
 
     run_command(f"python3 {CLI_PATH} restart-hysteria2 > /dev/null 2>&1", capture_output=False)
+    run_command("systemctl restart hysteria-normal-sub.service > /dev/null 2>&1", capture_output=False)
     print(f"Hysteria2 restarted successfully with new SNI: {sni}.")
 
     if use_certbot:
