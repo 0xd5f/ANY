@@ -106,7 +106,7 @@ async def restore_api(file: UploadFile = File(...)):
         with zipfile.ZipFile(temp_path, 'r') as zip_ref:
             namelist = zip_ref.namelist()
             
-            required_flat_files = {"ca.key", "ca.crt", "config.json", ".configs.env"}
+            required_flat_files = {"config.json", ".configs.env"}
             missing_files = required_flat_files - set(namelist)
             if missing_files:
                 raise HTTPException(

@@ -154,7 +154,6 @@
         </div>
         {% endif %}
     </div>
-</div>
 
 <!-- Modals -->
 
@@ -268,8 +267,8 @@
 <!-- QRCode.js for client code generation -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('wireguardData', () => ({
+    window.wireguardData = function () {
+        return {
             loading: false,
             showAddModal: false,
             showConfigModal: false,
@@ -484,7 +483,7 @@
                     console.error('Failed to copy text: ', err);
                 }
             }
-        }));
-    });
+        };
+    };
 </script>
 {% endblock %}
